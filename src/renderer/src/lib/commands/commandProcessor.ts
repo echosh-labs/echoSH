@@ -1,58 +1,71 @@
-// src/renderer/src/lib/commandProcessor.ts
-
 /**
  * @file commandProcessor.ts
- * @description Handles parsing and execution of terminal commands.
+ * @description A dynamic command processing engine that loads and executes command definitions.
  */
 
-export type CommandAction = 'clearHistory' | 'toggleLatencyWidget'
-export type SoundEffect = 'error' | 'command' | 'none'
-
-export interface CommandResult {
-  output: string
-  action?: CommandAction
-  soundEffect?: SoundEffect // Explicitly define the sound to be played
-}
+import { CommandDefinition, CommandResult } from '../../definitions/commands/types'
+import { coreCommands } from '../../definitions/commands/core'
 
 /**
- * Processes a given command string and returns the result.
- * @param command The raw command string from the terminal input.
- * @returns A CommandResult object with the output and any special actions.
+ * A class-based command processor for better state management and initialization.
  */
-export function processCommand(command: string): CommandResult {
-  const trimmedCommand = command.trim().toLowerCase()
+class CommandProcessor {
+  // Use a Map for efficient, case-insensitive command lookups.
+  private readonly commands: Map<string, CommandDefinition>
 
-  switch (trimmedCommand) {
-    case 'clear':
+  constructor() {
+    this.commands = new Map()
+    this.loadCommands(coreCommands)
+  }
+
+  /**
+   * Loads an array of command definitions into the command map.
+   * @param commandList An array of objects conforming to the CommandDefinition interface.
+   */
+  public loadCommands(commandList: CommandDefinition[]): void {
+    commandList.forEach((command) => {
+      this.commands.set(command.name.toLowerCase(), command)
+    })
+    // In the future, this could be extended to load commands from other sources (e.g., plugins).
+  }
+
+  /**
+   * Parses a raw input string, finds the corresponding command, and executes it.
+   * @param input The raw command string from the terminal.
+   * @returns A CommandResult object with the output and any triggered actions or sound effects.
+   */
+  public process(input: string): CommandResult {
+    const trimmedInput = input.trim()
+    if (!trimmedInput) {
+      // Return a default empty result if there's no input.
+      return { output: '', soundEffect: 'none' }
+    }
+
+    const [commandName, ...args] = trimmedInput.split(/\s+/)
+    const command = this.commands.get(commandName.toLowerCase())
+
+    if (command) {
+      // Execute the command's defined function and return the result.
+      const output = command.execute(args)
       return {
-        output: '',
-        action: 'clearHistory',
-        soundEffect: 'none'
+        output,
+        action: command.action,
+        soundEffect: command.soundEffect
       }
-
-    case 'help':
+    } else {
+      // Handle the case where the command is not found.
       return {
-        output: 'Available commands: clear, help, test:error, toggle:latency',
-        soundEffect: 'command'
-      }
-
-    case 'test:error':
-      return {
-        output: 'Error: This is a test error.',
+        output: `Command not found: ${commandName}`,
         soundEffect: 'error'
       }
-
-    case 'toggle:latency':
-      return {
-        output: 'Toggling audio latency widget...',
-        action: 'toggleLatencyWidget',
-        soundEffect: 'command'
-      }
-
-    default:
-      return {
-        output: `Executing: ${command}`,
-        soundEffect: 'command'
-      }
+    }
   }
+}
+
+// Export a singleton instance of the processor.
+const commandProcessor = new CommandProcessor()
+
+// Expose the process method directly for ease of use.
+export const processCommand = (input: string): CommandResult => {
+  return commandProcessor.process(input)
 }

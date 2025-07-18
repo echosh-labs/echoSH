@@ -1,8 +1,13 @@
-// src/renderer/src/components/Terminal.tsx
+/**
+ * @file Terminal.tsx
+ * @description The main user interface component. It orchestrates user input,
+ * command processing, and audio feedback.
+ */
 
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react'
 import { audioEngine } from '../lib/audio/audioEngine'
 import { processCommand } from '../lib/commands/commandProcessor'
+import { CommandResult } from '../definitions/commands/types'
 
 interface HistoryItem {
   id: number
@@ -23,18 +28,21 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   const outputContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Load command history from the main process on initial render.
   useEffect(() => {
     window.electron.ipcRenderer.invoke('history:load').then((loadedHistory) => {
       setCommandHistory(loadedHistory)
     })
   }, [])
 
+  // Auto-scroll to the bottom of the output area when history changes.
   useEffect(() => {
     if (outputContainerRef.current) {
       outputContainerRef.current.scrollTop = outputContainerRef.current.scrollHeight
     }
   }, [history])
 
+  // Handles the first user interaction to initialize the AudioContext.
   const handleTerminalClick = (): void => {
     if (!isInitialized) {
       audioEngine.initialize()
@@ -43,6 +51,7 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
     inputRef.current?.focus()
   }
 
+  // Handles keyboard input for keystroke sounds and command history navigation.
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (isInitialized && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
       audioEngine.playKeystrokeSound(e.key)
@@ -67,16 +76,19 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
     }
   }
 
+  // Main handler for command submission.
   const handleCommandSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
     const command = input.trim()
     if (!command) return
 
+    // Update and save command history.
     const newCommandHistory = [command, ...commandHistory.filter((c) => c !== command)]
     setCommandHistory(newCommandHistory)
     window.electron.ipcRenderer.send('history:save', newCommandHistory)
     setHistoryIndex(-1)
 
+    // Ensure audio engine is initialized before processing.
     if (!isInitialized) {
       setHistory([
         ...history,
@@ -90,9 +102,12 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
       return
     }
 
-    const result = processCommand(command)
+    // Process the command and get the result.
+    const result: CommandResult = processCommand(command)
 
-    // --- Handle Sound Effect ---
+    // --- Orchestrate Side Effects ---
+
+    // 1. Play the appropriate sound effect based on the command result.
     switch (result.soundEffect) {
       case 'error':
         audioEngine.playErrorSound()
@@ -102,11 +117,11 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
         break
       case 'none':
       default:
-        // Do nothing
+        // Do nothing for commands that should be silent.
         break
     }
 
-    // --- Handle Action ---
+    // 2. Perform any UI actions based on the command result.
     switch (result.action) {
       case 'clearHistory':
         setHistory([])
@@ -116,6 +131,7 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
         break
     }
 
+    // 3. Update the output history unless the action was to clear it.
     if (result.action !== 'clearHistory') {
       const newHistoryItem: HistoryItem = {
         id: history.length,
