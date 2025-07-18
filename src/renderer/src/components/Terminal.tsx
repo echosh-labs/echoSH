@@ -1,8 +1,8 @@
 // src/renderer/src/components/Terminal.tsx
 
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react'
-import { audioEngine } from '../lib/audioEngine'
-import { processCommand } from '../lib/commandProcessor'
+import { audioEngine } from '../lib/audio/audioEngine'
+import { processCommand } from '../lib/commands/commandProcessor'
 
 interface HistoryItem {
   id: number

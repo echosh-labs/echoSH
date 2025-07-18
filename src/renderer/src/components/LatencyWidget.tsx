@@ -1,7 +1,7 @@
 // src/renderer/src/components/LatencyWidget.tsx
 
 import React, { useState, useEffect } from 'react'
-import { audioEngine, LatencyInfo } from '../lib/audioEngine'
+import { audioEngine, LatencyInfo } from '../lib/audio/audioEngine'
 
 /**
  * @file LatencyWidget.tsx
