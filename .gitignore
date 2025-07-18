@@ -1,0 +1,75 @@
+node_modules
+dist
+out
+.DS_Store
+.eslintcache
+*.log*
+
+# .gitignore
+
+# Node.js and package manager artifacts
+# These directories contain all the downloaded packages and should not be versioned.
+node_modules
+.pnpm-debug.log*
+npm-debug.log*
+yarn-error.log
+package-lock.json
+pnpm-lock.yaml
+
+# Vite build and cache directories
+# Vite's development server cache and production build output.
+.vite/
+dist/
+
+# Electron and electron-builder output
+# These are the directories where your packaged application is built.
+out/
+release/
+dist_electron/
+*.dmg
+*.exe
+*.AppImage
+*.snap
+*.deb
+*.rpm
+*.zip
+*.tar.gz
+*.nsis
+
+# IDE and editor configuration files
+# User-specific settings for development environments.
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Operating System generated files
+# System-specific files that don't belong in the repository.
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files
+# General log files that may be generated during development or execution.
+*.log
+logs
+*.log.*
+
+# Environment variables
+# These files often contain sensitive secrets and API keys.
+# Never commit them.
+.env
+.env.local
+.env.*.local
+
+# TypeScript build output
+# If you have separate build steps for TypeScript.
+*.tsbuildinfo
