@@ -1,10 +1,26 @@
 /**
  * @file commandProcessor.ts
- * @description A dynamic command processing engine that loads and executes command definitions.
+ * @description A dynamic command processing engine that loads and executes command definitions,
+ * combining static and runtime effects into a single result for the orchestrator.
  */
 
-import { CommandDefinition, CommandResult } from '../../definitions/commands/types'
+import {
+  CommandDefinition,
+  CommandResult,
+  CommandAction,
+  SoundEvent
+} from '../../definitions/commands/types'
 import { coreCommands } from '../../definitions/commands/core'
+
+/**
+ * The final, consolidated result object that is returned to the Terminal component.
+ * It contains the text output and flattened arrays of all actions and sound events to be triggered.
+ */
+export interface ProcessedCommandResult {
+  output: string
+  actions: CommandAction[]
+  soundEvents: SoundEvent[]
+}
 
 /**
  * A class-based command processor for better state management and initialization.
@@ -26,37 +42,49 @@ class CommandProcessor {
     commandList.forEach((command) => {
       this.commands.set(command.name.toLowerCase(), command)
     })
-    // In the future, this could be extended to load commands from other sources (e.g., plugins).
   }
 
   /**
-   * Parses a raw input string, finds the corresponding command, and executes it.
+   * Parses a raw input string, finds the corresponding command, executes it,
+   * and consolidates all static and runtime effects into a single result object.
    * @param input The raw command string from the terminal.
-   * @returns A CommandResult object with the output and any triggered actions or sound effects.
+   * @returns A ProcessedCommandResult object for the Terminal to orchestrate.
    */
-  public process(input: string): CommandResult {
+  public process(input: string): ProcessedCommandResult {
     const trimmedInput = input.trim()
     if (!trimmedInput) {
-      // Return a default empty result if there's no input.
-      return { output: '', soundEffect: 'none' }
+      return { output: '', actions: [], soundEvents: ['none'] }
     }
 
     const [commandName, ...args] = trimmedInput.split(/\s+/)
     const command = this.commands.get(commandName.toLowerCase())
 
     if (command) {
-      // Execute the command's defined function and return the result.
-      const output = command.execute(args)
+      // 1. Execute the command's core logic to get the runtime result.
+      const runtimeResult: CommandResult = command.execute(args)
+
+      // 2. Consolidate static and runtime effects into flattened arrays.
+      const allActions: CommandAction[] = [
+        ...(command.staticActions ?? []),
+        ...(runtimeResult.runtimeActions ?? [])
+      ]
+      const allSoundEvents: SoundEvent[] = [
+        ...(command.staticSoundEvents ?? []),
+        ...(runtimeResult.runtimeSoundEvents ?? [])
+      ]
+
+      // 3. Return the final, processed result for the orchestrator.
       return {
-        output,
-        action: command.action,
-        soundEffect: command.soundEffect
+        output: runtimeResult.output,
+        actions: allActions,
+        soundEvents: allSoundEvents.length > 0 ? allSoundEvents : ['none']
       }
     } else {
       // Handle the case where the command is not found.
       return {
         output: `Command not found: ${commandName}`,
-        soundEffect: 'error'
+        actions: [],
+        soundEvents: ['invalidCommand']
       }
     }
   }
@@ -66,6 +94,6 @@ class CommandProcessor {
 const commandProcessor = new CommandProcessor()
 
 // Expose the process method directly for ease of use.
-export const processCommand = (input: string): CommandResult => {
+export const processCommand = (input: string): ProcessedCommandResult => {
   return commandProcessor.process(input)
 }

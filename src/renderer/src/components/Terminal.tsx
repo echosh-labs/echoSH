@@ -6,8 +6,11 @@
 
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react'
 import { audioEngine } from '../lib/audio/audioEngine'
-import { processCommand } from '../lib/commands/commandProcessor'
-import { CommandResult } from '../definitions/commands/types'
+import {
+  processCommand,
+  ProcessedCommandResult
+} from '../lib/commands/commandProcessor'
+import { CommandAction, SoundEvent } from '../definitions/commands/types'
 
 interface HistoryItem {
   id: number
@@ -83,7 +86,10 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
     if (!command) return
 
     // Update and save command history.
-    const newCommandHistory = [command, ...commandHistory.filter((c) => c !== command)]
+    const newCommandHistory = [
+      command,
+      ...commandHistory.filter((c) => c !== command)
+    ]
     setCommandHistory(newCommandHistory)
     window.electron.ipcRenderer.send('history:save', newCommandHistory)
     setHistoryIndex(-1)
@@ -95,44 +101,49 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
         {
           id: history.length,
           command: command,
-          output: 'Please click on the terminal to initialize the audio engine first.'
+          output:
+            'Please click on the terminal to initialize the audio engine first.'
         }
       ])
       setInput('')
       return
     }
 
-    // Process the command and get the result.
-    const result: CommandResult = processCommand(command)
+    // Process the command and get the consolidated result.
+    const result: ProcessedCommandResult = processCommand(command)
 
     // --- Orchestrate Side Effects ---
 
-    // 1. Play the appropriate sound effect based on the command result.
-    switch (result.soundEffect) {
-      case 'error':
-        audioEngine.playErrorSound()
-        break
-      case 'command':
-        audioEngine.generateCommandSound(command)
-        break
-      case 'none':
-      default:
-        // Do nothing for commands that should be silent.
-        break
-    }
+    // 1. Iterate through and trigger all sound events.
+    result.soundEvents.forEach((event: SoundEvent) => {
+      // This is a temporary mapping. The future ThemeManager will handle this.
+      switch (event) {
+        case 'commandSuccess':
+          audioEngine.generateCommandSound(command)
+          break
+        case 'invalidCommand':
+          audioEngine.playErrorSound()
+          break
+        case 'none':
+        default:
+          break // Do nothing for silent events.
+      }
+    })
 
-    // 2. Perform any UI actions based on the command result.
-    switch (result.action) {
-      case 'clearHistory':
-        setHistory([])
-        break
-      case 'toggleLatencyWidget':
-        onToggleLatencyWidget()
-        break
-    }
+    // 2. Iterate through and execute all UI actions.
+    result.actions.forEach((action: CommandAction) => {
+      switch (action) {
+        case 'clearHistory':
+          setHistory([])
+          break
+        case 'toggleLatencyWidget':
+          onToggleLatencyWidget()
+          break
+      }
+    })
 
-    // 3. Update the output history unless the action was to clear it.
-    if (result.action !== 'clearHistory') {
+    // 3. Update the output history if it wasn't cleared.
+    if (!result.actions.includes('clearHistory') && result.output) {
       const newHistoryItem: HistoryItem = {
         id: history.length,
         command: command,
@@ -147,7 +158,7 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   return (
     <div className="terminal-container" onClick={handleTerminalClick}>
       <div className="output-area" ref={outputContainerRef}>
-        <div className="p-2">Sirocco v0.1.0 - Click to start audio.</div>
+        <div className="p-2">Sirocco v0.2.0 - Click to start audio.</div>
         {history.map((item) => (
           <div key={item.id} className="p-2 pt-0">
             <div className="flex">
