@@ -1,10 +1,10 @@
-# EchoSH - The Synesthetic Terminal
+# Sirocco - The Synesthetic Terminal
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com) 
 [![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**EchoSH is a command-line interface that transforms your digital workflow into an immersive, generative audio experience. Every keystroke, command, and error is transmuted into a unique sonic event, turning the act of coding into a practice of composition.**
+**Sirocco is a command-line interface that transforms your digital workflow into an immersive, generative audio experience. Every keystroke, command, and error is transmuted into a unique sonic event, turning the act of coding into a practice of composition.**
 
 ---
 
@@ -21,7 +21,7 @@
 
 ### Core Concept
 
-In a standard terminal, user interaction is a silent, visual affair. EchoSH challenges this paradigm by creating a rich, auditory feedback loop. It's built on the idea that the data flowing through a developer's terminal has an inherent rhythm and texture. By translating this data into sound, we can achieve a deeper, more intuitive connection to our tools and our work.
+In a standard terminal, user interaction is a silent, visual affair. Sirocco challenges this paradigm by creating a rich, auditory feedback loop. It's built on the idea that the data flowing through a developer's terminal has an inherent rhythm and texture. By translating this data into sound, we can achieve a deeper, more intuitive connection to our tools and our work.
 
 This is not just a utility; it's an instrument. It's an experiment in synesthesia, exploring the intersection of code, productivity, and generative art.
 
@@ -44,7 +44,11 @@ This is not just a utility; it's an instrument. It's an experiment in synesthesi
 
 ### Philosophy
 
-This project is grounded in a belief that the tools we use should not only be functional but also engaging and inspiring. In the same way an alchemist seeks to transmute base materials, EchoSH seeks to find the hidden harmony within the seemingly mundane flow of data. It encourages a state of heightened awareness, where the developer becomes more attuned to the cause and effect of their digital actions. It is an exercise in discipline and meditation, finding the signal in the noise.
+> Echo what you type—
+> The power of Sirocco—
+> Winds are blowing strong.
+
+This project is grounded in a belief that the tools we use should not only be functional but also engaging and inspiring. In the same way an alchemist seeks to transmute base materials, Sirocco seeks to find the hidden harmony within the seemingly mundane flow of data. It encourages a state of heightened awareness, where the developer becomes more attuned to the cause and effect of their digital actions. It is an exercise in discipline and meditation, finding the signal in the noise.
 
 ### Getting Started
 
@@ -59,11 +63,11 @@ To get a local copy up and running, follow these simple steps.
 
 1.  Clone the repository:
     ```sh
-    git clone [https://github.com/stiamprie/echosh.git](https://github.com/stiamprie/echosh.git)
+    git clone [https://github.com/stiamprie/sirocco.git](https://github.com/stiamprie/sirocco.git)
     ```
 2.  Navigate to the project directory:
     ```sh
-    cd echosh
+    cd sirocco
     ```
 3.  Install dependencies:
     ```sh
