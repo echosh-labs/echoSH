@@ -5,12 +5,13 @@
  * @description Handles parsing and execution of terminal commands.
  */
 
-// Exporting the action types makes them reusable and more explicit.
 export type CommandAction = 'clearHistory' | 'toggleLatencyWidget'
+export type SoundEffect = 'error' | 'command' | 'none'
 
 export interface CommandResult {
   output: string
   action?: CommandAction
+  soundEffect?: SoundEffect // Explicitly define the sound to be played
 }
 
 /**
@@ -24,29 +25,34 @@ export function processCommand(command: string): CommandResult {
   switch (trimmedCommand) {
     case 'clear':
       return {
-        output: '', // No output is needed since the screen will be cleared.
-        action: 'clearHistory'
+        output: '',
+        action: 'clearHistory',
+        soundEffect: 'none'
       }
 
     case 'help':
       return {
-        output: 'Available commands: clear, help, test:error, toggle:latency'
+        output: 'Available commands: clear, help, test:error, toggle:latency',
+        soundEffect: 'command'
       }
 
     case 'test:error':
       return {
-        output: 'Error: This is a test error.'
+        output: 'Error: This is a test error.',
+        soundEffect: 'error'
       }
 
     case 'toggle:latency':
       return {
         output: 'Toggling audio latency widget...',
-        action: 'toggleLatencyWidget'
+        action: 'toggleLatencyWidget',
+        soundEffect: 'command'
       }
 
     default:
       return {
-        output: `Executing: ${command}`
+        output: `Executing: ${command}`,
+        soundEffect: 'command'
       }
   }
 }

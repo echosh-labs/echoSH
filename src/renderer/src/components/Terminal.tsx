@@ -23,14 +23,12 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   const outputContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Load command history on initial render
   useEffect(() => {
     window.electron.ipcRenderer.invoke('history:load').then((loadedHistory) => {
       setCommandHistory(loadedHistory)
     })
   }, [])
 
-  // Auto-scroll to the bottom when output history changes
   useEffect(() => {
     if (outputContainerRef.current) {
       outputContainerRef.current.scrollTop = outputContainerRef.current.scrollHeight
@@ -46,11 +44,10 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (isInitialized && e.key.length === 1) {
+    if (isInitialized && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
       audioEngine.playKeystrokeSound(e.key)
     }
 
-    // Handle command history navigation
     if (e.key === 'ArrowUp') {
       e.preventDefault()
       const newIndex = Math.min(historyIndex + 1, commandHistory.length - 1)
@@ -75,35 +72,48 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
     const command = input.trim()
     if (!command) return
 
-    // Update persistent command history
     const newCommandHistory = [command, ...commandHistory.filter((c) => c !== command)]
     setCommandHistory(newCommandHistory)
     window.electron.ipcRenderer.send('history:save', newCommandHistory)
-    setHistoryIndex(-1) // Reset history navigation index
+    setHistoryIndex(-1)
 
     if (!isInitialized) {
-      const newHistoryItem: HistoryItem = {
-        id: history.length,
-        command: command,
-        output: 'Please click on the terminal to initialize the audio engine first.'
-      }
-      setHistory([...history, newHistoryItem])
+      setHistory([
+        ...history,
+        {
+          id: history.length,
+          command: command,
+          output: 'Please click on the terminal to initialize the audio engine first.'
+        }
+      ])
       setInput('')
       return
     }
 
     const result = processCommand(command)
 
-    if (command.toLowerCase() === 'test:error') {
-      audioEngine.playErrorSound()
-    } else {
-      audioEngine.generateCommandSound(command)
+    // --- Handle Sound Effect ---
+    switch (result.soundEffect) {
+      case 'error':
+        audioEngine.playErrorSound()
+        break
+      case 'command':
+        audioEngine.generateCommandSound(command)
+        break
+      case 'none':
+      default:
+        // Do nothing
+        break
     }
 
-    if (result.action === 'clearHistory') {
-      setHistory([])
-    } else if (result.action === 'toggleLatencyWidget') {
-      onToggleLatencyWidget()
+    // --- Handle Action ---
+    switch (result.action) {
+      case 'clearHistory':
+        setHistory([])
+        break
+      case 'toggleLatencyWidget':
+        onToggleLatencyWidget()
+        break
     }
 
     if (result.action !== 'clearHistory') {
@@ -121,7 +131,7 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   return (
     <div className="terminal-container" onClick={handleTerminalClick}>
       <div className="output-area" ref={outputContainerRef}>
-        <div className="p-2">EchoSH v1.0 - Click to start audio.</div>
+        <div className="p-2">Sirocco v0.1.0 - Click to start audio.</div>
         {history.map((item) => (
           <div key={item.id} className="p-2 pt-0">
             <div className="flex">
