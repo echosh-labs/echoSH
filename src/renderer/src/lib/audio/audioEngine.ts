@@ -140,65 +140,6 @@ class AudioEngine {
     }
   }
 
-  // --- Public Sound Event Methods ---
-
-  public playKeystrokeSound(key: string): void {
-    const blueprint: SoundBlueprint = {
-      sources: [
-        {
-          type: 'oscillator',
-          oscillatorType: 'triangle',
-          frequency: 250 + (key.charCodeAt(0) * 5) % 800
-        }
-      ],
-      envelope: { attack: 0.005, decay: 0.05, sustain: 0.2, release: 0.045 },
-      duration: 0.1
-    }
-    this.playSoundFromBlueprint(blueprint)
-  }
-
-  public generateCommandSound(command: string): void {
-    const charCodes = command.split('').map((char) => char.charCodeAt(0))
-    const sumOfCharCodes = charCodes.reduce((a, b) => a + b, 0)
-
-    const blueprint: SoundBlueprint = {
-      sources: [
-        { type: 'oscillator', oscillatorType: 'sine', frequency: 200 + (sumOfCharCodes % 300) }
-      ],
-      envelope: {
-        attack: 0.05,
-        decay: 0.1,
-        sustain: 0.8,
-        release: Math.min(0.1 + command.length * 0.05, 1.0)
-      },
-      lfo: {
-        type: 'sawtooth',
-        frequency: 5 + (command.length % 10),
-        affects: 'frequency',
-        depth: 15
-      },
-      duration: Math.min(0.2 + command.length * 0.05, 1.5)
-    }
-    this.playSoundFromBlueprint(blueprint)
-  }
-
-  public playErrorSound(): void {
-    const blueprint: SoundBlueprint = {
-      sources: [
-        { type: 'oscillator', oscillatorType: 'square', frequency: 150 },
-        {
-          type: 'oscillator',
-          oscillatorType: 'square',
-          frequency: 150 * Math.pow(1.05946, 6),
-          detune: 10
-        }
-      ],
-      envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 },
-      duration: 0.5
-    }
-    this.playSoundFromBlueprint(blueprint)
-  }
-
   // --- Node Creation Helpers ---
 
   private createSourceNode(blueprint: SoundSourceBlueprint): AudioScheduledSourceNode {

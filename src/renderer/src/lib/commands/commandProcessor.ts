@@ -1,5 +1,5 @@
 /**
- * @file commandProcessor.ts
+ * @file src/renderer/src/lib/commands/commandProcessor.ts
  * @description A dynamic command processing engine that loads and executes command definitions,
  * combining static and runtime effects into a single result for the orchestrator.
  */
@@ -7,10 +7,10 @@
 import {
   CommandDefinition,
   CommandResult,
-  CommandAction,
-  SoundEvent
+  CommandAction
 } from '../../definitions/commands/types'
 import { coreCommands } from '../../definitions/commands/core'
+import { SoundBlueprint } from '../audio/audioBlueprints'
 
 /**
  * The final, consolidated result object that is returned to the Terminal component.
@@ -19,7 +19,7 @@ import { coreCommands } from '../../definitions/commands/core'
 export interface ProcessedCommandResult {
   output: string
   actions: CommandAction[]
-  soundEvents: SoundEvent[]
+  soundBlueprint?: SoundBlueprint
 }
 
 /**
@@ -53,7 +53,7 @@ class CommandProcessor {
   public process(input: string): ProcessedCommandResult {
     const trimmedInput = input.trim()
     if (!trimmedInput) {
-      return { output: '', actions: [], soundEvents: ['none'] }
+      return { output: '', actions: [] }
     }
 
     const [commandName, ...args] = trimmedInput.split(/\s+/)
@@ -68,23 +68,32 @@ class CommandProcessor {
         ...(command.staticActions ?? []),
         ...(runtimeResult.runtimeActions ?? [])
       ]
-      const allSoundEvents: SoundEvent[] = [
-        ...(command.staticSoundEvents ?? []),
-        ...(runtimeResult.runtimeSoundEvents ?? [])
-      ]
+      const soundBlueprint = runtimeResult.soundBlueprint ?? command.soundBlueprint
 
       // 3. Return the final, processed result for the orchestrator.
       return {
         output: runtimeResult.output,
         actions: allActions,
-        soundEvents: allSoundEvents.length > 0 ? allSoundEvents : ['none']
+        soundBlueprint
       }
     } else {
       // Handle the case where the command is not found.
       return {
         output: `Command not found: ${commandName}`,
         actions: [],
-        soundEvents: ['invalidCommand']
+        soundBlueprint: {
+          sources: [
+            { type: 'oscillator', oscillatorType: 'square', frequency: 150 },
+            {
+              type: 'oscillator',
+              oscillatorType: 'square',
+              frequency: 150 * Math.pow(1.05946, 6), // Tritone
+              detune: 10
+            }
+          ],
+          envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 },
+          duration: 0.5
+        }
       }
     }
   }

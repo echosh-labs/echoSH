@@ -1,5 +1,5 @@
 /**
- * @file Terminal.tsx
+ * @file src/renderer/src/components/Terminal.tsx
  * @description The main user interface component. It orchestrates user input,
  * command processing, and audio feedback.
  */
@@ -10,7 +10,7 @@ import {
   processCommand,
   ProcessedCommandResult
 } from '../lib/commands/commandProcessor'
-import { CommandAction, SoundEvent } from '../definitions/commands/types'
+import { CommandAction } from '../definitions/commands/types'
 
 interface HistoryItem {
   id: number
@@ -57,7 +57,17 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   // Handles keyboard input for keystroke sounds and command history navigation.
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (isInitialized && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      audioEngine.playKeystrokeSound(e.key)
+      audioEngine.playSoundFromBlueprint({
+        sources: [
+          {
+            type: 'oscillator',
+            oscillatorType: 'triangle',
+            frequency: 250 + (e.key.charCodeAt(0) * 5) % 800
+          }
+        ],
+        envelope: { attack: 0.005, decay: 0.05, sustain: 0.2, release: 0.045 },
+        duration: 0.1
+      })
     }
 
     if (e.key === 'ArrowUp') {
@@ -114,21 +124,10 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
 
     // --- Orchestrate Side Effects ---
 
-    // 1. Iterate through and trigger all sound events.
-    result.soundEvents.forEach((event: SoundEvent) => {
-      // This is a temporary mapping. The future ThemeManager will handle this.
-      switch (event) {
-        case 'commandSuccess':
-          audioEngine.generateCommandSound(command)
-          break
-        case 'invalidCommand':
-          audioEngine.playErrorSound()
-          break
-        case 'none':
-        default:
-          break // Do nothing for silent events.
-      }
-    })
+    // 1. Play the sound blueprint if it exists.
+    if (result.soundBlueprint) {
+      audioEngine.playSoundFromBlueprint(result.soundBlueprint)
+    }
 
     // 2. Iterate through and execute all UI actions.
     result.actions.forEach((action: CommandAction) => {

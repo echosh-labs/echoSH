@@ -148,12 +148,3 @@ export interface SoundBlueprint {
   compressor?: CompressorBlueprint
   duration: number // Total duration of the sound in seconds
 }
-
-// --- Theme Structure ---
-
-export interface SoundTheme {
-  keystroke: (key: string) => SoundBlueprint
-  command: (command: string) => SoundBlueprint
-  error: () => SoundBlueprint
-  // We can add more event types here in the future
-}
