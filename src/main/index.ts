@@ -21,9 +21,12 @@ function loadHistory(): string[] {
   return []
 }
 
-function saveHistory(_event: Electron.IpcMainEvent, commands: string[]): void {
+function saveHistory(commands: unknown[] = []): void {
   try {
-    fs.writeFileSync(historyFilePath, JSON.stringify(commands, null, 2))
+    const safeCommands = Array.isArray(commands)
+      ? commands.map((c) => String(c))
+      : []
+    fs.writeFileSync(historyFilePath, JSON.stringify(safeCommands, null, 2))
   } catch (error) {
     console.error('Failed to save command history:', error)
   }
@@ -68,8 +71,10 @@ app.whenReady().then(() => {
 
   // --- IPC Handlers for History ---
   ipcMain.handle('history:load', loadHistory)
-  ipcMain.on('history:save', saveHistory)
-  // --- End IPC Handlers ---
+  ipcMain.handle('history:save', (_event, commands: string[]) => {
+  saveHistory(commands)
+  return true
+})// --- End IPC Handlers ---
 
   createWindow()
 

@@ -11,6 +11,7 @@ import {
   ProcessedCommandResult
 } from '../lib/commands/commandProcessor'
 import { CommandAction } from '../definitions/commands/types'
+import { loadHistory, saveHistory } from '../lib/commands/historyStorage'
 
 interface HistoryItem {
   id: number
@@ -31,12 +32,17 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   const outputContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Load command history from the main process on initial render.
+  // Load command history from persistent storage on initial render.
   useEffect(() => {
-    window.electron.ipcRenderer.invoke('history:load').then((loadedHistory) => {
-      setCommandHistory(loadedHistory)
+    loadHistory().then((storedHistory) => {
+      setCommandHistory(storedHistory)
     })
   }, [])
+
+  // Save command history to persistent storage whenever it changes.
+  useEffect(() => {
+    saveHistory(commandHistory)
+  }, [commandHistory])
 
   // Auto-scroll to the bottom of the output area when history changes.
   useEffect(() => {
@@ -72,11 +78,10 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
 
     if (e.key === 'ArrowUp') {
       e.preventDefault()
+      if (commandHistory.length === 0) return
       const newIndex = Math.min(historyIndex + 1, commandHistory.length - 1)
-      if (newIndex >= 0) {
-        setHistoryIndex(newIndex)
-        setInput(commandHistory[commandHistory.length - 1 - newIndex])
-      }
+      setHistoryIndex(newIndex)
+      setInput(commandHistory[newIndex])
     } else if (e.key === 'ArrowDown') {
       e.preventDefault()
       const newIndex = Math.max(historyIndex - 1, -1)
@@ -84,7 +89,7 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
       if (newIndex === -1) {
         setInput('')
       } else {
-        setInput(commandHistory[commandHistory.length - 1 - newIndex])
+        setInput(commandHistory[newIndex])
       }
     }
   }
@@ -101,7 +106,7 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
       ...commandHistory.filter((c) => c !== command)
     ]
     setCommandHistory(newCommandHistory)
-    window.electron.ipcRenderer.send('history:save', newCommandHistory)
+    // localStorage update is handled by useEffect
     setHistoryIndex(-1)
 
     // Ensure audio engine is initialized before processing.
