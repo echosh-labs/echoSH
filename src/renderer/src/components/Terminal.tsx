@@ -99,13 +99,33 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
     }
   }
 
-  // Main handler for command submission.
-  const handleCommandSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-    e.preventDefault()
-    const command = input.trim()
-    if (!command) return
+  const internalCommands: { [key: string]: (arg: string) => void } = {
+    help: () => {
+      const commands = [
+        { cmd: 'help', desc: 'Displays this list of available commands.' },
+        { cmd: 'theme', desc: 'Displays the application color palette.' },
+        { cmd: 'color:list', desc: 'Lists available output text colors.' },
+        { cmd: 'color:<name>', desc: 'Sets the output text color (e.g., color:red).' },
+        { cmd: 'clear', desc: 'Clears the output history from the terminal view.' },
+        { cmd: 'test:error', desc: 'Triggers the custom error sound for testing.' },
+        { cmd: 'toggle:latency', desc: 'Shows or hides the audio latency diagnostic widget.' }
+      ]
 
-    if (command === 'theme') {
+      const helpOutput = (
+        <div className="mt-1">
+          <p className="mb-2">Available commands:</p>
+          {commands.map(({ cmd, desc }) => (
+            <div key={cmd} className="flex">
+              <span className="w-40 flex-shrink-0 text-foreground">{cmd}</span>
+              <span className="text-muted-foreground">{desc}</span>
+            </div>
+          ))}
+        </div>
+      )
+
+      setHistory((prev) => [...prev, { id: prev.length, command: 'help', output: helpOutput }])
+    },
+    theme: () => {
       const themeColors: { [key: string]: string } = {
         background: 'bg-background',
         foreground: 'bg-foreground',
@@ -140,16 +160,10 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
           </div>
         </div>
       )
-
-      setHistory(prev => [...prev, { id: prev.length, command, output: themeOutput }])
-      setInput('')
-      setHistoryIndex(-1)
-      return
-    }
-
-    // Handle built-in color command
-    if (command.startsWith('color:')) {
-      const newColor = command.substring(6).trim()
+      setHistory(prev => [...prev, { id: prev.length, command: 'theme', output: themeOutput }])
+    },
+    color: (arg: string) => {
+      const newColor = arg.trim()
       const validColors: { [key: string]: string } = {
         default: 'text-cyan-400',
         white: 'text-foreground',
@@ -170,12 +184,21 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
         outputMessage = `Error: Invalid color '${newColor}'. Use 'color:list' to see available colors.`
       }
 
-      const newHistoryItem: HistoryItem = {
-        id: history.length,
-        command: command,
-        output: outputMessage
-      }
-      setHistory(prev => [...prev, newHistoryItem])
+      const command = `color:${newColor}`
+      setHistory(prev => [...prev, { id: prev.length, command, output: outputMessage }])
+    }
+  }
+
+  // Main handler for command submission.
+  const handleCommandSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault()
+    const command = input.trim()
+    if (!command) return
+
+    // Check for internal commands first
+    const [cmd, ...args] = command.split(':')
+    if (internalCommands[cmd]) {
+      internalCommands[cmd](args.join(':'))
       setInput('')
       setHistoryIndex(-1)
       return
