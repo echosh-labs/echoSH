@@ -10,7 +10,7 @@
     "lint": "eslint --cache .",
     "typecheck": "tsc --noEmit --build",
     "start": "electron-vite preview",
-    "dev": "concurrently \"vite\" \"cross-env DEV= tsc-watch -p tsconfig.electron.json --onSuccess \\\"electron .\\\"\"",
+    "dev": "concurrently \"vite\" \"cross-env DEV= ELECTRON_GTK_VERSION=3 tsc-watch -p tsconfig.electron.json --onSuccess \\\"electron .\\\"\"",
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
@@ -19,38 +19,37 @@
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.11",
-    "electron-updater": "^6.6.2",
-    "tailwindcss": "^4.1.11"
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.1",
     "@types/node": "^22.16.5",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.4.21",
+    "clsx": "^2.1.1",
     "concurrently": "^9.2.0",
     "cross-env": "^7.0.3",
     "electron": "^36.5.0",
-    "clsx": "^2.1.1",
-    "electron-updater": "^6.3.9",
-    "tailwind-merge": "^2.4.0",
-    "@tailwindcss/vite": "^4.1.1",
-    "autoprefixer": "^10.4.21",
     "electron-builder": "^25.1.8",
     "eslint": "^9.31.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "tailwind-merge": "^2.4.0",
+    "tailwindcss": "^4.1.11",
     "tsc-watch": "^7.1.1",
-    "postcss": "^8.5.6",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
       "electron",
       "esbuild"
     ]

@@ -14,6 +14,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var electron_1 = require("electron");
 var path = require("path");
 var icon_png_asset_1 = require("../../resources/icon.png?asset");
+
+// Force GTK3 to avoid conflicts with native modules that might be linked against it.
+if (process.platform === 'linux') {
+    electron_1.app.commandLine.appendSwitch('gtk-version', '3');
+}
 console.log('Starting main process');
 require("./api");
 function createWindow() {

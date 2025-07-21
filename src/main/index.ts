@@ -1,9 +1,11 @@
 import { app, BrowserWindow, shell } from 'electron'
 import * as path from 'path'
-console.log('Starting main process');
 
-const isDev = process.env.DEV != undefined;
-// const isPreview = process.env.PREVIEW != undefined;
+// Force GTK3 to avoid conflicts with native modules that might be linked against it.
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('gtk-version', '3');
+}
+console.log('Starting main process');
 
 import './api'
 
@@ -23,7 +25,8 @@ function createWindow(): BrowserWindow {
       // sandbox: false
     }
   })
-  if (isDev) {
+  // Use the built-in `isPackaged` property to check for development mode
+  if (!app.isPackaged) {
     mainWindow.loadURL("http://localhost:5173");
     // mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   }
