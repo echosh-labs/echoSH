@@ -13,16 +13,25 @@ import AppBar from "@/renderer/components/AppBar.tsx";
 function App(): React.ReactElement {
   const [isLatencyWidgetVisible, setLatencyWidgetVisible] = useState(false)
 
+  const [terminalColorClass, setTerminalColorClass] = useState<string>(
+    'text-cyan-400'
+  )
+
   const handleToggleLatencyWidget = (): void => {
     setLatencyWidgetVisible((prev) => !prev)
   }
 
+
   return (
-    <div className="app-container">
-      <AppBar isLatencyWidgetVisible={isLatencyWidgetVisible}/>
-      <Terminal onToggleLatencyWidget={handleToggleLatencyWidget} />
+    <div className={`app-container ${terminalColorClass}`}>
+      <AppBar isLatencyWidgetVisible={isLatencyWidgetVisible} />
+      <Terminal
+        terminalColorClass={terminalColorClass}
+        setTerminalColorClass={setTerminalColorClass}
+        onToggleLatencyWidget={handleToggleLatencyWidget}
+      />
     </div>
-  )
+  );
 }
 
 export default App

@@ -8,9 +8,9 @@ export default function AppBar({
 
 
   return (
-    <div className="app-bar flex justify-between">
+    <div className="app-bar flex justify-between border-b-[0.5px] border-b-[var(--border)]">
       <div className="p-2 h-full">
-        <h2 className="pl-2 font-light">Sirocco v0.2.0 - Click to start audio.</h2>
+        <div>Sirocco v0.2.0 - Click to start audio.</div>
       </div>
       <LatencyWidget isVisible={isLatencyWidgetVisible} />
     </div>

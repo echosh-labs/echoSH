@@ -60,8 +60,6 @@ class CommandProcessor {
       return { output: '', actions: [] }
     }
 
-    console.log(this.vars);
-
     const {
       variables,
       command: commandName,
@@ -69,8 +67,6 @@ class CommandProcessor {
     } = CommandParser.parse(input, this.vars)
 
     this.vars = variables;
-
-    console.log({variables, command: commandName, args})
 
     if (commandName.length === 0) {
       return { output: trimmedInput, actions: [] }

@@ -23,10 +23,16 @@ interface HistoryItem {
 }
 
 interface TerminalProps {
-  onToggleLatencyWidget: () => void
+  onToggleLatencyWidget: () => void,
+  terminalColorClass: string,
+  setTerminalColorClass: (color: string) => void,
 }
 
-export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => {
+export const Terminal: React.FC<TerminalProps> = ({
+                                                    onToggleLatencyWidget,
+                                                    terminalColorClass,
+                                                    setTerminalColorClass,
+}) => {
   const [input, setInput] = useState<string>('')
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [commandHistory, setCommandHistory] = useState<string[]>([])
@@ -34,9 +40,6 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   const [predictions, setPredictions] = useState<string[]>([])
   const [isAudioInitialized, setIsAudioInitialized] = useState<boolean>(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(true)
-  const [terminalColorClass, setTerminalColorClass] = useState<string>(
-    'text-cyan-400'
-  )
   const outputContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -303,9 +306,10 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   }
 
   return (
-    <div className={`flex h-screen flex-col bg-background font-mono text-sm text-foreground ${terminalColorClass}`} onClick={handleTerminalClick}>
+    <div
+      style={{height: 'calc(100vh - 54px)'}}
+      className={`flex flex-col bg-background font-mono text-sm text-foreground`} onClick={handleTerminalClick}>
       <div className="flex-grow overflow-y-auto p-4" ref={outputContainerRef}>
-        <div>Sirocco v0.2.0 - Click to start audio.</div>
         {isLoadingHistory && <div className="animate-pulse">Loading history...</div>}
         {history.map((item) => (
           <div key={item.id} className="mb-2">
@@ -323,13 +327,13 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
         )}
       </div>
 
-      <div className="input-area p-2">
         {predictions.length > 0 && (
-          <div className="cmd-predictions text-output">
-            {predictions.join(', ')}
+          <div className="input-area p-2">
+            <div className="cmd-predictions text-output">
+              {predictions.join(', ')}
+            </div>
           </div>
         )}
-      </div>
       <div className="border-t border-border p-4">
         <form onSubmit={handleCommandSubmit}>
           <div className="flex items-center">
