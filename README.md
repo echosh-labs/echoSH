@@ -13,7 +13,7 @@
 
 ### Visual Demo
 
-*A short screen recording of echoSH in action would be incredibly powerful here. You can convert your video to a high-quality GIF and embed it.*
+*Preliminary terminal in operation.*
 
 ![echoSH Demo](assets/echosh-demo.gif)
 
