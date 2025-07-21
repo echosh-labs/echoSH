@@ -4,17 +4,15 @@
  * command processing, and audio feedback.
  */
 
-import React, { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
+import React, { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { audioEngine } from '../lib/audio/audioEngine'
 import {
-  processCommand,
   ProcessedCommandResult
 } from '../lib/commands/commandProcessor'
 import { CommandAction } from '../definitions/commands/types'
 import { loadHistory, saveHistory } from '../lib/commands/historyStorage'
-import { keySounds } from "@/renderer/definitions/keys/special.ts";
-import { CommandPrediction } from "@/renderer/lib/commands/commandPrediction.ts";
-import { coreCommands } from "@/renderer/definitions/commands/core";
+import { keySounds } from "@/renderer/lib/audio/keys/special.ts";
+import { useTerminalContext } from "@/renderer/lib/contexts/terminalContext.tsx";
 
 interface HistoryItem {
   id: number
@@ -24,15 +22,14 @@ interface HistoryItem {
 
 interface TerminalProps {
   onToggleLatencyWidget: () => void,
-  terminalColorClass: string,
-  setTerminalColorClass: (color: string) => void,
 }
 
 export const Terminal: React.FC<TerminalProps> = ({
                                                     onToggleLatencyWidget,
-                                                    terminalColorClass,
-                                                    setTerminalColorClass,
 }) => {
+
+  const terminalContext = useTerminalContext();
+
   const [input, setInput] = useState<string>('')
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [commandHistory, setCommandHistory] = useState<string[]>([])
@@ -43,9 +40,8 @@ export const Terminal: React.FC<TerminalProps> = ({
   const outputContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const commandPrediction = useMemo(() => {
-    return new CommandPrediction(coreCommands);
-  }, []);
+  const commandPrediction = terminalContext.predictions;
+  const commandProcessor = terminalContext.processor;
 
   // Load command history from persistent storage on initial render.
   useEffect(() => {
@@ -141,32 +137,33 @@ export const Terminal: React.FC<TerminalProps> = ({
   }
 
   const internalCommands: { [key: string]: (arg: string) => void } = {
-    help: () => {
-      const commands = [
-        { cmd: 'help', desc: 'Displays this list of available commands.' },
-        { cmd: 'theme', desc: 'Displays the application color palette.' },
-        { cmd: 'color:list', desc: 'Lists available output text colors.' },
-        { cmd: 'color:<name>', desc: 'Sets the output text color (e.g., color:red).' },
-        { cmd: 'clear', desc: 'Clears the output history from the terminal view.' },
-        { cmd: 'test:error', desc: 'Triggers the custom error sound for testing.' },
-        { cmd: 'toggle:latency', desc: 'Shows or hides the audio latency diagnostic widget.' }
-      ]
-
-      const helpOutput = (
-        <div className="mt-1">
-          <p className="mb-2">Available commands:</p>
-          {commands.map(({ cmd, desc }) => (
-            <div key={cmd} className="flex">
-              <span className="w-40 flex-shrink-0 text-foreground">{cmd}</span>
-              <span className="text-muted-foreground">{desc}</span>
-            </div>
-          ))}
-        </div>
-      )
-
-      setHistory((prev) => [...prev, { id: prev.length, command: 'help', output: helpOutput }])
-    },
+    // help: () => {
+    //   // const commands = [
+    //   //   { cmd: 'help', desc: 'Displays this list of available commands.' },
+    //   //   { cmd: 'theme', desc: 'Displays the application color palette.' },
+    //   //   { cmd: 'color:list', desc: 'Lists available output text colors.' },
+    //   //   { cmd: 'color:<name>', desc: 'Sets the output text color (e.g., color:red).' },
+    //   //   { cmd: 'clear', desc: 'Clears the output history from the terminal view.' },
+    //   //   { cmd: 'test:error', desc: 'Triggers the custom error sound for testing.' },
+    //   //   { cmd: 'toggle:latency', desc: 'Shows or hides the audio latency diagnostic widget.' }
+    //   // ]
+    //
+    //   const helpOutput = (
+    //     <div className="mt-1">
+    //       <p className="mb-2">Available commands:</p>
+    //       {coreCommands.map(({ name, description }, index) => (
+    //         <div key={index} className="flex">
+    //           <span className="w-40 flex-shrink-0 text-foreground">{name}</span>
+    //           <span className="text-muted-foreground">{description}</span>
+    //         </div>
+    //       ))}
+    //     </div>
+    //   )
+    //
+    //   setHistory((prev) => [...prev, { id: prev.length, command: 'help', output: helpOutput }])
+    // },
     theme: () => {
+
       const themeColors: { [key: string]: string } = {
         background: 'bg-background',
         foreground: 'bg-foreground',
@@ -189,6 +186,7 @@ export const Terminal: React.FC<TerminalProps> = ({
         ring: 'bg-ring'
       }
 
+
       const themeOutput = (
         <div className="mt-1">
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 md:grid-cols-3">
@@ -203,31 +201,31 @@ export const Terminal: React.FC<TerminalProps> = ({
       )
       setHistory(prev => [...prev, { id: prev.length, command: 'theme', output: themeOutput }])
     },
-    color: (arg: string) => {
-      const newColor = arg.trim()
-      const validColors: { [key: string]: string } = {
-        default: 'text-cyan-400',
-        white: 'text-foreground',
-        cyan: 'text-cyan-400',
-        green: 'text-green-400',
-        yellow: 'text-yellow-400',
-        red: 'text-red-400' // Using a standard red for better visibility
-      }
-
-      let outputMessage = ''
-
-      if (newColor === 'list') {
-        outputMessage = `Available colors: ${Object.keys(validColors).join(', ')}`
-      } else if (validColors[newColor]) {
-        setTerminalColorClass(validColors[newColor])
-        outputMessage = `Terminal color set to ${newColor}.`
-      } else {
-        outputMessage = `Error: Invalid color '${newColor}'. Use 'color:list' to see available colors.`
-      }
-
-      const command = `color:${newColor}`
-      setHistory(prev => [...prev, { id: prev.length, command, output: outputMessage }])
-    }
+    // color: (arg: string) => {
+    //   const newColor = arg.trim()
+    //   const validColors: { [key: string]: string } = {
+    //     default: 'text-cyan-400',
+    //     white: 'text-foreground',
+    //     cyan: 'text-cyan-400',
+    //     green: 'text-green-400',
+    //     yellow: 'text-yellow-400',
+    //     red: 'text-red-400' // Using a standard red for better visibility
+    //   }
+    //
+    //   let outputMessage = ''
+    //
+    //   if (newColor === 'list') {
+    //     outputMessage = `Available colors: ${Object.keys(validColors).join(', ')}`
+    //   } else if (validColors[newColor]) {
+    //     setTerminalColorClass(validColors[newColor])
+    //     outputMessage = `Terminal color set to ${newColor}.`
+    //   } else {
+    //     outputMessage = `Error: Invalid color '${newColor}'. Use 'color:list' to see available colors.`
+    //   }
+    //
+    //   const command = `color:${newColor}`
+    //   setHistory(prev => [...prev, { id: prev.length, command, output: outputMessage }])
+    // }
   }
 
   // Main handler for command submission.
@@ -271,7 +269,7 @@ export const Terminal: React.FC<TerminalProps> = ({
     }
 
     // Process the command and get the consolidated result.
-    const result: ProcessedCommandResult = processCommand(command)
+    const result: ProcessedCommandResult = commandProcessor.process(command);
 
     // --- Orchestrate Side Effects ---
 

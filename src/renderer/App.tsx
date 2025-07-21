@@ -1,9 +1,11 @@
 // src/renderer/src/App.tsx
 
-import React, { useState } from 'react'
+import React, { useState } from "react";
 import { Terminal } from './components/Terminal'
 import './assets/App.css'
 import AppBar from "@/renderer/components/AppBar.tsx";
+import {  useTerminalContext } from "@/renderer/lib/contexts/terminalContext.tsx";
+
 
 /**
  * @file App.tsx
@@ -13,21 +15,16 @@ import AppBar from "@/renderer/components/AppBar.tsx";
 function App(): React.ReactElement {
   const [isLatencyWidgetVisible, setLatencyWidgetVisible] = useState(false)
 
-  const [terminalColorClass, setTerminalColorClass] = useState<string>(
-    'text-cyan-400'
-  )
+  const terminalContext = useTerminalContext();
 
   const handleToggleLatencyWidget = (): void => {
     setLatencyWidgetVisible((prev) => !prev)
   }
 
-
   return (
-    <div className={`app-container ${terminalColorClass}`}>
+    <div className={`app-container ${terminalContext.color}`}>
       <AppBar isLatencyWidgetVisible={isLatencyWidgetVisible} />
       <Terminal
-        terminalColorClass={terminalColorClass}
-        setTerminalColorClass={setTerminalColorClass}
         onToggleLatencyWidget={handleToggleLatencyWidget}
       />
     </div>

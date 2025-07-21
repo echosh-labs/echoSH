@@ -13,6 +13,7 @@ import { coreCommands } from '../../definitions/commands/core'
 import { SoundBlueprint } from '../audio/audioBlueprints'
 import { helpCommand } from "@//renderer/definitions/commands/core/help.ts";
 import { CommandParser } from "@/renderer/lib/commands/commandParser.ts";
+import { CommandPrediction } from "@/renderer/lib/commands/commandPrediction.ts";
 
 /**
  * The final, consolidated result object that is returned to the Terminal component.
@@ -24,6 +25,11 @@ export interface ProcessedCommandResult {
   soundBlueprint?: SoundBlueprint
 }
 
+export interface TerminalSetters {
+  setColor: (c: string) => void;
+  setPredictions: (p: CommandPrediction) => void
+}
+
 /**
  * A class-based command processor for better state management and initialization.
  */
@@ -32,10 +38,13 @@ class CommandProcessor {
   private readonly commands: Map<string, CommandDefinition>
   private vars: Record<string, string> = {}
 
+  private setters: TerminalSetters;
 
-  constructor() {
+  constructor(setters: TerminalSetters) {
+    this.setters = setters;
+
     this.commands = new Map()
-    this.loadCommands(coreCommands)
+    this.loadCommands(coreCommands);
   }
 
   /**
@@ -60,7 +69,7 @@ class CommandProcessor {
       return { output: '', actions: [] }
     }
 
-    const {
+    let {
       variables,
       command: commandName,
       args
@@ -71,15 +80,19 @@ class CommandProcessor {
     if (commandName.length === 0) {
       return { output: trimmedInput, actions: [] }
     }
-    // const args = trimmedInput.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
-    // const commandName = args.shift()?.replace(/^"|"$/g, '').toLowerCase() || '';
-    // const commandArgs = args.map(arg => arg.replace(/^"|"$/g, ''));
 
-    const command = this.commands.get(commandName);
+    let command: CommandDefinition|undefined;
+    if (args.includes('-h')) {
+      command = this.commands.get('help');
+      args = [commandName, ...args];
+    }
+    else {
+      command = this.commands.get(commandName);
+    }
 
     if (command) {
       // 1. Execute the command's core logic to get the runtime result.
-      const runtimeResult: CommandResult = command.execute(args)
+      const runtimeResult: CommandResult = command.execute(args, this.setters)
 
       // 2. Consolidate static and runtime effects into flattened arrays.
       const allActions: CommandAction[] = [
@@ -97,7 +110,7 @@ class CommandProcessor {
     } else {
       // Handle the case where the command is not found.
       return {
-        output: `Command not found: ${commandName}\n` + helpCommand.execute().output,
+        output: `Command not found: ${commandName}\n` + helpCommand.execute([], this.setters).output,
         actions: [],
         soundBlueprint: {
           sources: [
@@ -117,10 +130,12 @@ class CommandProcessor {
   }
 }
 
-// Export a singleton instance of the processor.
-const commandProcessor = new CommandProcessor()
+// // Export a singleton instance of the processor.
+// const commandProcessor = new CommandProcessor(function(_ctx){})
+//
+// // Expose the process method directly for ease of use.
+// export const processCommand = (input: string): ProcessedCommandResult => {
+//   return commandProcessor.process(input)
+// }
 
-// Expose the process method directly for ease of use.
-export const processCommand = (input: string): ProcessedCommandResult => {
-  return commandProcessor.process(input)
-}
+export default CommandProcessor

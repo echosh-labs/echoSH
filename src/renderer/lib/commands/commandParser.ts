@@ -61,6 +61,7 @@ export class CommandParser {
   }
 }
 
+/*
 // --- TEST CASES ---
 console.log(CommandParser.parse('echo "user=test"'));
 // { variables: {}, command: 'echo', args: ['user=test'] }
@@ -73,3 +74,4 @@ console.log(CommandParser.parse('echo $USER', { USER: 'alice' }));
 
 console.log(CommandParser.parse('echo "hello world" $USER', { USER: 'bob' }));
 // { variables: { USER: 'bob' }, command: 'echo', args: ['hello world', 'bob'] }
+*/

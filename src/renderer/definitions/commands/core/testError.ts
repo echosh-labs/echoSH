@@ -19,5 +19,6 @@ export const testErrorCommand: CommandDefinition = {
   },
   execute: () => ({
     output: 'Error: This is a test error.'
-  })
+  }),
+  argSet: []
 }

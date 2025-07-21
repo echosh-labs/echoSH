@@ -72,13 +72,32 @@ const seagullByTheOceanBlueprint: SoundBlueprint = {
 };
 
 export const playSeagullCommand: CommandDefinition = {
-  name: 'play:seagull',
+  name: 'play',
   description: 'Generates an improved sound of a seagull squawking by the ocean.',
 
-  execute: (): CommandResult => {
-    return {
-      output: 'A seagull squawks... hopefully more realistically this time.',
-      soundBlueprint: seagullByTheOceanBlueprint
+  execute: (args = []): CommandResult => {
+
+    if (args.length <= 0 || args[0] === 'list') {
+      return { output: "seagull" };
     }
-  }
+    else {
+      switch (args[0]) {
+        case "seagull":
+          return {
+            output: 'A seagull squawks... hopefully more realistically this time.',
+            soundBlueprint: seagullByTheOceanBlueprint
+          }
+        default:
+          return {
+            output: `'${args[0]}' is not recognized as a sound.`
+          }
+      }
+    }
+  },
+  argSet: [
+    {
+      placeholder: "sound",
+      description: "Play a sound"
+    }
+  ]
 }

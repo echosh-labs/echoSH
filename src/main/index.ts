@@ -5,6 +5,8 @@ console.log('Starting main process');
 const isDev = process.env.DEV != undefined;
 // const isPreview = process.env.PREVIEW != undefined;
 
+import './api'
+
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 900,

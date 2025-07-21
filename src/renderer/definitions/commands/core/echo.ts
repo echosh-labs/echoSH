@@ -56,5 +56,6 @@ export const echoCommand: CommandDefinition = {
   soundBlueprint: echoEffect,
   execute: (args) => ({
     output: (args ?? []).join(" ")
-  })
+  }),
+  argSet: []
 }

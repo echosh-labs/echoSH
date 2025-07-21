@@ -77,7 +77,7 @@ export interface DistortionBlueprint {
 }
 
 export interface ReverbBlueprint {
-  impulseResponseUrl: string // URL to an impulse response audio file
+  impulseResponseUrl?: string // URL to an impulse response audio file
   mix?: number // Wet/dry mix of the effect (0.0 to 1.0)
 }
 

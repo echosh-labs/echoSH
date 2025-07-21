@@ -56,7 +56,7 @@ const digitalZenGardenBlueprint: SoundBlueprint = {
     feedback: 0.35,  // Low feedback ensures the echoes fade out gracefully without cluttering the sound.
     mix: 0.3,        // A low mix keeps the delay in the background.
   },
-  
+
   // Reverb would be ideal here to create a sense of a large, open space.
   // This is commented out as it requires a valid URL to an impulse response file.
   /*
@@ -74,10 +74,11 @@ const digitalZenGardenBlueprint: SoundBlueprint = {
     attack: 0.5, // Slow attack to preserve the soft entry of the sound.
     release: 1.0, // Slow release for a smooth dynamic response.
   },
-};export const testCommand: CommandDefinition = {
+};
+export const testCommand: CommandDefinition = {
   name: 'test',
   description: 'Triggers a complex diagnostic sound to test the audio engine.',
-  
+
   // The execute function is the key. It returns the blueprint to the processor.
   execute: (): CommandResult => {
     return {
@@ -85,5 +86,6 @@ const digitalZenGardenBlueprint: SoundBlueprint = {
       // The dynamically generated blueprint is attached here.
       soundBlueprint: digitalZenGardenBlueprint
     }
-  }
+  },
+  argSet: []
 }
