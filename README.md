@@ -1,10 +1,21 @@
-# Sirocco - The Synesthetic Terminal
+# echoSH - The Synesthetic Terminal
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com) 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com)
+*Formerly known as Sirocco*
+
+[![Build Status](https://github.com/stiamprie/sirocco/actions/workflows/ci.yml/badge.svg)](https://github.com/stiamprie/sirocco/actions)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/stiamprie/sirocco/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-**Sirocco is a command-line interface that transforms your digital workflow into an immersive, generative audio experience. Every keystroke, command, and error is transmuted into a unique sonic event, turning the act of coding into a practice of composition.**
+**echoSH transforms your command-line workflow into an immersive, generative audio experience. Every keystroke, command, and process is transmuted into a unique sonic event, turning the act of coding into a practice of composition.**
+
+---
+
+### Visual Demo
+
+*A short screen recording of echoSH in action would be incredibly powerful here. You can convert your video to a high-quality GIF and embed it.*
+
+![echoSH Demo](assets/echosh-demo.gif)
 
 ---
 
@@ -12,7 +23,7 @@
 * [Features](#features)
 * [Tech Stack](#tech-stack)
 * [Philosophy](#philosophy)
-* [Getting Started](#getting-started)
+* [Getting Started (for Developers)](#getting-started-for-developers)
 * [Usage](#usage)
 * [Roadmap](#roadmap)
 * [Contributing](#contributing)
@@ -21,7 +32,7 @@
 
 ### Core Concept
 
-In a standard terminal, user interaction is a silent, visual affair. Sirocco challenges this paradigm by creating a rich, auditory feedback loop. It's built on the idea that the data flowing through a developer's terminal has an inherent rhythm and texture. By translating this data into sound, we can achieve a deeper, more intuitive connection to our tools and our work.
+In a standard terminal, user interaction is a silent, visual affair. echoSH challenges this paradigm by creating a rich, auditory feedback loop. It's built on the idea that the data flowing through a developer's terminal has an inherent rhythm and texture. By translating this data into sound, we can achieve a deeper, more intuitive connection to our tools and our work.
 
 This is not just a utility; it's an instrument. It's an experiment in synesthesia, exploring the intersection of code, productivity, and generative art.
 
@@ -44,15 +55,15 @@ This is not just a utility; it's an instrument. It's an experiment in synesthesi
 
 ### Philosophy
 
-> Echo what you type—
-> The power of Sirocco—
-> Winds are blowing strong.
+> Echoes in the shell—
+> The power of echoSH—
+> Code's new symphony.
 
-This project is grounded in a belief that the tools we use should not only be functional but also engaging and inspiring. In the same way an alchemist seeks to transmute base materials, Sirocco seeks to find the hidden harmony within the seemingly mundane flow of data. It encourages a state of heightened awareness, where the developer becomes more attuned to the cause and effect of their digital actions. It is an exercise in discipline and meditation, finding the signal in the noise.
+This project is grounded in a belief that the tools we use should not only be functional but also engaging and inspiring. In the same way an alchemist seeks to transmute base materials, echoSH seeks to find the hidden harmony within the seemingly mundane flow of data. It encourages a state of heightened awareness, where the developer becomes more attuned to the cause and effect of their digital actions. It is an exercise in discipline and meditation, finding the signal in the noise.
 
-### Getting Started
+### Getting Started (for Developers)
 
-To get a local copy up and running, follow these simple steps.
+This project is in its early stages. The following instructions are for setting up a local development environment. An end-user installer is planned for the future.
 
 **Prerequisites**
 
@@ -61,11 +72,11 @@ To get a local copy up and running, follow these simple steps.
 
 **Installation & Launch**
 
-1.  Clone the repository:
+1.  Clone the repository (the URL will need updating if you rename the repo):
     ```sh
-    git clone [https://github.com/stiamprie/sirocco.git](https://github.com/stiamprie/sirocco.git)
+    git clone https://github.com/stiamprie/sirocco.git
     ```
-2.  Navigate to the project directory:
+2.  Navigate to the project directory (you may want to rename the folder):
     ```sh
     cd sirocco
     ```
@@ -89,13 +100,14 @@ The terminal functions like a standard shell, but with a few special commands:
 
 ### Roadmap
 
-This project is in its early stages. Future plans include:
+This project is in its early stages, with many exciting features planned.
 
-* [ ] **Advanced Sound Synthesis:** Incorporating more complex oscillators, filters, and effects.
-* [ ] **Audio Theming:** Allowing users to select or create different "sound palettes."
-* [ ] **Advanced Command Parsing:** Deeper analysis of commands and their arguments for more nuanced audio generation.
-* [ ] **Plugin Architecture:** Enabling users to write their own commands and corresponding sound generators.
-* [ ] **Visual Theming:** Customizing the colors and fonts of the terminal UI.
+*   [ ] **Custom Sound Blueprints:** Allow users to define their own sound palettes in simple JSON files. Map custom sounds to specific commands, events (like errors or success), or even command arguments and flags.
+*   [ ] **Advanced Synthesis Engine:** Move beyond basic oscillators to include filters (LPF, HPF), envelopes (ADSR), and effects (reverb, delay) for richer, more complex soundscapes.
+*   [ ] **Deeper Command Analysis:** Parse command flags and arguments for more nuanced and context-aware audio feedback. Imagine `git commit` sounding different from `git push`.
+*   [ ] **Visual Theming:** Full customization of the terminal's color scheme and typography.
+*   [ ] **Plugin Architecture:** An API for users to extend echoSH with new commands and corresponding sound generators.
+*   [ ] **User-friendly Installers:** Provide packaged installers for macOS, Windows, and Linux.
 
 ### Contributing
 
@@ -109,4 +121,4 @@ Contributions are what make the open-source community such an amazing place to l
 
 ### License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See `LICENSE.md` for more information.
