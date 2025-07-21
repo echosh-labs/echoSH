@@ -60,7 +60,7 @@ export interface CommandDefinition {
    * @param args - An array of string arguments provided by the user after the command name.
    * @returns A `CommandResult` object containing the output and any dynamic effects.
    */
-  execute: (args: string[]) => CommandResult
+  execute: (args?: string[]) => CommandResult
 
   /**
    * An optional array of UI actions that are *always* performed when this command is run.

@@ -11,6 +11,8 @@ import {
 } from '../../definitions/commands/types'
 import { coreCommands } from '../../definitions/commands/core'
 import { SoundBlueprint } from '../audio/audioBlueprints'
+import { helpCommand } from "@//renderer/definitions/commands/core/help.ts";
+import { CommandParser } from "@/renderer/lib/commands/commandParser.ts";
 
 /**
  * The final, consolidated result object that is returned to the Terminal component.
@@ -28,6 +30,8 @@ export interface ProcessedCommandResult {
 class CommandProcessor {
   // Use a Map for efficient, case-insensitive command lookups.
   private readonly commands: Map<string, CommandDefinition>
+  private vars: Record<string, string> = {}
+
 
   constructor() {
     this.commands = new Map()
@@ -56,8 +60,26 @@ class CommandProcessor {
       return { output: '', actions: [] }
     }
 
-    const [commandName, ...args] = trimmedInput.split(/\s+/)
-    const command = this.commands.get(commandName.toLowerCase())
+    console.log(this.vars);
+
+    const {
+      variables,
+      command: commandName,
+      args
+    } = CommandParser.parse(input, this.vars)
+
+    this.vars = variables;
+
+    console.log({variables, command: commandName, args})
+
+    if (commandName.length === 0) {
+      return { output: trimmedInput, actions: [] }
+    }
+    // const args = trimmedInput.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+    // const commandName = args.shift()?.replace(/^"|"$/g, '').toLowerCase() || '';
+    // const commandArgs = args.map(arg => arg.replace(/^"|"$/g, ''));
+
+    const command = this.commands.get(commandName);
 
     if (command) {
       // 1. Execute the command's core logic to get the runtime result.
@@ -79,7 +101,7 @@ class CommandProcessor {
     } else {
       // Handle the case where the command is not found.
       return {
-        output: `Command not found: ${commandName}`,
+        output: `Command not found: ${commandName}\n` + helpCommand.execute().output,
         actions: [],
         soundBlueprint: {
           sources: [

@@ -76,6 +76,8 @@ class AudioEngine {
   public async playSoundFromBlueprint(blueprint: SoundBlueprint): Promise<void> {
     if (!this.audioContext || !this.mainGain) return
 
+    await this.ensureActiveContext();
+
     const now = this.audioContext.currentTime
     const { duration, envelope } = blueprint
 
@@ -339,6 +341,12 @@ class AudioEngine {
       AudioEngine.instance = new AudioEngine()
     }
     return AudioEngine.instance
+  }
+
+  public async ensureActiveContext(): Promise<void> {
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      await this.audioContext.resume();
+    }
   }
 }
 

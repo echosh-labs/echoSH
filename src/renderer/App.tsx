@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react'
 import { Terminal } from './components/Terminal'
-import { LatencyWidget } from './components/LatencyWidget'
-import './assets/main.css'
+import './assets/App.css'
+import AppBar from "@/renderer/components/AppBar.tsx";
 
 /**
  * @file App.tsx
@@ -19,7 +19,7 @@ function App(): React.ReactElement {
 
   return (
     <div className="app-container">
-      <LatencyWidget isVisible={isLatencyWidgetVisible} />
+      <AppBar isLatencyWidgetVisible={isLatencyWidgetVisible}/>
       <Terminal onToggleLatencyWidget={handleToggleLatencyWidget} />
     </div>
   )

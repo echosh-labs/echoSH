@@ -4,7 +4,7 @@
  * command processing, and audio feedback.
  */
 
-import React, { useState, useRef, useEffect, KeyboardEvent } from 'react'
+import React, { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
 import { audioEngine } from '../lib/audio/audioEngine'
 import {
   processCommand,
@@ -12,6 +12,9 @@ import {
 } from '../lib/commands/commandProcessor'
 import { CommandAction } from '../definitions/commands/types'
 import { loadHistory, saveHistory } from '../lib/commands/historyStorage'
+import { keySounds } from "@/renderer/definitions/keys/special.ts";
+import { CommandPrediction } from "@/renderer/lib/commands/commandPrediction.ts";
+import { coreCommands } from "@/renderer/definitions/commands/core";
 
 interface HistoryItem {
   id: number
@@ -29,8 +32,14 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   const [commandHistory, setCommandHistory] = useState<string[]>([])
   const [historyIndex, setHistoryIndex] = useState<number>(-1)
   const [isInitialized, setIsInitialized] = useState<boolean>(false)
-  const outputContainerRef = useRef<HTMLDivElement>(null)
+  const outputContainerRef = useRef<HTMLDivElement>(null);
+  const [predictions, setPredictions] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+
+
+  const commandPrediction = useMemo(() => {
+    return new CommandPrediction(coreCommands);
+  }, []);
 
   // Load command history from persistent storage on initial render.
   useEffect(() => {
@@ -62,13 +71,28 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
 
   // Handles keyboard input for keystroke sounds and command history navigation.
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key !== 'Tab') {
+      commandPrediction.reset();
+      if (predictions.length > 0) {
+        setPredictions([]);
+      }
+    }
     if (isInitialized && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+
+      const character = e.key;
+
+      const special = /[^\w\s]/
+
+      const frequency =
+        character.match(special) ? 1200
+        : (250 + (e.key.charCodeAt(0) * 5) % 800);
+
       audioEngine.playSoundFromBlueprint({
         sources: [
           {
             type: 'oscillator',
             oscillatorType: 'triangle',
-            frequency: 250 + (e.key.charCodeAt(0) * 5) % 800
+            frequency
           }
         ],
         envelope: { attack: 0.005, decay: 0.05, sustain: 0.2, release: 0.045 },
@@ -76,21 +100,36 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
       })
     }
 
-    if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      if (commandHistory.length === 0) return
-      const newIndex = Math.min(historyIndex + 1, commandHistory.length - 1)
-      setHistoryIndex(newIndex)
-      setInput(commandHistory[newIndex])
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      const newIndex = Math.max(historyIndex - 1, -1)
-      setHistoryIndex(newIndex)
-      if (newIndex === -1) {
-        setInput('')
-      } else {
-        setInput(commandHistory[newIndex])
-      }
+    let newIndex;
+    switch (e.key) {
+      case "ArrowUp":
+        e.preventDefault()
+        if (commandHistory.length === 0) break;
+        newIndex = Math.min(historyIndex + 1, commandHistory.length - 1)
+        setHistoryIndex(newIndex)
+        setInput(commandHistory[newIndex]);
+        break;
+      case "ArrowDown":
+        e.preventDefault()
+        newIndex = Math.max(historyIndex - 1, -1)
+        setHistoryIndex(newIndex)
+        setInput(newIndex === -1 ? '' : commandHistory[newIndex]);
+        break;
+      case "Backspace":
+        keySounds.backspace();
+        break;
+      case "Tab":
+        e.preventDefault();
+        const prediction = commandPrediction.predict(input);
+
+        if (Array.isArray(prediction)) {
+          setPredictions(prediction);
+        }
+        else {
+          setPredictions([]);
+          setInput(prediction)
+        }
+        break;
     }
   }
 
@@ -162,7 +201,6 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   return (
     <div className="terminal-container" onClick={handleTerminalClick}>
       <div className="output-area" ref={outputContainerRef}>
-        <div className="p-2">Sirocco v0.2.0 - Click to start audio.</div>
         {history.map((item) => (
           <div key={item.id} className="p-2 pt-0">
             <div className="flex">
@@ -180,6 +218,11 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
       </div>
 
       <div className="input-area p-2">
+        {predictions.length > 0 && (
+          <div className="cmd-predictions text-output">
+            {predictions.join(', ')}
+          </div>
+        )}
         <form onSubmit={handleCommandSubmit}>
           <div className="flex">
             <span className="text-prompt mr-2">$</span>

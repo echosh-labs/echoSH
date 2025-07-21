@@ -5,6 +5,7 @@ import { toggleLatencyCommand } from './toggleLatency'
 import { CommandDefinition } from '../types'
 import { testCommand } from './test'
 import { playSeagullCommand } from './playSeagul'
+import { echoCommand } from "@/renderer/definitions/commands/core/echo.ts";
 
 export const coreCommands: CommandDefinition[] = [
   clearCommand,
@@ -12,5 +13,6 @@ export const coreCommands: CommandDefinition[] = [
   testErrorCommand,
   toggleLatencyCommand,
   testCommand,
-  playSeagullCommand
+  playSeagullCommand,
+  echoCommand
 ]
