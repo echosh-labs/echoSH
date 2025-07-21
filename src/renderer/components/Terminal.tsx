@@ -19,7 +19,7 @@ import { coreCommands } from "@/renderer/definitions/commands/core";
 interface HistoryItem {
   id: number
   command: string
-  output: string
+  output: React.ReactNode
 }
 
 interface TerminalProps {
@@ -31,11 +31,14 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [commandHistory, setCommandHistory] = useState<string[]>([])
   const [historyIndex, setHistoryIndex] = useState<number>(-1)
-  const [isInitialized, setIsInitialized] = useState<boolean>(false)
-  const outputContainerRef = useRef<HTMLDivElement>(null);
   const [predictions, setPredictions] = useState<string[]>([])
+  const [isAudioInitialized, setIsAudioInitialized] = useState<boolean>(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(true)
+  const [terminalColorClass, setTerminalColorClass] = useState<string>(
+    'text-cyan-400'
+  )
+  const outputContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-
 
   const commandPrediction = useMemo(() => {
     return new CommandPrediction(coreCommands);
@@ -45,6 +48,7 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
   useEffect(() => {
     loadHistory().then((storedHistory) => {
       setCommandHistory(storedHistory)
+      setIsLoadingHistory(false)
     })
   }, [])
 
@@ -62,9 +66,9 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
 
   // Handles the first user interaction to initialize the AudioContext.
   const handleTerminalClick = (): void => {
-    if (!isInitialized) {
+    if (!isAudioInitialized) {
       audioEngine.initialize()
-      setIsInitialized(true)
+      setIsAudioInitialized(true)
     }
     inputRef.current?.focus()
   }
@@ -77,7 +81,6 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
         setPredictions([]);
       }
     }
-    if (isInitialized && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
 
       const character = e.key;
 
@@ -87,6 +90,7 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
         character.match(special) ? 1200
         : (250 + (e.key.charCodeAt(0) * 5) % 800);
 
+    if (isAudioInitialized && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
       audioEngine.playSoundFromBlueprint({
         sources: [
           {
@@ -133,27 +137,127 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
     }
   }
 
+  const internalCommands: { [key: string]: (arg: string) => void } = {
+    help: () => {
+      const commands = [
+        { cmd: 'help', desc: 'Displays this list of available commands.' },
+        { cmd: 'theme', desc: 'Displays the application color palette.' },
+        { cmd: 'color:list', desc: 'Lists available output text colors.' },
+        { cmd: 'color:<name>', desc: 'Sets the output text color (e.g., color:red).' },
+        { cmd: 'clear', desc: 'Clears the output history from the terminal view.' },
+        { cmd: 'test:error', desc: 'Triggers the custom error sound for testing.' },
+        { cmd: 'toggle:latency', desc: 'Shows or hides the audio latency diagnostic widget.' }
+      ]
+
+      const helpOutput = (
+        <div className="mt-1">
+          <p className="mb-2">Available commands:</p>
+          {commands.map(({ cmd, desc }) => (
+            <div key={cmd} className="flex">
+              <span className="w-40 flex-shrink-0 text-foreground">{cmd}</span>
+              <span className="text-muted-foreground">{desc}</span>
+            </div>
+          ))}
+        </div>
+      )
+
+      setHistory((prev) => [...prev, { id: prev.length, command: 'help', output: helpOutput }])
+    },
+    theme: () => {
+      const themeColors: { [key: string]: string } = {
+        background: 'bg-background',
+        foreground: 'bg-foreground',
+        card: 'bg-card',
+        'card-foreground': 'bg-card-foreground',
+        popover: 'bg-popover',
+        'popover-foreground': 'bg-popover-foreground',
+        primary: 'bg-primary',
+        'primary-foreground': 'bg-primary-foreground',
+        secondary: 'bg-secondary',
+        'secondary-foreground': 'bg-secondary-foreground',
+        muted: 'bg-muted',
+        'muted-foreground': 'bg-muted-foreground',
+        accent: 'bg-accent',
+        'accent-foreground': 'bg-accent-foreground',
+        destructive: 'bg-destructive',
+        'destructive-foreground': 'bg-destructive-foreground',
+        border: 'bg-border',
+        input: 'bg-input',
+        ring: 'bg-ring'
+      }
+
+      const themeOutput = (
+        <div className="mt-1">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 md:grid-cols-3">
+            {Object.entries(themeColors).map(([name, className]) => (
+              <div key={name} className="flex items-center">
+                <div className={`h-4 w-4 rounded-sm border border-border ${className} mr-2`}></div>
+                <span className="text-sm">{name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+      setHistory(prev => [...prev, { id: prev.length, command: 'theme', output: themeOutput }])
+    },
+    color: (arg: string) => {
+      const newColor = arg.trim()
+      const validColors: { [key: string]: string } = {
+        default: 'text-cyan-400',
+        white: 'text-foreground',
+        cyan: 'text-cyan-400',
+        green: 'text-green-400',
+        yellow: 'text-yellow-400',
+        red: 'text-red-400' // Using a standard red for better visibility
+      }
+
+      let outputMessage = ''
+
+      if (newColor === 'list') {
+        outputMessage = `Available colors: ${Object.keys(validColors).join(', ')}`
+      } else if (validColors[newColor]) {
+        setTerminalColorClass(validColors[newColor])
+        outputMessage = `Terminal color set to ${newColor}.`
+      } else {
+        outputMessage = `Error: Invalid color '${newColor}'. Use 'color:list' to see available colors.`
+      }
+
+      const command = `color:${newColor}`
+      setHistory(prev => [...prev, { id: prev.length, command, output: outputMessage }])
+    }
+  }
+
   // Main handler for command submission.
   const handleCommandSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault()
     const command = input.trim()
     if (!command) return
 
+    // Check for internal commands first
+    const [cmd, ...args] = command.split(':')
+    if (internalCommands[cmd]) {
+      internalCommands[cmd](args.join(':'))
+      setInput('')
+      setHistoryIndex(-1)
+      return
+    }
+
     // Update and save command history.
-    const newCommandHistory = [
-      command,
-      ...commandHistory.filter((c) => c !== command)
-    ]
-    setCommandHistory(newCommandHistory)
-    // localStorage update is handled by useEffect
+    setCommandHistory((prevCommandHistory) => {
+      const updatedHistory = [
+        command,
+        ...prevCommandHistory.filter((c) => c !== command)
+      ]
+      return updatedHistory.slice(0, 50) // Keep history to a reasonable length
+    })
     setHistoryIndex(-1)
 
     // Ensure audio engine is initialized before processing.
-    if (!isInitialized) {
-      setHistory([
-        ...history,
+    if (!isAudioInitialized) {
+      setHistory(prev => [
+        ...prev,
         {
-          id: history.length,
+          id: prev.length,
           command: command,
           output:
             'Please click on the terminal to initialize the audio engine first.'
@@ -177,7 +281,7 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
     result.actions.forEach((action: CommandAction) => {
       switch (action) {
         case 'clearHistory':
-          setHistory([])
+          setHistory(() => [])
           break
         case 'toggleLatencyWidget':
           onToggleLatencyWidget()
@@ -192,26 +296,28 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
         command: command,
         output: result.output
       }
-      setHistory([...history, newHistoryItem])
+      setHistory(prev => [...prev, { ...newHistoryItem, id: prev.length }])
     }
 
     setInput('')
   }
 
   return (
-    <div className="terminal-container" onClick={handleTerminalClick}>
-      <div className="output-area" ref={outputContainerRef}>
+    <div className={`flex h-screen flex-col bg-background font-mono text-sm text-foreground ${terminalColorClass}`} onClick={handleTerminalClick}>
+      <div className="flex-grow overflow-y-auto p-4" ref={outputContainerRef}>
+        <div>Sirocco v0.2.0 - Click to start audio.</div>
+        {isLoadingHistory && <div className="animate-pulse">Loading history...</div>}
         {history.map((item) => (
-          <div key={item.id} className="p-2 pt-0">
+          <div key={item.id} className="mb-2">
             <div className="flex">
-              <span className="text-prompt mr-2">$</span>
-              <span>{item.command}</span>
+              <span className="mr-2">$</span>
+              <span className="flex-shrink-1">{item.command}</span>
             </div>
-            <div className="text-output">{item.output}</div>
+            <div className="whitespace-pre-wrap">{item.output}</div>
           </div>
         ))}
-        {!isInitialized && (
-          <div className="text-warning p-2 animate-pulse">
+        {!isAudioInitialized && (
+          <div className="animate-pulse">
             Waiting for user interaction to initialize Audio Engine...
           </div>
         )}
@@ -223,16 +329,19 @@ export const Terminal: React.FC<TerminalProps> = ({ onToggleLatencyWidget }) => 
             {predictions.join(', ')}
           </div>
         )}
+      </div>
+      <div className="border-t border-border p-4">
         <form onSubmit={handleCommandSubmit}>
-          <div className="flex">
-            <span className="text-prompt mr-2">$</span>
+          <div className="flex items-center">
+            <span className="mr-2">$</span>
             <input
               ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="terminal-input"
+              className="w-full border-none bg-transparent p-0 caret-primary focus:outline-none focus:ring-0"
+              disabled={isLoadingHistory} // Disable input while history is loading
               autoComplete="off"
             />
           </div>
