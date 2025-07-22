@@ -88,4 +88,5 @@ export type CommandArg =
   placeholder?: string;
   description?: string;
   required?: boolean;
+  getSuggestions?: (currentArg: string) => string[] | Promise<string[]>;
 } | string;

@@ -125,7 +125,9 @@ export const presetsCommand: CommandDefinition = {
       args: [
         {
           placeholder: 'preset_name',
-          description: 'The name of the preset, in quotes if it contains spaces.'
+          description: 'The name of the preset, in quotes if it contains spaces.',
+          // Provide a dynamic list of preset names for autocompletion.
+          getSuggestions: () => rawPresets.map((p) => `"${p.name}"`)
         }
       ]
     },

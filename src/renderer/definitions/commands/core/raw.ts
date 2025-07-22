@@ -1,4 +1,5 @@
 import { CommandDefinition, CommandResult } from '../types'
+import { rawPresets } from '../../../../../raw-presets'
 import {
   SoundBlueprint,
   OscillatorType,
@@ -50,8 +51,13 @@ set:<path>:<value>
   - value: the new value for the property.
   Example: raw filter:lowpass set:filter.Q:10
 
+preset:<name>
+  Loads a sound preset as a base. Other keywords will modify it.
+  - name: The name of the preset (e.g., "808 Kick"). Quotes are optional.
+  Example: raw preset:"808 Kick" dur:0.5
+
 --- FULL KEYWORD LIST ---
-osc, noise, filter, env, reverb, delay, dur, lfo, distort, pan, comp, set
+preset, osc, noise, filter, env, reverb, delay, dur, lfo, distort, pan, comp, set
 
 --- EXAMPLES ---
 
@@ -93,6 +99,123 @@ const createDefaultBlueprint = (): SoundBlueprint => ({
   duration: 0.4
 })
 
+type KeywordHandler = (
+  parts: string[],
+  blueprint: SoundBlueprint,
+  report: string[],
+  helpers: { clearSourcesIfNeeded: () => void }
+) => void
+
+/**
+ * A map of keyword handlers for building the sound blueprint. This data-driven
+ * approach replaces a large switch statement, making the command easier to
+ * maintain and extend.
+ */
+const keywordHandlers: Record<string, KeywordHandler> = {
+  osc: (parts, blueprint, report, { clearSourcesIfNeeded }) => {
+    clearSourcesIfNeeded()
+    blueprint.sources.push({
+      type: 'oscillator',
+      oscillatorType: (parts[1] as OscillatorType) || 'sine',
+      frequency: parseFloat(parts[2]) || 440,
+      detune: parseFloat(parts[3]) || 0
+    })
+    report.push(`+ Added Oscillator: ${parts.slice(1).join(':')}`)
+  },
+  noise: (parts, blueprint, report, { clearSourcesIfNeeded }) => {
+    clearSourcesIfNeeded()
+    blueprint.sources.push({
+      type: 'noise',
+      noiseType: (parts[1] as NoiseType) || 'white'
+    })
+    report.push(`+ Added Noise: ${parts[1] || 'white'}`)
+  },
+  filter: (parts, blueprint, report) => {
+    blueprint.filter = {
+      type: 'biquad',
+      filterType: (parts[1] as BiquadFilterType) || 'lowpass',
+      frequency: parseFloat(parts[2]) || 1000,
+      Q: parseFloat(parts[3]) || 1,
+      gain: parseFloat(parts[4]) || 0
+    }
+    report.push(`+ Set Filter: ${parts.slice(1).join(':')}`)
+  },
+  env: (parts, blueprint, report) => {
+    blueprint.envelope = {
+      attack: parseFloat(parts[1]) || 0.01,
+      decay: parseFloat(parts[2]) || 0.1,
+      sustain: parseFloat(parts[3]) || 0.1,
+      release: parseFloat(parts[4]) || 0.2
+    }
+    report.push(`+ Set Envelope: ${parts.slice(1).join(':')}`)
+  },
+  reverb: (parts, blueprint, report) => {
+    blueprint.reverb = {
+      decay: parseFloat(parts[1]) || 1,
+      mix: parseFloat(parts[2]) || 0.5,
+      reverse: parts[3] === 'true'
+    }
+    report.push(`+ Set Reverb: ${parts.slice(1).join(':')}`)
+  },
+  delay: (parts, blueprint, report) => {
+    blueprint.delay = {
+      delayTime: parseFloat(parts[1]) || 0.3,
+      feedback: parseFloat(parts[2]) || 0.4,
+      mix: parseFloat(parts[3]) || 0.5
+    }
+    report.push(`+ Set Delay: ${parts.slice(1).join(':')}`)
+  },
+  dur: (parts, blueprint, report) => {
+    blueprint.duration = parseFloat(parts[1]) || 0.5
+    report.push(`+ Set Duration: ${parts[1]}`)
+  },
+  lfo: (parts, blueprint, report) => {
+    blueprint.lfo = {
+      type: (parts[1] as OscillatorType) || 'sine',
+      frequency: parseFloat(parts[2]) || 5,
+      depth: parseFloat(parts[3]) || 100,
+      affects: (parts[4] as LfoAffects) || 'frequency'
+    }
+    report.push(`+ Set LFO: ${parts.slice(1).join(':')}`)
+  },
+  distort: (parts, blueprint, report) => {
+    blueprint.distortion = {
+      amount: parseFloat(parts[1]) || 50,
+      oversample: (parts[2] as OverSampleType) || 'none'
+    }
+    report.push(`+ Set Distortion: ${parts.slice(1).join(':')}`)
+  },
+  pan: (parts, blueprint, report) => {
+    blueprint.panner = {
+      type: 'stereo',
+      pan: parseFloat(parts[1]) || 0
+    }
+    report.push(`+ Set Panner: ${parts[1]}`)
+  },
+  comp: (parts, blueprint, report) => {
+    blueprint.compressor = {
+      threshold: parseFloat(parts[1]) || -24,
+      knee: parseFloat(parts[2]) || 30,
+      ratio: parseFloat(parts[3]) || 12,
+      attack: parseFloat(parts[4]) || 0.003,
+      release: parseFloat(parts[5]) || 0.25
+    }
+    report.push(`+ Set Compressor: ${parts.slice(1).join(':')}`)
+  }
+}
+
+// Add aliases
+keywordHandlers.oscillator = keywordHandlers.osc
+keywordHandlers.envelope = keywordHandlers.env
+keywordHandlers.duration = keywordHandlers.dur
+keywordHandlers.distortion = keywordHandlers.distort
+keywordHandlers.panner = keywordHandlers.pan
+keywordHandlers.compressor = keywordHandlers.comp
+
+const keywordSuggestions = [
+  'preset:', 'osc:', 'noise:', 'filter:', 'env:', 'reverb:', 'delay:', 'dur:', 'lfo:', 'distort:', 'pan:', 'comp:', 'set:'
+];
+
 /**
  * Parses keywords and builds a SoundBlueprint.
  * Keywords format: <type>:<param1>:<param2>...
@@ -101,8 +224,26 @@ export function buildBlueprintFromKeywords(keywords: string[]): {
   blueprint: SoundBlueprint
   report: string[]
 } {
-  const blueprint = createDefaultBlueprint()
+  let processingKeywords = [...keywords]
   const report: string[] = []
+
+  const presetIndex = processingKeywords.findIndex((k) => k.toLowerCase().startsWith('preset:'))
+
+  if (presetIndex > -1) {
+    const presetKeyword = processingKeywords.splice(presetIndex, 1)[0]
+    const presetName = presetKeyword.split(':').slice(1).join(':').replace(/"/g, '').trim()
+    const preset = rawPresets.find((p) => p.name.toLowerCase() === presetName.toLowerCase())
+
+    if (preset) {
+      report.push(`+ Loaded preset: ${preset.name}`)
+      const presetKeywords = preset.command.split(' ').slice(1)
+      processingKeywords.unshift(...presetKeywords)
+    } else {
+      report.push(`! Preset not found: ${presetName}`)
+    }
+  }
+
+  const blueprint = createDefaultBlueprint()
   let sourcesCleared = false
 
   const clearSourcesIfNeeded = () => {
@@ -112,120 +253,19 @@ export function buildBlueprintFromKeywords(keywords: string[]): {
     }
   }
 
-  for (const keyword of keywords) {
+  for (const keyword of processingKeywords) {
     const parts = keyword.toLowerCase().split(':')
     const key = parts[0]
 
+    const handler = keywordHandlers[key]
+
     try {
-      switch (key) {
-        case 'osc':
-        case 'oscillator':
-          clearSourcesIfNeeded()
-          blueprint.sources.push({
-            type: 'oscillator',
-            oscillatorType: (parts[1] as OscillatorType) || 'sine',
-            frequency: parseFloat(parts[2]) || 440,
-            detune: parseFloat(parts[3]) || 0
-          })
-          report.push(`+ Added Oscillator: ${parts.slice(1).join(':')}`)
-          break
-
-        case 'noise':
-          clearSourcesIfNeeded()
-          blueprint.sources.push({
-            type: 'noise',
-            noiseType: (parts[1] as NoiseType) || 'white'
-          })
-          report.push(`+ Added Noise: ${parts[1] || 'white'}`)
-          break
-
-        case 'filter':
-          blueprint.filter = {
-            type: 'biquad',
-            filterType: (parts[1] as BiquadFilterType) || 'lowpass',
-            frequency: parseFloat(parts[2]) || 1000,
-            Q: parseFloat(parts[3]) || 1,
-            gain: parseFloat(parts[4]) || 0
-          }
-          report.push(`+ Set Filter: ${parts.slice(1).join(':')}`)
-          break
-
-        case 'env':
-        case 'envelope':
-          blueprint.envelope = {
-            attack: parseFloat(parts[1]) || 0.01,
-            decay: parseFloat(parts[2]) || 0.1,
-            sustain: parseFloat(parts[3]) || 0.1,
-            release: parseFloat(parts[4]) || 0.2
-          }
-          report.push(`+ Set Envelope: ${parts.slice(1).join(':')}`)
-          break
-
-        case 'reverb':
-          blueprint.reverb = {
-            decay: parseFloat(parts[1]) || 1,
-            mix: parseFloat(parts[2]) || 0.5,
-            reverse: parts[3] === 'true'
-          }
-          report.push(`+ Set Reverb: ${parts.slice(1).join(':')}`)
-          break
-
-        case 'delay':
-          blueprint.delay = {
-            delayTime: parseFloat(parts[1]) || 0.3,
-            feedback: parseFloat(parts[2]) || 0.4,
-            mix: parseFloat(parts[3]) || 0.5
-          }
-          report.push(`+ Set Delay: ${parts.slice(1).join(':')}`)
-          break
-
-        case 'dur':
-        case 'duration':
-          blueprint.duration = parseFloat(parts[1]) || 0.5
-          report.push(`+ Set Duration: ${parts[1]}`)
-          break
-
-        case 'lfo':
-          blueprint.lfo = {
-            type: (parts[1] as OscillatorType) || 'sine',
-            frequency: parseFloat(parts[2]) || 5,
-            depth: parseFloat(parts[3]) || 100,
-            affects: (parts[4] as LfoAffects) || 'frequency'
-          }
-          report.push(`+ Set LFO: ${parts.slice(1).join(':')}`)
-          break
-
-        case 'distort':
-        case 'distortion':
-          blueprint.distortion = {
-            amount: parseFloat(parts[1]) || 50,
-            oversample: (parts[2] as OverSampleType) || 'none'
-          }
-          report.push(`+ Set Distortion: ${parts.slice(1).join(':')}`)
-          break
-
-        case 'pan':
-        case 'panner':
-          blueprint.panner = {
-            type: 'stereo',
-            pan: parseFloat(parts[1]) || 0
-          }
-          report.push(`+ Set Panner: ${parts[1]}`)
-          break
-
-        case 'comp':
-        case 'compressor':
-          blueprint.compressor = {
-            threshold: parseFloat(parts[1]) || -24,
-            knee: parseFloat(parts[2]) || 30,
-            ratio: parseFloat(parts[3]) || 12,
-            attack: parseFloat(parts[4]) || 0.003,
-            release: parseFloat(parts[5]) || 0.25
-          }
-          report.push(`+ Set Compressor: ${parts.slice(1).join(':')}`)
-          break
-
-        case 'set': {
+      if (handler) {
+        handler(parts, blueprint, report, { clearSourcesIfNeeded })
+      } else if (key === 'set') {
+        // 'set' is handled separately due to its unique logic with defaultPartCreators
+        // and dynamic path traversal, which doesn't fit the standard handler signature cleanly.
+        {
           const path = parts[1]
           const valueStr = parts[2]
           if (!path || valueStr === undefined) {
@@ -273,9 +313,8 @@ export function buildBlueprintFromKeywords(keywords: string[]): {
           break
         }
 
-        default:
-          report.push(`! Unknown keyword: ${keyword}`)
-          break
+      } else {
+        report.push(`! Unknown keyword: ${keyword}`)
       }
     } catch (e) {
       report.push(`! Error parsing keyword: ${keyword} - ${(e as Error).message}`)
@@ -310,7 +349,24 @@ export const rawCommand: CommandDefinition = {
   argSet: [
     {
       placeholder: 'keywords...',
-      description: 'A space-separated list of sound-building keywords (e.g., osc:sine:440).'
+      description: 'A space-separated list of sound-building keywords (e.g., osc:sine:440, preset:"808 Kick").',
+      getSuggestions: (currentArg: string) => {
+        // Suggesting presets for the 'preset' keyword
+        if (currentArg.startsWith('preset:')) {
+          const search = currentArg.substring('preset:'.length).replace(/"/g, '').toLowerCase();
+          return rawPresets
+            .filter(p => p.name.toLowerCase().includes(search))
+            .map(p => `preset:"${p.name}"`);
+        }
+
+        // Suggesting top-level keywords if the user is typing a new one
+        if (!currentArg.includes(':')) {
+          return keywordSuggestions.filter(k => k.startsWith(currentArg));
+        }
+
+        // Return no suggestions for other keyword parameters for now
+        return [];
+      }
     }
   ]
 }
