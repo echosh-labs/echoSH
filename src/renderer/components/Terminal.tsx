@@ -16,7 +16,7 @@ import { useTerminalContext } from "@/renderer/lib/contexts/terminalContext.tsx"
 
 interface HistoryItem {
   id: number
-  command: string
+  command: React.ReactNode
   output: React.ReactNode
 }
 
@@ -235,14 +235,26 @@ export const Terminal = () => {
       }
     })
 
+
+
+
     // 3. Update the output history if it wasn't cleared.
     if (!result.actions.includes('clearHistory') && result.output) {
-      const newHistoryItem: HistoryItem = {
-        id: history.length,
-        command: command,
-        output: result.output
-      }
-      setHistory(prev => [...prev, { ...newHistoryItem, id: prev.length }])
+
+      Promise.all([
+        terminalContext.effects.process(command),
+        terminalContext.effects.process(result.output)
+      ]).then(([command, output]) => {
+
+          const newHistoryItem: HistoryItem = {
+            id: history.length,
+            command: command,
+            output: output
+          }
+          setHistory(prev => [...prev, { ...newHistoryItem, id: prev.length }])
+        })
+
+
     }
 
     setInput('')

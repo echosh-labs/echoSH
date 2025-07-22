@@ -3,16 +3,20 @@ import CommandProcessor from "@/renderer/lib/commands/commandProcessor.ts";
 import { CommandPrediction } from "@/renderer/lib/commands/commandPrediction.ts";
 import { coreCommands } from "@/renderer/definitions/commands/core";
 import { useTheme } from "@/renderer/lib/contexts/themeProvider.tsx";
+import { EffectController } from "@/renderer/lib/text/effectController.tsx";
+
 
 export type TerminalContext = {
   processor: CommandProcessor;
   predictions: CommandPrediction;
-  arch: string
+  arch: string;
   latency: boolean;
-  setProcessor: (p: CommandProcessor) => void;
-  setPredictions: (p: CommandPrediction) => void;
+  effects: EffectController;
   setArch: (c: string) => void;
   setLatency: (c: boolean) => void;
+  setProcessor: (p: CommandProcessor) => void;
+  setPredictions: (p: CommandPrediction) => void;
+  setEffects: (p: EffectController) => void;
 }
 
 // @ts-expect-error none
@@ -27,6 +31,7 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
 
   const theme         = useTheme();
   const [predictions, setPredictions]   = useState<CommandPrediction>(new CommandPrediction(coreCommands));
+  const [effects, setEffects]         = useState<EffectController>(new EffectController());
 
   const [processor, setProcessor]       = useState<CommandProcessor>(new CommandProcessor({
     theme,
@@ -38,10 +43,12 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
     predictions,
     arch,
     latency,
-    setProcessor,
-    setPredictions,
+    effects,
     setArch,
     setLatency,
+    setProcessor,
+    setPredictions,
+    setEffects,
   };
 
   useEffect(() => {

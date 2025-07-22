@@ -16,7 +16,7 @@ function createWindow(): BrowserWindow {
     // ...(process.platform === 'linux' ? { icon } : {}),
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#0D1117',
+      color: 'rgba(13,17,23,0)',
       symbolColor: '#C9D1D9',
       height: 54
     },
