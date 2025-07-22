@@ -7,8 +7,7 @@ body {
   overflow: hidden;
   background-image: url('wavy-lines.svg');
   background-size: cover;
-  user-select: none;
-  app-region: drag;
+  user-select: text;
 }
 
 code {
@@ -263,6 +262,7 @@ html,
   width: 100%;
   padding-right: 150px;
   padding-block: 0.5rem;
+  app-region: drag;
 }
 
 .terminal-container {
