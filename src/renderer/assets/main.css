@@ -277,10 +277,8 @@ html,
 }
 
 .output-area {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 0.5rem;
   app-region: no-drag;
+  user-select: text;
 }
 
 .input-area {

@@ -44,7 +44,12 @@ export const Terminal: React.FC<TerminalProps> = ({
   const commandProcessor = terminalContext.processor;
 
   // Load command history from persistent storage on initial render.
+  // Also, init application
   useEffect(() => {
+    if (!isAudioInitialized) {
+      audioEngine.initialize()
+      setIsAudioInitialized(true)
+    }
     loadHistory().then((storedHistory) => {
       setCommandHistory(storedHistory)
       setIsLoadingHistory(false)
@@ -65,11 +70,7 @@ export const Terminal: React.FC<TerminalProps> = ({
 
   // Handles the first user interaction to initialize the AudioContext.
   const handleTerminalClick = (): void => {
-    if (!isAudioInitialized) {
-      audioEngine.initialize()
-      setIsAudioInitialized(true)
-    }
-    inputRef.current?.focus()
+    // inputRef.current?.focus()
   }
 
   // Handles keyboard input for keystroke sounds and command history navigation.
@@ -137,31 +138,6 @@ export const Terminal: React.FC<TerminalProps> = ({
   }
 
   const internalCommands: { [key: string]: (arg: string) => void } = {
-    // help: () => {
-    //   // const commands = [
-    //   //   { cmd: 'help', desc: 'Displays this list of available commands.' },
-    //   //   { cmd: 'theme', desc: 'Displays the application color palette.' },
-    //   //   { cmd: 'color:list', desc: 'Lists available output text colors.' },
-    //   //   { cmd: 'color:<name>', desc: 'Sets the output text color (e.g., color:red).' },
-    //   //   { cmd: 'clear', desc: 'Clears the output history from the terminal view.' },
-    //   //   { cmd: 'test:error', desc: 'Triggers the custom error sound for testing.' },
-    //   //   { cmd: 'toggle:latency', desc: 'Shows or hides the audio latency diagnostic widget.' }
-    //   // ]
-    //
-    //   const helpOutput = (
-    //     <div className="mt-1">
-    //       <p className="mb-2">Available commands:</p>
-    //       {coreCommands.map(({ name, description }, index) => (
-    //         <div key={index} className="flex">
-    //           <span className="w-40 flex-shrink-0 text-foreground">{name}</span>
-    //           <span className="text-muted-foreground">{description}</span>
-    //         </div>
-    //       ))}
-    //     </div>
-    //   )
-    //
-    //   setHistory((prev) => [...prev, { id: prev.length, command: 'help', output: helpOutput }])
-    // },
     theme: () => {
 
       const themeColors: { [key: string]: string } = {
@@ -200,32 +176,7 @@ export const Terminal: React.FC<TerminalProps> = ({
         </div>
       )
       setHistory(prev => [...prev, { id: prev.length, command: 'theme', output: themeOutput }])
-    },
-    // color: (arg: string) => {
-    //   const newColor = arg.trim()
-    //   const validColors: { [key: string]: string } = {
-    //     default: 'text-cyan-400',
-    //     white: 'text-foreground',
-    //     cyan: 'text-cyan-400',
-    //     green: 'text-green-400',
-    //     yellow: 'text-yellow-400',
-    //     red: 'text-red-400' // Using a standard red for better visibility
-    //   }
-    //
-    //   let outputMessage = ''
-    //
-    //   if (newColor === 'list') {
-    //     outputMessage = `Available colors: ${Object.keys(validColors).join(', ')}`
-    //   } else if (validColors[newColor]) {
-    //     setTerminalColorClass(validColors[newColor])
-    //     outputMessage = `Terminal color set to ${newColor}.`
-    //   } else {
-    //     outputMessage = `Error: Invalid color '${newColor}'. Use 'color:list' to see available colors.`
-    //   }
-    //
-    //   const command = `color:${newColor}`
-    //   setHistory(prev => [...prev, { id: prev.length, command, output: outputMessage }])
-    // }
+    }
   }
 
   // Main handler for command submission.
@@ -303,11 +254,13 @@ export const Terminal: React.FC<TerminalProps> = ({
     setInput('')
   }
 
+  console.log("test")
+
   return (
     <div
       style={{height: 'calc(100vh - 54px)'}}
       className={`flex flex-col bg-background font-mono text-sm text-foreground`} onClick={handleTerminalClick}>
-      <div className="flex-grow overflow-y-auto p-4" ref={outputContainerRef}>
+      <div className="flex-grow overflow-y-auto p-4 output-area" ref={outputContainerRef}>
         {isLoadingHistory && <div className="animate-pulse">Loading history...</div>}
         {history.map((item) => (
           <div key={item.id} className="mb-2">

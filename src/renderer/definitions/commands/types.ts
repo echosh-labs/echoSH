@@ -56,8 +56,6 @@ export interface CommandDefinition {
   /** A brief, user-facing explanation of what the command does. */
   readonly description: string
 
-  subCommand?: string;
-
   /**
    * The core logic of the command.
    * @param args - An array of string arguments provided by the user after the command name.
