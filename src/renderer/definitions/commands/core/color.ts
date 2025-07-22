@@ -13,7 +13,7 @@ const validColors: { [key: string]: string } = {
 
 export const colorCommand: CommandDefinition = {
   name: 'color',
-  execute: (args: string[], setters) => {
+  execute: (args: string[], contexts) => {
     let output;
 
     const found = validColors[args[0]];
@@ -24,7 +24,7 @@ export const colorCommand: CommandDefinition = {
     }
 
     if (found) {
-      setters.setColor(found);
+      contexts.theme.setColor(found);
       output = `Setting color to '${found}'`
     }
     else {

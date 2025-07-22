@@ -20,13 +20,7 @@ interface HistoryItem {
   output: React.ReactNode
 }
 
-interface TerminalProps {
-  onToggleLatencyWidget: () => void,
-}
-
-export const Terminal: React.FC<TerminalProps> = ({
-                                                    onToggleLatencyWidget,
-}) => {
+export const Terminal = () => {
 
   const terminalContext = useTerminalContext();
 
@@ -236,7 +230,7 @@ export const Terminal: React.FC<TerminalProps> = ({
           setHistory(() => [])
           break
         case 'toggleLatencyWidget':
-          onToggleLatencyWidget()
+          terminalContext.setLatency(!terminalContext.latency)
           break
       }
     })
@@ -257,7 +251,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   return (
     <div
       style={{height: 'calc(100vh - 54px)'}}
-      className={`flex flex-col bg-background font-mono text-sm text-foreground`} onClick={handleTerminalClick}>
+      className={`flex flex-col bg-background text-sm`} onClick={handleTerminalClick}>
       <div className="flex-grow overflow-y-auto p-4 output-area" ref={outputContainerRef}>
         {isLoadingHistory && <div className="animate-pulse">Loading history...</div>}
         {history.map((item) => (

@@ -2,16 +2,17 @@ import { createContext, ReactNode, useContext, useEffect, useState } from "react
 import CommandProcessor from "@/renderer/lib/commands/commandProcessor.ts";
 import { CommandPrediction } from "@/renderer/lib/commands/commandPrediction.ts";
 import { coreCommands } from "@/renderer/definitions/commands/core";
+import { useTheme } from "@/renderer/lib/contexts/themeProvider.tsx";
 
 export type TerminalContext = {
   processor: CommandProcessor;
   predictions: CommandPrediction;
-  color: string;
   arch: string
+  latency: boolean;
   setProcessor: (p: CommandProcessor) => void;
   setPredictions: (p: CommandPrediction) => void;
-  setColor: (c: string) => void;
   setArch: (c: string) => void;
+  setLatency: (c: boolean) => void;
 }
 
 // @ts-expect-error none
@@ -19,23 +20,28 @@ const TerminalContext = createContext<TerminalContext>();
 
 export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
 
-  const [color, setColor]               = useState<string>('text-cyan-400');
   const [arch, setArch]                 = useState<string>("unknown");
+  const [latency, setLatency]           = useState<boolean>(false);
+  //TODO move history to terminal context
+  // const [history, setHistory]           = useState<boolean>(false);
+
+  const theme         = useTheme();
   const [predictions, setPredictions]   = useState<CommandPrediction>(new CommandPrediction(coreCommands));
+
   const [processor, setProcessor]       = useState<CommandProcessor>(new CommandProcessor({
-    setColor,
-    setPredictions
+    theme,
+    predictions
   }));
 
   const value: TerminalContext = {
     processor,
     predictions,
-    color,
     arch,
+    latency,
     setProcessor,
     setPredictions,
-    setColor,
-    setArch
+    setArch,
+    setLatency,
   };
 
   useEffect(() => {

@@ -1,11 +1,8 @@
 // src/renderer/src/App.tsx
 
-import React, { useState } from "react";
+import React from "react";
 import { Terminal } from './components/Terminal'
 import './assets/App.css'
-import AppBar from "@/renderer/components/AppBar.tsx";
-import {  useTerminalContext } from "@/renderer/lib/contexts/terminalContext.tsx";
-
 
 /**
  * @file App.tsx
@@ -13,20 +10,9 @@ import {  useTerminalContext } from "@/renderer/lib/contexts/terminalContext.tsx
  * It manages the state for the latency widget and renders the main UI.
  */
 function App(): React.ReactElement {
-  const [isLatencyWidgetVisible, setLatencyWidgetVisible] = useState(false)
-
-  const terminalContext = useTerminalContext();
-
-  const handleToggleLatencyWidget = (): void => {
-    setLatencyWidgetVisible((prev) => !prev)
-  }
-
   return (
-    <div className={`app-container ${terminalContext.color}`}>
-      <AppBar isLatencyWidgetVisible={isLatencyWidgetVisible} />
-      <Terminal
-        onToggleLatencyWidget={handleToggleLatencyWidget}
-      />
+    <div className={`app-container`}>
+      <Terminal />
     </div>
   );
 }
