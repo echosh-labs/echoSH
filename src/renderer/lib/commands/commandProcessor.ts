@@ -11,7 +11,6 @@ import {
 } from '../../definitions/commands/types'
 import { coreCommands } from '../../definitions/commands/core'
 import { SoundBlueprint } from '../audio/audioBlueprints'
-import { helpCommand } from "@//renderer/definitions/commands/core/help.ts";
 import { CommandParser } from "@/renderer/lib/commands/commandParser.ts";
 import { CommandPrediction } from "@/renderer/lib/commands/commandPrediction.ts";
 import { ThemeProviderState } from "@/renderer/lib/contexts/themeProvider.tsx";
@@ -112,7 +111,7 @@ class CommandProcessor {
       // Handle the case where the command is not found.
       return {
         output:
-          `Command not found: ${commandName}\n` + helpCommand.execute([], this.contexts).output,
+          `Command not found: ${commandName}\n`,
         actions: [],
         soundBlueprint: {
           sources: [

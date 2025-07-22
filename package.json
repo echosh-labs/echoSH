@@ -1,10 +1,16 @@
 {
-  "name": "terminal",
+  "name": "sirocco",
   "version": "1.0.0",
   "description": "An Electron application with React and TypeScript",
   "main": "dist/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": {
+    "name": "Justin Wood, Josh Wood"
+  },
+  "homepage": "",
+  "repository": {
+    "directory": "/",
+    "url": "https://github.com/stiamprie/sirocco"
+  },
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -58,5 +64,24 @@
       "electron",
       "esbuild"
     ]
+  },
+  "build": {
+    "appId": "com.jw.sirocco",
+    "productName": "Sirocco",
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*"
+    ],
+    "directories": {
+      "output": "dist/mac"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "resources/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icon.ico"
+    }
   }
 }
