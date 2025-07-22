@@ -8,6 +8,7 @@ import { playSeagullCommand } from './play'
 import { echoCommand } from "@/renderer/definitions/commands/core/echo.ts";
 import { colorCommand } from "@/renderer/definitions/commands/core/color.ts";
 import { rawCommand } from "@/renderer/definitions/commands/core/raw.ts";
+import { presetsCommand } from "@/renderer/definitions/commands/core/presets.ts";
 
 export const coreCommands: CommandDefinition[] = [
   clearCommand,
@@ -18,5 +19,6 @@ export const coreCommands: CommandDefinition[] = [
   playSeagullCommand,
   echoCommand,
   colorCommand,
-  rawCommand
+  rawCommand,
+  presetsCommand
 ]

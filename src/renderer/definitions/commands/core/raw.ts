@@ -56,13 +56,33 @@ osc, noise, filter, env, reverb, delay, dur, lfo, distort, pan, comp, set
 --- EXAMPLES ---
 
 # A simple kick drum
-raw osc:sine:150 env:0.01:0.2:0:0.1 dur:0.3 set:filter.frequency:400
+raw osc:sine:150 env:0.01:0.2:0:0.1 dur:0.3 filter:lowpass:400
 
 # A simple hi-hat
 raw noise:white env:0.01:0.05:0:0.01 dur:0.1 filter:highpass:7000:5
 
 # Shimmering pad
 raw osc:sawtooth:220:5 osc:sawtooth:220:-5 env:1:1:0.5:2 dur:4 filter:lowpass:1000:2 lfo:sine:4:20 reverb:3:0.7`
+
+/**
+ * Default creators for optional blueprint parts.
+ * Used by the 'set' keyword to initialize parts on-demand.
+ */
+const defaultPartCreators: Record<string, () => any> = {
+  filter: () => ({ type: 'biquad', filterType: 'lowpass', frequency: 1000, Q: 1, gain: 0 }),
+  reverb: () => ({ decay: 1, mix: 0.5, reverse: false }),
+  delay: () => ({ delayTime: 0.3, feedback: 0.4, mix: 0.5 }),
+  lfo: () => ({ type: 'sine', frequency: 5, depth: 100, affects: 'frequency' }),
+  distortion: () => ({ amount: 50, oversample: 'none' }),
+  panner: () => ({ type: 'stereo', pan: 0 }),
+  compressor: () => ({
+    threshold: -24,
+    knee: 30,
+    ratio: 12,
+    attack: 0.003,
+    release: 0.25
+  })
+}
 
 /**
  * A default blueprint to build upon.
@@ -77,7 +97,7 @@ const createDefaultBlueprint = (): SoundBlueprint => ({
  * Parses keywords and builds a SoundBlueprint.
  * Keywords format: <type>:<param1>:<param2>...
  */
-function buildBlueprintFromKeywords(keywords: string[]): {
+export function buildBlueprintFromKeywords(keywords: string[]): {
   blueprint: SoundBlueprint
   report: string[]
 } {
@@ -220,9 +240,15 @@ function buildBlueprintFromKeywords(keywords: string[]): {
           for (let i = 0; i < keys.length - 1; i++) {
             const key = keys[i]
             if (current[key] === undefined || current[key] === null) {
-              report.push(`! Path not found: '${path}'. Parent '${key}' does not exist.`)
-              current = null
-              break
+              // If a top-level optional part doesn't exist, create it.
+              if (i === 0 && defaultPartCreators[key]) {
+                current[key] = defaultPartCreators[key]()
+                report.push(`i Initialized default ${key}`)
+              } else {
+                report.push(`! Path not found: '${path}'. Parent '${key}' does not exist.`)
+                current = null
+                break
+              }
             }
             current = current[key]
           }
