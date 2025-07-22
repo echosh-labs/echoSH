@@ -7,6 +7,7 @@ import { testCommand } from './test'
 import { playSeagullCommand } from './play'
 import { echoCommand } from "@/renderer/definitions/commands/core/echo.ts";
 import { colorCommand } from "@/renderer/definitions/commands/core/color.ts";
+import { rawCommand } from "@/renderer/definitions/commands/core/raw.ts";
 
 export const coreCommands: CommandDefinition[] = [
   clearCommand,
@@ -16,5 +17,6 @@ export const coreCommands: CommandDefinition[] = [
   testCommand,
   playSeagullCommand,
   echoCommand,
-  colorCommand
+  colorCommand,
+  rawCommand
 ]

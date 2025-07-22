@@ -58,13 +58,11 @@ const digitalZenGardenBlueprint: SoundBlueprint = {
   },
 
   // Reverb would be ideal here to create a sense of a large, open space.
-  // This is commented out as it requires a valid URL to an impulse response file.
-  /*
   reverb: {
-    impulseResponseUrl: '/path/to/a/cathedral_reverb.wav',
-    mix: 0.4,
+    decay: 4.5, // A long, cathedral-like reverb tail.
+    mix: 0.4,   // A significant amount of reverb to create a spacious feel.
+    reverse: false
   },
-  */
 
   // A compressor ensures a smooth, consistent volume without any sudden peaks.
   compressor: {

@@ -31,6 +31,8 @@ export const rainbowFlutter: SoundBlueprint = {
     mix: 0.12
   },
   reverb: {
+    decay: 1.2, // A magical, shimmering tail
+    reverse: false,
     mix: 0.22
   },
   panner: {
