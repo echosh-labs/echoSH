@@ -1,5 +1,13 @@
+/**
+ * @file src/renderer/lib/audio/sounds/rainbow-flutter.ts
+ * @description Defines a complex, magical sound blueprint named 'rainbowFlutter'.
+ * This sound is used for special events, like changing the terminal theme color,
+ * to provide a whimsical and rewarding auditory experience.
+ */
+
 import { SoundBlueprint } from "@/renderer/lib/audio/audioBlueprints.ts";
 
+/** A bright, shimmering, and magical sound effect with layered oscillators and gentle modulation. */
 export const rainbowFlutter: SoundBlueprint = {
   sources: [
     // Layered oscillators to simulate "color"
