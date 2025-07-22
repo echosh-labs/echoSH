@@ -7,7 +7,7 @@ if (process.platform === 'linux') {
 }
 console.log('Starting main process');
 
-import './api'
+import "./api";
 
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
@@ -22,12 +22,15 @@ function createWindow(): BrowserWindow {
     },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      // sandbox: false
-    }
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+
   })
   // Use the built-in `isPackaged` property to check for development mode
   if (!app.isPackaged) {
     mainWindow.loadURL("http://localhost:5173");
+    mainWindow.webContents.openDevTools();
     // mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   }
   else {

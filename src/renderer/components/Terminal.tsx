@@ -254,8 +254,6 @@ export const Terminal: React.FC<TerminalProps> = ({
     setInput('')
   }
 
-  console.log("test")
-
   return (
     <div
       style={{height: 'calc(100vh - 54px)'}}

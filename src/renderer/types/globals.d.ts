@@ -1,11 +1,9 @@
 
-declare const backendAudioEngine: typeof import("./preload").backend;
+// declare const BRIDGE: typeof import("@/main/preload.ts").BRIDGE;
 
-// This is the idiomatic way to extend third-party types in TypeScript.
-declare module Window {
-  interface ipcRenderer {
-      invoke: (channel: 'history:load') => Promise<string[]>
-      send: (channel: 'history:save', commands: string[]) => void
+declare global {
+  interface Window {
+    BRIDGE: typeof import("@/main/preload.ts").BRIDGE;
   }
 }
-
+export {}

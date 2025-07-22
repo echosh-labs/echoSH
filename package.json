@@ -2,7 +2,7 @@
   "name": "terminal",
   "version": "1.0.0",
   "description": "An Electron application with React and TypeScript",
-  "main": "dist/index.js",
+  "main": "dist/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
   "scripts": {
