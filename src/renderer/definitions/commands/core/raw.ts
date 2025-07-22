@@ -9,6 +9,62 @@ import {
 } from '../../../lib/audio/audioBlueprints'
 
 /**
+ * Help text for the 'raw' command.
+ */
+const HELP_TEXT = `Usage: raw <keywords...>
+Generates a sound on-the-fly from keyword arguments.
+Each keyword modifies a part of the sound blueprint, processed in order.
+
+Example: raw osc:sawtooth:220 filter:lowpass:800 dur:0.5
+
+--- KEYWORDS ---
+
+osc:<type>:<freq>:<detune>
+  Adds an oscillator source. Clears default source on first use.
+  - type: sine, square, sawtooth, triangle (default: sine)
+  - freq: frequency in Hz (default: 440)
+  - detune: cents (default: 0)
+  Example: raw osc:sawtooth:220 osc:sine:440:10
+
+noise:<type>
+  Adds a noise source. Clears default source on first use.
+  - type: white, brown, pink (default: white)
+  Example: raw noise:pink
+
+env:<attack>:<decay>:<sustain>:<release>
+  Sets the ADSR envelope. All values in seconds.
+  - Defaults: 0.01:0.1:0.1:0.2
+  Example: raw env:0.01:0.2:0.5:1
+
+filter:<type>:<freq>:<q>:<gain>
+  Sets a biquad filter.
+  - type: lowpass, highpass, bandpass, etc. (default: lowpass)
+  - freq: frequency in Hz (default: 1000)
+  - q: Q-factor (default: 1)
+  - gain: for peaking/shelving filters (default: 0)
+  Example: raw filter:bandpass:1500:5
+
+set:<path>:<value>
+  Sets a single property on the blueprint. Useful for fine-tuning.
+  - path: dot-notation path to property (e.g., envelope.attack or sources.0.frequency)
+  - value: the new value for the property.
+  Example: raw filter:lowpass set:filter.Q:10
+
+--- FULL KEYWORD LIST ---
+osc, noise, filter, env, reverb, delay, dur, lfo, distort, pan, comp, set
+
+--- EXAMPLES ---
+
+# A simple kick drum
+raw osc:sine:150 env:0.01:0.2:0:0.1 dur:0.3 set:filter.frequency:400
+
+# A simple hi-hat
+raw noise:white env:0.01:0.05:0:0.01 dur:0.1 filter:highpass:7000:5
+
+# Shimmering pad
+raw osc:sawtooth:220:5 osc:sawtooth:220:-5 env:1:1:0.5:2 dur:4 filter:lowpass:1000:2 lfo:sine:4:20 reverb:3:0.7`
+
+/**
  * A default blueprint to build upon.
  */
 const createDefaultBlueprint = (): SoundBlueprint => ({
@@ -149,6 +205,48 @@ function buildBlueprintFromKeywords(keywords: string[]): {
           report.push(`+ Set Compressor: ${parts.slice(1).join(':')}`)
           break
 
+        case 'set': {
+          const path = parts[1]
+          const valueStr = parts[2]
+          if (!path || valueStr === undefined) {
+            report.push(`! Invalid 'set' usage. Format: set:path:value`)
+            break
+          }
+
+          const keys = path.split('.')
+          let current: any = blueprint
+
+          // Traverse the path to find the target object
+          for (let i = 0; i < keys.length - 1; i++) {
+            const key = keys[i]
+            if (current[key] === undefined || current[key] === null) {
+              report.push(`! Path not found: '${path}'. Parent '${key}' does not exist.`)
+              current = null
+              break
+            }
+            current = current[key]
+          }
+
+          if (current) {
+            const finalKey = keys[keys.length - 1]
+            if (typeof current !== 'object') {
+              report.push(`! Cannot set property on non-object at path: ${path}`)
+            } else {
+              const num = parseFloat(valueStr)
+              const parsedValue = !isNaN(num)
+                ? num
+                : valueStr === 'true'
+                ? true
+                : valueStr === 'false'
+                ? false
+                : (valueStr as any) // Let it be a string
+              current[finalKey] = parsedValue
+              report.push(`+ Set ${path} = ${valueStr}`)
+            }
+          }
+          break
+        }
+
         default:
           report.push(`! Unknown keyword: ${keyword}`)
           break
@@ -173,9 +271,7 @@ export const rawCommand: CommandDefinition = {
   description: 'Generates a sound on-the-fly from keyword arguments.',
   execute: (args = []): CommandResult => {
     if (args.length === 0) {
-      return {
-        output: `Usage: raw <keywords...>\nExample: raw osc:sawtooth:220 filter:lowpass:800 lfo:sine:5:100:frequency`
-      }
+      return { output: HELP_TEXT }
     }
 
     const { blueprint, report } = buildBlueprintFromKeywords(args)
