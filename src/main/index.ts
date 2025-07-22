@@ -7,7 +7,7 @@ if (process.platform === 'linux') {
 }
 console.log('Starting main process');
 
-import "./api";
+import './api'
 
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({

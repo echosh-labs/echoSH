@@ -5,16 +5,19 @@
 
 // --- Core Sound Generation ---
 
+export type OscillatorType = 'sine' | 'square' | 'sawtooth' | 'triangle'
+
 export interface OscillatorBlueprint {
   type: 'oscillator'
-  oscillatorType: OscillatorType // 'sine', 'square', 'sawtooth', 'triangle'
+  oscillatorType: OscillatorType
   frequency: number // Base frequency in Hz
   detune?: number // Detune in cents
 }
 
+export type NoiseType = 'white' | 'pink' | 'brown'
 export interface NoiseBlueprint {
   type: 'noise'
-  noiseType: 'white' | 'pink' | 'brown'
+  noiseType: NoiseType
 }
 
 /**
@@ -31,18 +34,29 @@ export interface EnvelopeBlueprint {
   release: number // Time in seconds to fade out from sustain level
 }
 
+export type LfoAffects = 'frequency' | 'amplitude' | 'filterCutoff' | 'pan'
+
 export interface LfoBlueprint {
   type: OscillatorType
   frequency: number // LFO rate in Hz
-  affects: 'frequency' | 'amplitude' | 'filterCutoff' | 'pan' // What the LFO modulates
+  affects: LfoAffects // What the LFO modulates
   depth: number // How much the LFO modulates the target parameter
 }
 
 // --- Timbre and Tone Shaping ---
 
+export type BiquadFilterType =
+  | 'lowpass'
+  | 'highpass'
+  | 'bandpass'
+  | 'peaking'
+  | 'lowshelf'
+  | 'highshelf'
+  | 'notch'
+  | 'allpass'
 export interface BiquadFilterBlueprint {
   type: 'biquad'
-  filterType: BiquadFilterType // 'lowpass', 'highpass', 'bandpass', 'peaking', etc.
+  filterType: BiquadFilterType
   frequency: number // The cutoff or center frequency in Hz
   Q: number // The Quality factor, also known as resonance or bandwidth
   gain?: number // Required for 'lowshelf', 'highshelf', and 'peaking' filters (in dB)
@@ -71,13 +85,22 @@ export interface DelayBlueprint {
   mix?: number // Wet/dry mix of the effect (0.0 to 1.0)
 }
 
+export type OverSampleType = 'none' | '2x' | '4x'
+
 export interface DistortionBlueprint {
   amount: number // A value controlling the intensity of the distortion curve
-  oversample: OverSampleType // 'none', '2x', '4x' to reduce aliasing artifacts
+  oversample: OverSampleType
 }
 
 export interface ReverbBlueprint {
-  impulseResponseUrl?: string // URL to an impulse response audio file
+  /**
+   * The duration of the reverb tail in seconds.
+   */
+  decay: number
+  /**
+   * If true, the reverb tail will build up instead of fading out.
+   */
+  reverse?: boolean
   mix?: number // Wet/dry mix of the effect (0.0 to 1.0)
 }
 
