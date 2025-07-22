@@ -36,7 +36,6 @@ class AudioEngine {
   private static instance: AudioEngine
   private audioContext: CustomAudioContext | null = null
   private mainGain: GainNode | null = null
-  private reverbCache: Map<string, AudioBuffer> = new Map()
 
   // Private constructor is intentional for the singleton pattern.
   private constructor() {
@@ -78,67 +77,112 @@ class AudioEngine {
 
     await this.ensureActiveContext();
 
-    const now = this.audioContext.currentTime
-    const { duration, envelope } = blueprint
+    const now = this.audioContext.currentTime;
+    const { duration, envelope } = blueprint;
+
+    // This map will hold references to all created nodes for easy access.
+    const nodes: Record<string, AudioNode | AudioNode[]> = {};
 
     // 1. Create the final output gain stage, controlled by the main envelope
-    const ampEnvelope = this.audioContext.createGain()
-    ampEnvelope.gain.setValueAtTime(0, now)
-    ampEnvelope.gain.linearRampToValueAtTime(1, now + envelope.attack)
+    const ampEnvelope = this.audioContext.createGain();
+    nodes.ampEnvelope = ampEnvelope;
+    ampEnvelope.gain.setValueAtTime(0, now);
+    ampEnvelope.gain.linearRampToValueAtTime(1, now + envelope.attack);
     ampEnvelope.gain.linearRampToValueAtTime(
       envelope.sustain,
       now + envelope.attack + envelope.decay
-    )
-    ampEnvelope.gain.setValueAtTime(envelope.sustain, now + duration - envelope.release)
-    ampEnvelope.gain.linearRampToValueAtTime(0, now + duration)
+    );
+    ampEnvelope.gain.setValueAtTime(envelope.sustain, now + duration - envelope.release);
+    ampEnvelope.gain.linearRampToValueAtTime(0, now + duration);
 
-    // This will be the start of our audio processing chain
-    let lastNodeInChain: AudioNode = ampEnvelope
+    // This will be the entry point for our main signal chain.
+    let previousNode: AudioNode = ampEnvelope;
 
-    // 2. Build the rest of the chain backwards from the envelope
+    // 2. Build the effects chain, connecting each new node to the previous one.
     if (blueprint.compressor) {
-      const compressorNode = this.createCompressorNode(blueprint.compressor)
-      compressorNode.connect(lastNodeInChain)
-      lastNodeInChain = compressorNode
+      nodes.compressor = this.createCompressorNode(blueprint.compressor);
+      nodes.compressor.connect(previousNode);
+      previousNode = nodes.compressor;
     }
     if (blueprint.panner) {
-      const pannerNode = this.createPannerNode(blueprint.panner)
-      pannerNode.connect(lastNodeInChain)
-      lastNodeInChain = pannerNode
+      nodes.panner = this.createPannerNode(blueprint.panner);
+      nodes.panner.connect(previousNode);
+      previousNode = nodes.panner;
     }
     if (blueprint.distortion) {
-      const distortionNode = this.createDistortionNode(blueprint.distortion)
-      distortionNode.connect(lastNodeInChain)
-      lastNodeInChain = distortionNode
+      nodes.distortion = this.createDistortionNode(blueprint.distortion);
+      nodes.distortion.connect(previousNode);
+      previousNode = nodes.distortion;
     }
     if (blueprint.filter) {
-      const filterNode = this.createFilterNode(blueprint.filter)
-      filterNode.connect(lastNodeInChain)
-      lastNodeInChain = filterNode
+      nodes.filter = this.createFilterNode(blueprint.filter);
+      nodes.filter.connect(previousNode);
+      previousNode = nodes.filter;
     }
 
+    const chainStartNode = previousNode;
+
     // 3. Create and connect the sound sources to the start of the chain
-    const sourceNodes = blueprint.sources.map((sourceBp) => this.createSourceNode(sourceBp))
+    const sourceNodes = blueprint.sources.map((sourceBp) => this.createSourceNode(sourceBp));
+    nodes.sources = sourceNodes;
     sourceNodes.forEach((sourceNode) => {
-      sourceNode.connect(lastNodeInChain)
-      sourceNode.start(now)
-      sourceNode.stop(now + duration)
-    })
+      sourceNode.connect(chainStartNode);
+      sourceNode.start(now);
+      sourceNode.stop(now + duration);
+    });
 
     // 4. Handle parallel effects (Delay and Reverb) using sends
     if (blueprint.delay) {
       this.createDelaySend(ampEnvelope, blueprint.delay)
     }
     if (blueprint.reverb) {
-      await this.createReverbSend(ampEnvelope, blueprint.reverb)
+      this.createReverbSend(ampEnvelope, blueprint.reverb)
     }
 
     // 5. Connect the amplitude envelope to the main output
     ampEnvelope.connect(this.mainGain)
 
-    // 6. Handle LFO modulation (TODO: This is a complex step for later)
+    // 6. Handle LFO modulation
     if (blueprint.lfo) {
-      // LFO logic will connect to various node parameters
+      const lfo = this.audioContext.createOscillator();
+      lfo.type = blueprint.lfo.type;
+      lfo.frequency.value = blueprint.lfo.frequency;
+
+      const lfoGain = this.audioContext.createGain();
+      lfoGain.gain.value = blueprint.lfo.depth;
+
+      lfo.connect(lfoGain);
+
+      let targetParam: AudioParam | undefined;
+
+      switch (blueprint.lfo.affects) {
+        case 'frequency':
+          // Special case: connect LFO to all oscillator sources
+          sourceNodes.forEach((source) => {
+            if (source instanceof OscillatorNode) {
+              lfoGain.connect(source.frequency);
+            }
+          });
+          break; // Exit switch early as we've handled the connection
+        case 'amplitude':
+          targetParam = (nodes.ampEnvelope as GainNode)?.gain;
+          break;
+        case 'filterCutoff':
+          // Assumes the filter is a BiquadFilterNode for this to work
+          targetParam = (nodes.filter as BiquadFilterNode)?.frequency;
+          break;
+        case 'pan':
+          // Assumes the panner is a StereoPannerNode
+          targetParam = (nodes.panner as StereoPannerNode)?.pan;
+          break;
+      }
+
+      if (targetParam) {
+        lfoGain.connect(targetParam);
+      }
+
+      lfo.start(now);
+      lfo.stop(now + duration);
     }
   }
 
@@ -234,39 +278,57 @@ class AudioEngine {
     wetGain.connect(this.mainGain)
   }
 
-  private async createReverbSend(inputNode: AudioNode, blueprint: ReverbBlueprint): Promise<void> {
+  private createReverbSend(inputNode: AudioNode, blueprint: ReverbBlueprint): void {
     if (!this.audioContext || !this.mainGain) return
-    try {
-      const impulseBuffer = await this.loadImpulseResponse(blueprint.impulseResponseUrl)
-      const convolver = this.audioContext.createConvolver()
-      convolver.buffer = impulseBuffer
 
-      const mix = blueprint.mix ?? 0.5
-      const wetGain = this.audioContext.createGain()
-      wetGain.gain.value = mix
+    const impulseBuffer = this.createSyntheticImpulseResponse(
+      blueprint.decay,
+      blueprint.reverse ?? false
+    )
+    const convolver = this.audioContext.createConvolver()
+    convolver.buffer = impulseBuffer
 
-      inputNode.connect(convolver)
-      convolver.connect(wetGain)
-      wetGain.connect(this.mainGain)
-    } catch (error) {
-      console.error(`Failed to load impulse response for reverb: ${error}`)
-    }
+    const mix = blueprint.mix ?? 0.5
+    const wetGain = this.audioContext.createGain()
+    wetGain.gain.value = mix
+
+    inputNode.connect(convolver)
+    convolver.connect(wetGain)
+    wetGain.connect(this.mainGain)
   }
 
   // --- Utility Helpers ---
 
-  private async loadImpulseResponse(url: string): Promise<AudioBuffer> {
-    if (this.reverbCache.has(url)) {
-      return this.reverbCache.get(url)!
-    }
+  /**
+   * Generates a synthetic impulse response for the convolver node,
+   * creating a reverb effect without external audio files.
+   * @param duration The length of the reverb tail in seconds.
+   * @param reverse Whether to reverse the impulse, creating a "swell" effect.
+   * @returns An AudioBuffer containing the generated impulse response.
+   */
+  private createSyntheticImpulseResponse(duration: number, reverse: boolean): AudioBuffer {
     if (!this.audioContext) throw new Error('AudioContext not initialized.')
 
-    const response = await fetch(url)
-    const arrayBuffer = await response.arrayBuffer()
-    const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer)
+    const sampleRate = this.audioContext.sampleRate
+    const length = sampleRate * duration
+    const impulse = this.audioContext.createBuffer(2, length, sampleRate) // Stereo
 
-    this.reverbCache.set(url, audioBuffer)
-    return audioBuffer
+    for (let channel = 0; channel < 2; channel++) {
+      const channelData = impulse.getChannelData(channel)
+      for (let i = 0; i < length; i++) {
+        // Generate white noise and apply an exponential decay
+        const noise = Math.random() * 2 - 1
+        const envelope = Math.pow(1 - i / length, 2.5) // The exponent shapes the decay curve
+        channelData[i] = noise * envelope
+      }
+    }
+
+    if (reverse) {
+      impulse.getChannelData(0).reverse()
+      impulse.getChannelData(1).reverse()
+    }
+
+    return impulse
   }
 
   private createDistortionCurve(amount: number): Float32Array {

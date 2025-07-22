@@ -1,5 +1,12 @@
+/**
+ * @file src/renderer/lib/audio/keys/backspace.ts
+ * @description Defines the sound blueprint for the backspace key action.
+ * This sound provides satisfying, non-intrusive auditory feedback for deletion.
+ */
+
 import { SoundBlueprint } from "@/renderer/lib/audio/audioBlueprints.ts";
 
+/** A "swoosh" sound that blends filtered noise with a soft, falling sine wave. */
 export const backspaceSwoosh: SoundBlueprint = {
   // A swoosh often blends filtered noise and a soft falling sine for subtlety
   sources: [

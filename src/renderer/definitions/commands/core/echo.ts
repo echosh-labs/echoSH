@@ -32,8 +32,9 @@ export const echoEffect: SoundBlueprint = {
     mix: 0.34        // Wet/dry mix for an obvious echo
   },
   reverb: {
-    impulseResponseUrl: 'path/to/impulse.wav', // Use a short impulse or spring for a quick echo tail
-    mix: 0.22
+    decay: 0.4, // A short, "spring-like" reverb tail
+    mix: 0.22,
+    reverse: false
   },
   panner: {
     type: 'stereo',
