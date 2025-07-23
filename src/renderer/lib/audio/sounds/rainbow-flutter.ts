@@ -23,8 +23,8 @@ export const rainbowFlutter: SoundBlueprint = {
   },
   lfo: {
     type: 'sine',
-    frequency: 6,       // gentle vibrato
-    affects: 'frequency',
+    frequency: 6, // gentle vibrato
+    affects: { target: 'source', param: 'frequency' },
     depth: 60
   },
   filter: {
