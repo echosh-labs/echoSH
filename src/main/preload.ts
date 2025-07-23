@@ -1,23 +1,30 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer } from "electron";
+import { AppInitData } from "@/renderer/types/app";
 
-// Custom APIs for renderer
-const api = {
-  ipcRenderer: {
-    // Functions for renderer to invoke main process methods
-    invoke: (channel: 'history:load'): Promise<string[]> => ipcRenderer.invoke(channel),
-    // Functions for renderer to send data to main process
-    send: (channel: 'history:save', commands: string[]): void => ipcRenderer.send(channel, commands)
-  }
-}
+console.log("[PRELOAD] Loaded at", Date.now());
 
-// Use `contextBridge` to securely expose APIs to the renderer process
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld('electron', api)
-  } catch (error) {
-    console.error(error)
-  }
-} else {
-  // @ts-ignore (define in dts)
-  window.electron = api
-}
+export const BRIDGE = {
+  // Listen for push
+  onAppInit: (callback: (data: AppInitData) => void) => {
+    ipcRenderer.on("app:init", (_event, data) => callback(data));
+  },
+  removeAppInitHandler: () => {
+    ipcRenderer.removeAllListeners("app:init");
+  },
+  // Allow pull
+  requestAppInit: () => {
+    ipcRenderer.send("request:appInit");
+  },
+  onLoadHistory: (callback: (history: any) => void) => {
+    ipcRenderer.on("load:history", (_event, data) => callback(data));
+  },
+  removeHistoryListeners: () => {
+    ipcRenderer.removeAllListeners("load:history");
+  },
+  saveHistory: async (historyData: any) => {
+    await ipcRenderer.invoke("history:save", historyData);
+  },
+};
+
+console.log("Preload script loaded");
+contextBridge.exposeInMainWorld("BRIDGE", BRIDGE);

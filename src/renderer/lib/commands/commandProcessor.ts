@@ -11,9 +11,9 @@ import {
 } from '../../definitions/commands/types'
 import { coreCommands } from '../../definitions/commands/core'
 import { SoundBlueprint } from '../audio/audioBlueprints'
-import { helpCommand } from "@//renderer/definitions/commands/core/help.ts";
 import { CommandParser } from "@/renderer/lib/commands/commandParser.ts";
 import { CommandPrediction } from "@/renderer/lib/commands/commandPrediction.ts";
+import { ThemeProviderState } from "@/renderer/lib/contexts/themeProvider.tsx";
 
 /**
  * The final, consolidated result object that is returned to the Terminal component.
@@ -30,20 +30,25 @@ export interface TerminalSetters {
   setPredictions: (p: CommandPrediction) => void
 }
 
+export interface CommandContexts {
+  theme: ThemeProviderState;
+  predictions: CommandPrediction;
+}
+
 /**
  * A class-based command processor for better state management and initialization.
  */
 class CommandProcessor {
   // Use a Map for efficient, case-insensitive command lookups.
-  private readonly commands: Map<string, CommandDefinition>
-  private vars: Record<string, string> = {}
+  private readonly commands: Map<string, CommandDefinition>;
+  private vars: Record<string, string> = {};
 
-  private setters: TerminalSetters;
+  contexts: CommandContexts;
 
-  constructor(setters: TerminalSetters) {
-    this.setters = setters;
+  constructor(contexts: CommandContexts) {
+    this.contexts = contexts;
 
-    this.commands = new Map()
+    this.commands = new Map();
     this.loadCommands(coreCommands);
   }
 
@@ -53,8 +58,8 @@ class CommandProcessor {
    */
   public loadCommands(commandList: CommandDefinition[]): void {
     commandList.forEach((command) => {
-      this.commands.set(command.name.toLowerCase(), command)
-    })
+      this.commands.set(command.name.toLowerCase(), command);
+    });
   }
 
   /**
@@ -64,60 +69,56 @@ class CommandProcessor {
    * @returns A ProcessedCommandResult object for the Terminal to orchestrate.
    */
   public process(input: string): ProcessedCommandResult {
-    const trimmedInput = input.trim()
+    const trimmedInput = input.trim();
     if (!trimmedInput) {
-      return { output: '', actions: [] }
+      return { output: "", actions: [] };
     }
 
-    let {
-      variables,
-      command: commandName,
-      args
-    } = CommandParser.parse(input, this.vars)
+    let { variables, command: commandName, args } = CommandParser.parse(input, this.vars);
 
     this.vars = variables;
 
     if (commandName.length === 0) {
-      return { output: trimmedInput, actions: [] }
+      return { output: trimmedInput, actions: [] };
     }
 
-    let command: CommandDefinition|undefined;
-    if (args.includes('-h')) {
-      command = this.commands.get('help');
+    let command: CommandDefinition | undefined;
+    if (args.includes("-h")) {
+      command = this.commands.get("help");
       args = [commandName, ...args];
-    }
-    else {
+    } else {
       command = this.commands.get(commandName);
     }
 
     if (command) {
       // 1. Execute the command's core logic to get the runtime result.
-      const runtimeResult: CommandResult = command.execute(args, this.setters)
+      const runtimeResult: CommandResult = command.execute(args, this.contexts);
 
       // 2. Consolidate static and runtime effects into flattened arrays.
       const allActions: CommandAction[] = [
         ...(command.staticActions ?? []),
         ...(runtimeResult.runtimeActions ?? [])
-      ]
-      const soundBlueprint = runtimeResult.soundBlueprint ?? command.soundBlueprint
+      ];
+      const soundBlueprint = runtimeResult.soundBlueprint ?? command.soundBlueprint;
 
       // 3. Return the final, processed result for the orchestrator.
       return {
         output: runtimeResult.output,
         actions: allActions,
         soundBlueprint
-      }
+      };
     } else {
       // Handle the case where the command is not found.
       return {
-        output: `Command not found: ${commandName}\n` + helpCommand.execute([], this.setters).output,
+        output:
+          `Command not found: ${commandName}\n`,
         actions: [],
         soundBlueprint: {
           sources: [
-            { type: 'oscillator', oscillatorType: 'square', frequency: 150 },
+            { type: "oscillator", oscillatorType: "square", frequency: 150 },
             {
-              type: 'oscillator',
-              oscillatorType: 'square',
+              type: "oscillator",
+              oscillatorType: "square",
               frequency: 150 * Math.pow(1.05946, 6), // Tritone
               detune: 10
             }
@@ -125,7 +126,7 @@ class CommandProcessor {
           envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 },
           duration: 0.5
         }
-      }
+      };
     }
   }
 }

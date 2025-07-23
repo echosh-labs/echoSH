@@ -6,6 +6,9 @@
     "noEmit": false
   },
   "include": [
-    "src/main"
+    "src/main",
   ],
+  "exclude": [
+    "src/renderer"
+  ]
 }

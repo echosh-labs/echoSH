@@ -7,10 +7,12 @@ body {
   overflow: hidden;
   background-image: url('wavy-lines.svg');
   background-size: cover;
-  user-select: none;
-  app-region: drag;
+  user-select: text;
+  font-family: "Source Code Pro", monospace;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
 }
-
 code {
   font-weight: 600;
   padding: 3px 5px;
@@ -263,6 +265,7 @@ html,
   width: 100%;
   padding-right: 150px;
   padding-block: 0.5rem;
+  app-region: drag;
 }
 
 .terminal-container {
@@ -277,10 +280,8 @@ html,
 }
 
 .output-area {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 0.5rem;
   app-region: no-drag;
+  user-select: text;
 }
 
 .input-area {

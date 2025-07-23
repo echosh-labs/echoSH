@@ -8,7 +8,7 @@
  */
 
 import { SoundBlueprint } from '../../lib/audio/audioBlueprints'
-import { TerminalSetters } from "@/renderer/lib/commands/commandProcessor.ts";
+import { CommandContexts } from "@/renderer/lib/commands/commandProcessor.ts";
 
 //==============================================================================
 // Core Effect Types
@@ -56,14 +56,12 @@ export interface CommandDefinition {
   /** A brief, user-facing explanation of what the command does. */
   readonly description: string
 
-  subCommand?: string;
-
   /**
    * The core logic of the command.
    * @param args - An array of string arguments provided by the user after the command name.
    * @returns A `CommandResult` object containing the output and any dynamic effects.
    */
-  execute: (args: string[], setters: TerminalSetters) => CommandResult
+  execute: (args: string[], contexts: CommandContexts) => CommandResult
 
   /**
    * An optional array of UI actions that are *always* performed when this command is run.

@@ -16,18 +16,21 @@ function createWindow(): BrowserWindow {
     // ...(process.platform === 'linux' ? { icon } : {}),
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#0D1117',
+      color: 'rgba(13,17,23,0)',
       symbolColor: '#C9D1D9',
       height: 54
     },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      // sandbox: false
-    }
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+
   })
   // Use the built-in `isPackaged` property to check for development mode
   if (!app.isPackaged) {
     mainWindow.loadURL("http://localhost:5173");
+    mainWindow.webContents.openDevTools();
     // mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   }
   else {

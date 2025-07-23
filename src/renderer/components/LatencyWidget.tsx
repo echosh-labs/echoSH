@@ -1,6 +1,6 @@
 // src/renderer/src/components/LatencyWidget.tsx
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { audioEngine } from '../lib/audio/audioEngine'
 
 /**
@@ -8,34 +8,29 @@ import { audioEngine } from '../lib/audio/audioEngine'
  * @description A minimal widget to display Web Audio API latency info.
  */
 
-interface LatencyWidgetProps {
-  isVisible: boolean
-}
-
-export const LatencyWidget: React.FC<LatencyWidgetProps> = ({ isVisible }) => {
+export const LatencyWidget = () => {
 
   const [latency, setLatency] = useState<{ base: number, output: number } | null>(null);
 
   useEffect(() => {
     let interval;
-    if (isVisible) {
-      setInterval(() => {
-        const info = audioEngine.getLatencyInfo()
+    setInterval(() => {
+      const info = audioEngine.getLatencyInfo()
 
-        setLatency({
-          base: (info?.baseLatency ?? 0) * 1000,
-          output: (info?.outputLatency ?? 0) * 1000
-        });
+      setLatency({
+        base: (info?.baseLatency ?? 0) * 1000,
+        output: (info?.outputLatency ?? 0) * 1000
+      });
 
-      }, 100);
-    }
+    }, 100);
+
 
     return () => {
       clearInterval(interval);
     }
-  }, [isVisible]);
+  }, []);
 
-  if (!isVisible || !latency) {
+  if (!latency) {
     return null
   }
 

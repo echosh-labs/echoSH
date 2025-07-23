@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { app, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
 
 // --- History Persistence Setup ---
@@ -34,11 +34,31 @@ async function saveHistory(commands: unknown[] = []): Promise<void> {
 }
 // --- End History Persistence Setup ---
 
+export {
+  saveHistory,
+  loadHistory,
+}
 
-// --- IPC Handlers for History ---
-ipcMain.handle('history:load', loadHistory)
-ipcMain.handle('history:save', async (_event, commands: string[]) => {
-  await saveHistory(commands)
-  return true
-})
-// --- End IPC Handlers ---
+export function sendAppInit(mainWindow: BrowserWindow) {
+  const payload = {
+    arch: process.platform,
+    version: require('electron').app.getVersion(),
+    // ...other data
+  };
+  console.log("[MAIN] sendAppInit payload:", payload);
+  mainWindow.webContents.send('app:init', payload);
+}
+
+
+ipcMain.on("request:appInit", (event) => {
+  const contents = BrowserWindow.fromWebContents(event.sender);
+  console.log("[MAIN] Got request:appInit from webContents id:", event.sender.id);
+  if (contents) {
+    sendAppInit(contents);
+    console.log("[MAIN] Sent app:init to webContents id:", event.sender.id);
+  } else {
+    console.log("[MAIN] Could not find BrowserWindow for webContents id:", event.sender.id);
+  }
+});
+
+
