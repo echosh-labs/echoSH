@@ -34,12 +34,19 @@ export interface EnvelopeBlueprint {
   release: number // Time in seconds to fade out from sustain level
 }
 
-export type LfoAffects = 'frequency' | 'amplitude' | 'filterCutoff' | 'pan'
+/**
+ * A structured object describing what an LFO (Low-Frequency Oscillator) modulates.
+ * This provides a type-safe and extensible way to define modulation targets.
+ */
+export type LfoAffects =
+  | { target: 'source'; param: 'frequency' } // Modulates the frequency of all source oscillators
+  | { target: 'filter'; param: 'frequency' | 'Q' } // Modulates the filter's cutoff or Q
+  // Future targets like 'panner', 'delay', etc., can be added here.
 
 export interface LfoBlueprint {
   type: OscillatorType
   frequency: number // LFO rate in Hz
-  affects: LfoAffects // What the LFO modulates
+  affects: LfoAffects // A structured object defining the modulation target
   depth: number // How much the LFO modulates the target parameter
 }
 

@@ -68,7 +68,7 @@ export const Terminal = () => {
   }
 
   // Handles keyboard input for keystroke sounds and command history navigation.
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+  const handleKeyDown = async (e: KeyboardEvent<HTMLInputElement>): Promise<void> => {
     if (e.key !== 'Tab') {
       commandPrediction.reset();
       if (predictions.length > 0) {
@@ -85,17 +85,7 @@ export const Terminal = () => {
         : (250 + (e.key.charCodeAt(0) * 5) % 800);
 
     if (isAudioInitialized && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      audioEngine.playSoundFromBlueprint({
-        sources: [
-          {
-            type: 'oscillator',
-            oscillatorType: 'triangle',
-            frequency
-          }
-        ],
-        envelope: { attack: 0.005, decay: 0.05, sustain: 0.2, release: 0.045 },
-        duration: 0.1
-      })
+      audioEngine.playKeystroke(frequency);
     }
 
     let newIndex;
