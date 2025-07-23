@@ -15,14 +15,11 @@
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "typecheck": "tsc --noEmit --build",
-    "start": "electron-vite preview",
     "dev": "concurrently \"vite\" \"cross-env DEV= ELECTRON_GTK_VERSION=3 tsc-watch -p tsconfig.electron.json --onSuccess \\\"electron .\\\"\"",
-    "build": "npm run typecheck && electron-vite build",
-    "postinstall": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-builder",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",

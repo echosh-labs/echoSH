@@ -40,10 +40,9 @@ export const Terminal = () => {
   // Load command history from persistent storage on initial render.
   // Also, init application
   useEffect(() => {
-    if (!isAudioInitialized) {
-      audioEngine.initialize()
-      setIsAudioInitialized(true)
-    }
+
+    audioEngine.initialize()
+
     loadHistory().then((storedHistory) => {
       setCommandHistory(storedHistory)
       setIsLoadingHistory(false)
@@ -68,7 +67,7 @@ export const Terminal = () => {
   }
 
   // Handles keyboard input for keystroke sounds and command history navigation.
-  const handleKeyDown = async (e: KeyboardEvent<HTMLInputElement>): Promise<void> => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     if (e.key !== 'Tab') {
       commandPrediction.reset();
       if (predictions.length > 0) {
@@ -84,8 +83,18 @@ export const Terminal = () => {
         character.match(special) ? 1200
         : (250 + (e.key.charCodeAt(0) * 5) % 800);
 
-    if (isAudioInitialized && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      audioEngine.playKeystroke(frequency);
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      audioEngine.playSoundFromBlueprint({
+        sources: [
+          {
+            type: 'oscillator',
+            oscillatorType: 'triangle',
+            frequency
+          }
+        ],
+        envelope: { attack: 0.005, decay: 0.05, sustain: 0.2, release: 0.045 },
+        duration: 0.1
+      })
     }
 
     let newIndex;
