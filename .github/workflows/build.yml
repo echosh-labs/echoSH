@@ -3,9 +3,6 @@ name: Build Electron App
 
 on:
   push:
-    tags:
-      - 'v*'           # Build on new version tags (recommended)
-  workflow_dispatch:
 
 jobs:
   build:
@@ -34,10 +31,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        
+
       # Build the app (renderer + main) for Electron
       - name: Build renderer and main process
-        run: npm run build:app
+        run: npm run build
 
       - name: Build Electron App
         run: npm run ${{ matrix.build_script }}
