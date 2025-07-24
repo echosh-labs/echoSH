@@ -16,10 +16,11 @@
     "lint": "eslint --cache .",
     "typecheck": "tsc --noEmit --build",
     "dev": "concurrently \"vite\" \"cross-env DEV= ELECTRON_GTK_VERSION=3 tsc-watch -p tsconfig.electron.json --onSuccess \\\"electron .\\\"\"",
-    "build": "tsc && vite build",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux"
+    "build:app": "vite build && tsc -p tsconfig.electron.json",
+    "build": "npm run build:app && electron-builder",
+    "build:mac": "npm run build:app && electron-builder --mac",
+    "build:win": "npm run build:app && electron-builder --win",
+    "build:linux": "npm run build:app && electron-builder --linux"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

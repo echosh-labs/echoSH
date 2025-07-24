@@ -33,10 +33,7 @@ jobs:
         run: npm ci
 
       # Build the app (renderer + main) for Electron
-      - name: Build renderer and main process
-        run: npm run build
-
-      - name: Build Electron App
+      - name: Build Electron App for platform
         run: npm run ${{ matrix.build_script }}
 
       - name: Upload artifact
