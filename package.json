@@ -79,16 +79,13 @@
       "output": "dist"
     },
     "mac": {
-      "target": "dmg",
-      "icon": "resources/icon.icns"
+      "target": "dmg"
     },
     "win": {
-      "target": "nsis",
-      "icon": "resources/icon.png"
+      "target": "nsis"
     },
     "linux": {
-      "target": "deb",
-      "icon": "resources/icon.png"
+      "target": "deb"
     }
   }
 }
