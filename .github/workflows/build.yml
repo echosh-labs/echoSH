@@ -1,0 +1,40 @@
+# .github/workflows/build.yml
+name: Build Electron App
+
+on:
+  push:
+    tags:
+      - 'v*'           # Build only on new version tags (recommended)
+  workflow_dispatch:     # Or allow manual runs
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Electron App
+        run: npm run build
+
+      # Upload the built installer(s) as a workflow artifact
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-installer
+          path: |
+            dist/mac/
+            dist/win/
+            dist/linux/
