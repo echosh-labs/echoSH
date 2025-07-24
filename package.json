@@ -84,7 +84,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "resources/icon.ico"
+      "icon": "resources/icon.png"
     },
     "linux": {
       "target": "deb",
