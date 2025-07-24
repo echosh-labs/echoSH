@@ -89,7 +89,7 @@
     "win": {
       "target": "nsis",
       "icon": "resources/icon.ico",
-      "output": "dist/win",
+      "output": "dist/win"
     },
     "linux": {
       "target": "deb",
