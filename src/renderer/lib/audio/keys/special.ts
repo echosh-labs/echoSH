@@ -5,12 +5,6 @@
  */
 
 import { audioEngine } from "@/renderer/lib/audio/audioEngine.ts";
-import { backspaceSwoosh } from "./backspace.ts";
-
-// --- Instrument Registration ---
-// Pre-compile and register frequently used sounds when this module is loaded.
-audioEngine.registerInstrument('backspace', backspaceSwoosh);
-// Register other common sounds like 'error', 'success' here.
 
 /** An object that maps key names to functions that play their respective sounds. */
 export const keySounds = {

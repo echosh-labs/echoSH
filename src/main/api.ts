@@ -1,49 +1,26 @@
-import * as fs from "fs";
-import { app, BrowserWindow, ipcMain } from "electron";
-import * as path from "path";
+import { BrowserWindow, ipcMain } from "electron";
+import settings from 'electron-settings';
+import { HistoryItem } from "@/renderer/types/terminal";
+import { AppInitData, AppSettings } from "@/renderer/types/app";
 
-// --- History Persistence Setup ---
-const userDataPath = app.getPath('userData')
-const historyFilePath = path.join(userDataPath, 'command-history.json')
-async function loadHistory(): Promise<string[]> {
-  try {
-    if (!fs.existsSync(historyFilePath)) {
-      console.log("Couldn't find user history, creating...");
-      fs.writeFileSync(historyFilePath, JSON.stringify([]));
-    }
-    if (fs.existsSync(historyFilePath)) {
-      const data = await fs.promises.readFile(historyFilePath, {encoding: 'utf8'})
-      return JSON.parse(data.toString())
-    }
-  }
-  catch (error) {
-    console.error('Failed to load command history:', error)
-  }
-  return []
-}
 
-async function saveHistory(commands: unknown[] = []): Promise<void> {
-  try {
-    const safeCommands = Array.isArray(commands)
-      ? commands.map((c) => String(c))
-      : []
-    await fs.promises.writeFile(historyFilePath, JSON.stringify(safeCommands, null, 2))
-  } catch (error) {
-    console.error('Failed to save command history:', error)
-  }
+
+async function saveHistory(history: HistoryItem[] = []): Promise<void> {
+  await settings.set("history", history as any);
 }
 // --- End History Persistence Setup ---
 
-export {
-  saveHistory,
-  loadHistory,
-}
+export async function sendAppInit(mainWindow: BrowserWindow) {
 
-export function sendAppInit(mainWindow: BrowserWindow) {
-  const payload = {
+  const history = await settings.get("history") ?? [] as unknown as HistoryItem[];
+
+  const preferences = await settings.get("settings") ?? {};
+
+  const payload: AppInitData = {
     arch: process.platform,
     version: require('electron').app.getVersion(),
-    // ...other data
+    history: history as undefined|HistoryItem[],
+    settings: preferences as Partial<AppSettings>,
   };
   console.log("[MAIN] sendAppInit payload:", payload);
   mainWindow.webContents.send('app:init', payload);
@@ -62,3 +39,9 @@ ipcMain.on("request:appInit", (event) => {
 });
 
 
+ipcMain.handle("history:save", (_event, args) => {
+  saveHistory(args);
+})
+ipcMain.handle("settings:save", (_event, userPreferences) => {
+  settings.set("settings", userPreferences);
+})

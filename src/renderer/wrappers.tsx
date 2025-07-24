@@ -5,6 +5,7 @@ import { ThemeProvider } from "./lib/contexts/themeProvider";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SettingsPage from './components/Settings';
 import AppBar from "@/renderer/components/AppBar.tsx";
+import { Toaster } from "@/renderer/components/ui/sonner.tsx";
 
 
 export default function Wrappers() {
@@ -13,6 +14,7 @@ export default function Wrappers() {
       <TerminalContextProvider>
         <BrowserRouter>
           <AppBar />
+          <Toaster />
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/settings" element={<SettingsPage />} />
