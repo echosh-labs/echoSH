@@ -2,8 +2,9 @@
 
 *Formerly known as Sirocco*
 
-[![Build Status](https://github.com/stiamprie/sirocco/actions/workflows/ci.yml/badge.svg)](https://github.com/stiamprie/sirocco/actions)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/stiamprie/sirocco/releases)
+[![Build Electron App](https://github.com/stiamprie/sirocco/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/stiamprie/sirocco/actions/workflows/build.yml)
+
+[![Version](https://img.shields.io/badge/version-0.5.0-blue)](https://github.com/stiamprie/sirocco/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
