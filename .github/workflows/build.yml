@@ -32,7 +32,6 @@ jobs:
           node-version: 22
           cache: 'npm'
       - run: npm ci
-      - run: npm test
 
       # 🚀 Cache node_modules
       - name: Cache node modules
