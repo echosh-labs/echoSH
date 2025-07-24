@@ -83,11 +83,18 @@
     },
     "mac": {
       "target": "dmg",
-      "icon": "resources/icon.icns"
+      "icon": "resources/icon.icns",
+      "output": "dist/mac"
     },
     "win": {
       "target": "nsis",
-      "icon": "resources/icon.ico"
+      "icon": "resources/icon.ico",
+      "output": "dist/win",
+    },
+    "linux": {
+      "target": "deb",
+      "icon": "resources/icon.ico",
+      "output": "dist/linux"
     }
   }
 }
