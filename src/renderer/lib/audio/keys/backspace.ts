@@ -35,9 +35,9 @@ export const backspaceSwoosh: SoundBlueprint = {
   },
   lfo: {
     type: "sine",
-    frequency: 14,
-    affects: "frequency",
-    depth: 60 // Pitch sweep for the oscillator
+    frequency: 14, // A fast vibrato to create the "swoosh"
+    affects: { target: "source", param: "frequency" },
+    depth: 60 // How many Hz the pitch will sweep
   },
   delay: {
     delayTime: 0.07,

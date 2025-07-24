@@ -9,6 +9,7 @@ import { echoCommand } from "@/renderer/definitions/commands/core/echo.ts";
 import { colorCommand } from "@/renderer/definitions/commands/core/color.ts";
 import { rawCommand } from "@/renderer/definitions/commands/core/raw.ts";
 import { presetsCommand } from "@/renderer/definitions/commands/core/presets.ts";
+import { stopCommand } from "@/renderer/definitions/commands/core/stop.ts";
 
 export const coreCommands: CommandDefinition[] = [
   clearCommand,
@@ -20,5 +21,6 @@ export const coreCommands: CommandDefinition[] = [
   echoCommand,
   colorCommand,
   rawCommand,
-  presetsCommand
+  presetsCommand,
+  stopCommand
 ]

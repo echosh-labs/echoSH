@@ -347,3 +347,23 @@ html,
 .cmd-predictions {
 
 }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: var(--accent);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-foreground);
+  opacity: 0.1;
+}
+::-webkit-scrollbar-thumb:active {
+  background: var(--accent-foreground);
+  opacity: 0.9;
+}

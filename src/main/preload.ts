@@ -15,15 +15,11 @@ export const BRIDGE = {
   requestAppInit: () => {
     ipcRenderer.send("request:appInit");
   },
-  onLoadHistory: (callback: (history: any) => void) => {
-    ipcRenderer.on("load:history", (_event, data) => callback(data));
-  },
-  removeHistoryListeners: () => {
-    ipcRenderer.removeAllListeners("load:history");
-  },
   saveHistory: async (historyData: any) => {
     await ipcRenderer.invoke("history:save", historyData);
   },
+  saveSettings: async (historyData: any) =>
+    await ipcRenderer.invoke("settings:save", historyData),
 };
 
 console.log("Preload script loaded");

@@ -8,7 +8,8 @@
  */
 
 import { SoundBlueprint } from '../../lib/audio/audioBlueprints'
-import { CommandContexts } from "@/renderer/lib/commands/commandProcessor.ts";
+
+import { CommandContexts } from "@/renderer/lib/commands/processedCommandResult.ts";
 
 //==============================================================================
 // Core Effect Types
