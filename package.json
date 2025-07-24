@@ -4,7 +4,9 @@
   "description": "An Electron application with React and TypeScript",
   "main": "dist/main/index.js",
   "author": {
-    "name": "Justin Wood, Josh Wood"
+    "name": "Justin Wood, Josh Wood",
+    "email": "kalaghni@gmail.com",
+    "url": "https://github.com/stiamprie"
   },
   "homepage": "",
   "repository": {
