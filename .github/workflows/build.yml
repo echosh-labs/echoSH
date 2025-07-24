@@ -2,7 +2,9 @@
 name: Build Electron App
 
 on:
-  push:
+  push: 
+    branches:
+      - main
 
 jobs:
   build:
