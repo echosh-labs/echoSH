@@ -4,15 +4,24 @@ name: Build Electron App
 on:
   push:
     tags:
-      - 'v*'           # Build only on new version tags (recommended)
-  workflow_dispatch:     # Or allow manual runs
+      - 'v*'           # Build on new version tags (recommended)
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            build_script: build:mac
+            artifact_path: dist/mac/
+          - os: windows-latest
+            build_script: build:win
+            artifact_path: dist/win/
+          - os: ubuntu-latest
+            build_script: build:linux
+            artifact_path: dist/linux/
 
     steps:
       - name: Checkout repo
@@ -27,14 +36,10 @@ jobs:
         run: npm ci
 
       - name: Build Electron App
-        run: npm run build
+        run: npm run ${{ matrix.build_script }}
 
-      # Upload the built installer(s) as a workflow artifact
-      - name: Upload artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ runner.os }}-installer
-          path: |
-            dist/mac/
-            dist/win/
-            dist/linux/
+          path: ${{ matrix.artifact_path }}
