@@ -10,7 +10,10 @@ import { CommandParser } from "@/renderer/lib/commands/commandParser.ts";
 import { audioEngine } from "@/renderer/lib/audio/audioEngine.ts";
 import { errorSound } from "@/renderer/lib/audio/sounds/error.ts";
 import { keySounds } from "@/renderer/lib/audio/keys/special.ts";
-import { CommandContexts, ProcessedCommandResult } from "@/renderer/lib/commands/processedCommandResult.ts";
+import {
+  CommandContexts,
+  ProcessedCommandResult
+} from "@/renderer/lib/commands/processedCommandResult.ts";
 import React from "react";
 
 /**
@@ -27,8 +30,7 @@ class CommandProcessor {
   private localHistory: string[] = [];
 
   constructor(contexts: CommandContexts) {
-
-    audioEngine.initialize()
+    audioEngine.initialize();
 
     this.contexts = contexts;
 
@@ -39,7 +41,7 @@ class CommandProcessor {
   setLocalHistory(localHistory: string[]) {
     this.localHistory = localHistory;
     this.contexts.localHistory = localHistory;
-    this.resetIndex()
+    this.resetIndex();
   }
 
   /**
@@ -60,7 +62,11 @@ class CommandProcessor {
    * @param depth
    * @returns A ProcessedCommandResult object for the Terminal to orchestrate.
    */
-  process(input: string, providedVars: Record<string, string> = this.vars, depth = 0): ProcessedCommandResult {
+  process(
+    input: string,
+    providedVars: Record<string, string> = this.vars,
+    depth = 0
+  ): ProcessedCommandResult {
     this.setLocalHistory(this.localHistory.concat([input]));
 
     const trimmedInput = input.trim();
@@ -68,7 +74,11 @@ class CommandProcessor {
       return { output: "", actions: [] };
     }
 
-    let { variables, command: commandName, args } = CommandParser.parse(input, providedVars, this, depth);
+    let {
+      variables,
+      command: commandName,
+      args
+    } = CommandParser.parse(input, providedVars, this, depth);
 
     this.vars = variables;
 
@@ -97,7 +107,7 @@ class CommandProcessor {
 
       // 1. Play the sound blueprint if it exists.
       if (soundBlueprint) {
-        audioEngine.playSoundFromBlueprint(soundBlueprint)
+        audioEngine.playSoundFromBlueprint(soundBlueprint);
       }
       // 3. Return the final, processed result for the orchestrator.
       return {
@@ -108,45 +118,45 @@ class CommandProcessor {
     } else {
       // Handle the case where the command is not found.
       // 1. Play the sound blueprint if it exists.
-      audioEngine.playSoundFromBlueprint(errorSound)
+      audioEngine.playSoundFromBlueprint(errorSound);
       return {
-        output:
-          `Command not found: ${commandName}\n`,
+        output: `Command not found: ${commandName}\n`,
         actions: []
-      }
+      };
     }
   }
 
-  public handleKey(e: React.KeyboardEvent<HTMLInputElement>, setInput: (item: string) => void): void {
-
-    if (e.key !== 'Tab') {
+  public handleKey(
+    e: React.KeyboardEvent<HTMLInputElement>,
+    setInput: (item: string) => void
+  ): void {
+    if (e.key !== "Tab") {
       this.contexts.predictor.reset();
       if (this.contexts.predictions.length > 0) {
         this.contexts.setPredictions([]);
       }
     }
-    if (!['ArrowUp', 'ArrowDown'].includes(e.key)) {
+    if (!["ArrowUp", "ArrowDown"].includes(e.key)) {
       this.resetIndex();
     }
 
     let newIndex;
     switch (e.key) {
       case "ArrowUp":
-        e.preventDefault()
+        e.preventDefault();
         if (this.localHistory.length === 0) break;
-        newIndex = Math.max(this.commandIndex - 1, 0)
+        newIndex = Math.max(this.commandIndex - 1, 0);
         this.commandIndex = newIndex;
 
         setInput(this.localHistory[newIndex]);
         break;
       case "ArrowDown":
-        e.preventDefault()
+        e.preventDefault();
         if (this.commandIndex === this.localHistory.length - 1) {
           setInput("");
           this.resetIndex();
-        }
-        else {
-          newIndex = Math.min(this.commandIndex + 1, this.localHistory.length)
+        } else {
+          newIndex = Math.min(this.commandIndex + 1, this.localHistory.length);
           this.commandIndex = newIndex;
           setInput(this.localHistory[newIndex]);
         }
@@ -161,10 +171,9 @@ class CommandProcessor {
 
         if (Array.isArray(prediction)) {
           this.contexts.setPredictions(prediction);
-        }
-        else {
+        } else {
           this.contexts.setPredictions([]);
-          setInput(prediction)
+          setInput(prediction);
         }
         break;
       case "C":
@@ -179,24 +188,22 @@ class CommandProcessor {
 
     const character = e.key;
 
-    const special = /[^\w\s]/
+    const special = /[^\w\s]/;
 
-    const frequency =
-      character.match(special) ? 1200
-        : (250 + (e.key.charCodeAt(0) * 5) % 800);
+    const frequency = character.match(special) ? 1200 : 250 + ((e.key.charCodeAt(0) * 5) % 800);
 
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
       audioEngine.playSoundFromBlueprint({
         sources: [
           {
-            type: 'oscillator',
-            oscillatorType: 'triangle',
+            type: "oscillator",
+            oscillatorType: "triangle",
             frequency
           }
         ],
         envelope: { attack: 0.005, decay: 0.05, sustain: 0.2, release: 0.045 },
         duration: 0.1
-      })
+      });
     }
   }
 
@@ -213,4 +220,4 @@ class CommandProcessor {
 //   return commandProcessor.process(input)
 // }
 
-export default CommandProcessor
+export default CommandProcessor;

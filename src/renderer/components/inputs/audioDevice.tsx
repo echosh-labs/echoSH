@@ -1,17 +1,22 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/renderer/components/ui/select.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/renderer/components/ui/select.tsx";
 import { useEffect, useState } from "react";
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 
-
-export default function AudioDeviceSelect({...props}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-
+export default function AudioDeviceSelect({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Root>) {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
 
   useEffect(() => {
     window.navigator.mediaDevices.enumerateDevices().then((devices) => {
-
-      const audioDevices = devices.filter(d => d.kind === "audiooutput");
+      const audioDevices = devices.filter((d) => d.kind === "audiooutput");
 
       setDevices(audioDevices);
     });
@@ -30,10 +35,11 @@ export default function AudioDeviceSelect({...props}: React.ComponentProps<typeo
       </SelectTrigger>
       <SelectContent>
         {devices.map((device) => (
-          <SelectItem key={device.deviceId} value={device.deviceId}>{device.label}</SelectItem>
+          <SelectItem key={device.deviceId} value={device.deviceId}>
+            {device.label}
+          </SelectItem>
         ))}
       </SelectContent>
     </Select>
   );
-
 }

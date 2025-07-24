@@ -1,4 +1,12 @@
-import React, { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import CommandProcessor from "@/renderer/lib/commands/commandProcessor.ts";
 import { CommandPrediction } from "@/renderer/lib/commands/commandPrediction.ts";
 import { coreCommands } from "@/renderer/definitions/commands/core";
@@ -7,7 +15,6 @@ import { EffectController } from "@/renderer/lib/text/effectController.tsx";
 import { HistoryItem } from "@/renderer/types/terminal.ts";
 import { ProcessedCommandResult } from "@/renderer/lib/commands/processedCommandResult.ts";
 import { AppSettings } from "@/renderer/types/app.ts";
-
 
 export type TerminalContext = {
   version: string;
@@ -26,28 +33,23 @@ export type TerminalContext = {
 
   handleKey: (e: React.KeyboardEvent<HTMLInputElement>, setInput: (text: string) => void) => void;
   execute: (text: string) => ProcessedCommandResult;
-}
+};
 
 // @ts-expect-error none
 const TerminalContext = createContext<TerminalContext>();
 
-export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
+export const TerminalContextProvider = ({ children }: { children: ReactNode }) => {
+  const [version, setVersion] = useState<string>("0.0.0");
+  const [arch, setArch] = useState<string>("unknown");
+  const [latency, setLatency] = useState<boolean>(false);
+  const [history, _setHistory] = useState<HistoryItem[]>([]);
+  const [predictions, setPredictions] = useState<string[]>([]);
+  const [settings, setSettings] = useState<Partial<AppSettings>>({});
 
-  const [version, setVersion]           = useState<string>("0.0.0");
-  const [arch, setArch]                 = useState<string>("unknown");
-  const [latency, setLatency]           = useState<boolean>(false);
-  const [history, _setHistory]          = useState<HistoryItem[]>([]);
-  const [predictions, setPredictions]   = useState<string[]>([]);
-  const [settings, setSettings]         = useState<Partial<AppSettings>>({})
+  const theme = useTheme();
 
-  const theme          = useTheme();
-
-  const effects   = useMemo<EffectController>(() =>
-    new EffectController(),
-  []);
-  const predictor = useMemo<CommandPrediction>(() =>
-    new CommandPrediction(coreCommands),
-  []);
+  const effects = useMemo<EffectController>(() => new EffectController(), []);
+  const predictor = useMemo<CommandPrediction>(() => new CommandPrediction(coreCommands), []);
 
   const processor = useRef<CommandProcessor>(
     new CommandProcessor({
@@ -60,7 +62,7 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
 
       setLatency,
       setPredictions,
-      setHistory: _setHistory,
+      setHistory: _setHistory
     })
   );
 
@@ -90,9 +92,16 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
     execute: (command) => {
       const result = processor.current.process(command);
       const oldHistory = history.slice(-999);
-      const newHistory = oldHistory.slice(-999).concat([
-        { id: oldHistory.length, command: command, output: result.output, cleared: command === "clear" }
-      ])
+      const newHistory = oldHistory
+        .slice(-999)
+        .concat([
+          {
+            id: oldHistory.length,
+            command: command,
+            output: result.output,
+            cleared: command === "clear"
+          }
+        ]);
       setHistory(newHistory);
       return result;
     }
@@ -110,7 +119,7 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
       setArch(data.arch);
       if (data.history) {
         setHistory(data.history);
-        processor.current.setLocalHistory(data.history.map(h => h.command));
+        processor.current.setLocalHistory(data.history.map((h) => h.command));
       }
       setSettings(data.settings);
     });
@@ -120,11 +129,8 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
     };
   }, []);
 
-
-  return (
-    <TerminalContext.Provider value={value}>{children}</TerminalContext.Provider>
-  )
-}
+  return <TerminalContext.Provider value={value}>{children}</TerminalContext.Provider>;
+};
 
 export function useTerminalContext() {
   return useContext(TerminalContext);

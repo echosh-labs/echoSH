@@ -5,7 +5,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-image: url('wavy-lines.svg');
+  background-image: url("wavy-lines.svg");
   background-size: cover;
   user-select: text;
   font-family: "Source Code Pro", monospace;
@@ -37,7 +37,8 @@ code {
   margin-bottom: 80px;
 }
 
-button, input {
+button,
+input {
   app-region: no-drag;
 }
 
@@ -136,7 +137,7 @@ button, input {
   bottom: 30px;
   margin: 0 auto;
   padding: 15px 0;
-  font-family: 'Menlo', 'Lucida Console', monospace;
+  font-family: "Menlo", "Lucida Console", monospace;
   display: inline-flex;
   overflow: hidden;
   align-items: center;
@@ -225,16 +226,16 @@ button, input {
 /* src/renderer/src/assets/main.css */
 
 :root {
-  --background: #0D1117;
-  --foreground: #C9D1D9;
-  --prompt: #58A6FF;
-  --input: #79C0FF;
-  --output: #8B949E;
-  --warning: #F0B935;
-  --border: #30363D;
+  --background: #0d1117;
+  --foreground: #c9d1d9;
+  --prompt: #58a6ff;
+  --input: #79c0ff;
+  --output: #8b949e;
+  --warning: #f0b935;
+  --border: #30363d;
   --widget-bg: rgba(22, 27, 34, 0.85);
 
-  font-family: 'Fira Code', 'Courier New', monospace;
+  font-family: "Fira Code", "Courier New", monospace;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -345,7 +346,6 @@ html,
   }
 }
 .cmd-predictions {
-
 }
 ::-webkit-scrollbar {
   width: 8px;

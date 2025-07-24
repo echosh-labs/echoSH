@@ -1,4 +1,3 @@
-
 // declare const BRIDGE: typeof import("@/main/preload.ts").BRIDGE;
 
 declare global {
@@ -6,4 +5,4 @@ declare global {
     BRIDGE: typeof import("@/main/preload.ts").BRIDGE;
   }
 }
-export {}
+export {};

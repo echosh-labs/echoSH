@@ -1,17 +1,17 @@
 // file: src/renderer/src/definitions/commands/core/clear.ts
-import { CommandDefinition } from '../types'
-import { SoundBlueprint } from '../../../lib/audio/audioBlueprints'
+import { CommandDefinition } from "../types";
+import { SoundBlueprint } from "../../../lib/audio/audioBlueprints";
 
 export const echoEffect: SoundBlueprint = {
   sources: [
     {
-      type: 'oscillator',
-      oscillatorType: 'triangle',
+      type: "oscillator",
+      oscillatorType: "triangle",
       frequency: 700 // Clicky, high-mid frequency for a clear echo
     },
     {
-      type: 'noise',
-      noiseType: 'white'
+      type: "noise",
+      noiseType: "white"
     }
   ],
   envelope: {
@@ -21,15 +21,15 @@ export const echoEffect: SoundBlueprint = {
     release: 0.3
   },
   filter: {
-    type: 'biquad',
-    filterType: 'highpass',
+    type: "biquad",
+    filterType: "highpass",
     frequency: 400,
     Q: 0.7
   },
   delay: {
     delayTime: 0.22, // The echo time in seconds
-    feedback: 0.47,  // How much of the echo repeats
-    mix: 0.34        // Wet/dry mix for an obvious echo
+    feedback: 0.47, // How much of the echo repeats
+    mix: 0.34 // Wet/dry mix for an obvious echo
   },
   reverb: {
     decay: 0.4, // A short, "spring-like" reverb tail
@@ -37,7 +37,7 @@ export const echoEffect: SoundBlueprint = {
     reverse: false
   },
   panner: {
-    type: 'stereo',
+    type: "stereo",
     pan: 0 // Keep it center, or animate if you want
   },
   compressor: {
@@ -50,13 +50,12 @@ export const echoEffect: SoundBlueprint = {
   duration: 0.5
 };
 
-
 export const echoCommand: CommandDefinition = {
-  name: 'echo',
-  description: 'Return the provided args back.',
+  name: "echo",
+  description: "Return the provided args back.",
   soundBlueprint: echoEffect,
   execute: (args) => ({
     output: (args ?? []).join(" ")
   }),
   argSet: []
-}
+};

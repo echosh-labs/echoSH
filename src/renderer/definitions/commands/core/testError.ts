@@ -1,15 +1,15 @@
 // file: src/renderer/src/definitions/commands/core/testError.ts
-import { CommandDefinition } from '../types'
+import { CommandDefinition } from "../types";
 
 export const testErrorCommand: CommandDefinition = {
-  name: 'test:error',
-  description: 'Triggers the custom error sound for testing.',
+  name: "test:error",
+  description: "Triggers the custom error sound for testing.",
   soundBlueprint: {
     sources: [
-      { type: 'oscillator', oscillatorType: 'square', frequency: 150 },
+      { type: "oscillator", oscillatorType: "square", frequency: 150 },
       {
-        type: 'oscillator',
-        oscillatorType: 'square',
+        type: "oscillator",
+        oscillatorType: "square",
         frequency: 150 * Math.pow(1.05946, 6), // Tritone
         detune: 10
       }
@@ -18,7 +18,7 @@ export const testErrorCommand: CommandDefinition = {
     duration: 0.5
   },
   execute: () => ({
-    output: 'Error: This is a test error.'
+    output: "Error: This is a test error."
   }),
   argSet: []
-}
+};

@@ -12,4 +12,4 @@ export const errorSound: SoundBlueprint = {
   ],
   envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 },
   duration: 0.5
-}
+};

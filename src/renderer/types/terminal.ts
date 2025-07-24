@@ -1,6 +1,5 @@
-
 export interface HistoryItem {
-  id: number
+  id: number;
   command: string;
   output: React.ReactNode;
   cleared?: boolean;

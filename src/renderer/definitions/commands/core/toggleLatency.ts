@@ -1,5 +1,5 @@
 // file: src/renderer/src/definitions/commands/core/toggleLatency.ts
-import { CommandDefinition } from '../types'
+import { CommandDefinition } from "../types";
 
 export const toggleLatencyCommand: CommandDefinition = {
   name: "toggle:latency",
@@ -11,10 +11,10 @@ export const toggleLatencyCommand: CommandDefinition = {
     duration: 0.3
   },
   execute: (_args, contexts) => {
-    contexts.setLatency(!contexts.latency)
+    contexts.setLatency(!contexts.latency);
     return {
       output: "Toggling audio latency widget..."
-    }
+    };
   },
   argSet: []
 };

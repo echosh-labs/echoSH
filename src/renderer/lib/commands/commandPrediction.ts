@@ -1,7 +1,6 @@
 import { CommandDefinition } from "@/renderer/definitions/commands/types.ts";
 
 export class CommandPrediction {
-
   commandList: CommandDefinition[];
 
   multiPrediction: boolean = false;
@@ -13,21 +12,20 @@ export class CommandPrediction {
     this.commandList = commandList;
   }
 
-
-  predict(input: string): string|string[] {
+  predict(input: string): string | string[] {
     if (input.length === 0) return "";
 
     if (this.doublePressStartText.length > 0) {
       input = this.doublePressStartText;
     }
 
-    const chars = input.split(' ');
+    const chars = input.split(" ");
 
     const lastWord = chars[chars.length - 1];
 
-
-
-    const found = this.commandList.filter(cmd => cmd.name.toLowerCase().startsWith(lastWord.toLowerCase()));
+    const found = this.commandList.filter((cmd) =>
+      cmd.name.toLowerCase().startsWith(lastWord.toLowerCase())
+    );
 
     // Check if a command is found that is exactly the one entered
 
@@ -41,12 +39,12 @@ export class CommandPrediction {
     }
 
     if (this.multiPrediction) {
-      this.doublePress = ((this.doublePress) % found.length) + 1;
+      this.doublePress = (this.doublePress % found.length) + 1;
       return chars.slice(0, -1).join(" ") + found[this.doublePress - 1].name;
     } else {
       this.doublePressStartText = input;
       this.multiPrediction = true;
-      return found.map(cmd => cmd.name);
+      return found.map((cmd) => cmd.name);
     }
   }
 

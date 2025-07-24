@@ -18,8 +18,7 @@ export const BRIDGE = {
   saveHistory: async (historyData: any) => {
     await ipcRenderer.invoke("history:save", historyData);
   },
-  saveSettings: async (historyData: any) =>
-    await ipcRenderer.invoke("settings:save", historyData),
+  saveSettings: async (historyData: any) => await ipcRenderer.invoke("settings:save", historyData)
 };
 
 console.log("Preload script loaded");

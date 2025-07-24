@@ -3,10 +3,9 @@ import App from "@/renderer/App.tsx";
 import { ThemeProvider } from "./lib/contexts/themeProvider";
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import SettingsPage from './components/Settings';
+import SettingsPage from "./components/Settings";
 import AppBar from "@/renderer/components/AppBar.tsx";
 import { Toaster } from "@/renderer/components/ui/sonner.tsx";
-
 
 export default function Wrappers() {
   return (
@@ -22,5 +21,5 @@ export default function Wrappers() {
         </BrowserRouter>
       </TerminalContextProvider>
     </ThemeProvider>
-  )
+  );
 }

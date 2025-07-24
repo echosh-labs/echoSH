@@ -5,32 +5,29 @@
  * This engine creates sounds from scratch based on declarative blueprints.
  */
 
-import {
-  SoundBlueprint
-} from './audioBlueprints';
-import * as Tone from 'tone';
+import { SoundBlueprint } from "./audioBlueprints";
+import * as Tone from "tone";
 
 import { backspaceSwoosh } from "@/renderer/lib/audio/keys/backspace.ts";
 
-
 interface ExtendedWindow extends Window {
-  AudioContext?: typeof AudioContext
-  webkitAudioContext?: typeof AudioContext
+  AudioContext?: typeof AudioContext;
+  webkitAudioContext?: typeof AudioContext;
 }
 
 interface CustomAudioContext extends AudioContext {
-  sinkId?: string
+  sinkId?: string;
 }
 
 export interface LatencyInfo {
-  baseLatency: number
-  outputLatency: number
-  sinkId: string
+  baseLatency: number;
+  outputLatency: number;
+  sinkId: string;
 }
 
 class AudioEngine {
-  private static instance: AudioEngine
-  private audioContext: CustomAudioContext | null = null
+  private static instance: AudioEngine;
+  private audioContext: CustomAudioContext | null = null;
   private mainGain: Tone.Gain | null = null;
   private keystrokeSynth: Tone.PolySynth | null = null;
   private instruments: Map<string, Tone.PolySynth> = new Map();
@@ -41,15 +38,15 @@ class AudioEngine {
   }
 
   public initialize(): void {
-    if (this.audioContext) return
-    const extendedWindow = window as unknown as ExtendedWindow
-    const AudioContextClass = extendedWindow.AudioContext || extendedWindow.webkitAudioContext
+    if (this.audioContext) return;
+    const extendedWindow = window as unknown as ExtendedWindow;
+    const AudioContextClass = extendedWindow.AudioContext || extendedWindow.webkitAudioContext;
 
     if (AudioContextClass) {
       // Specify 'interactive' latency for faster audio response, crucial for UI feedback.
       this.audioContext = new AudioContextClass({
-        latencyHint: 'interactive'
-      }) as CustomAudioContext
+        latencyHint: "interactive"
+      }) as CustomAudioContext;
       // Tone.js needs to know which AudioContext to use.
       Tone.setContext(this.audioContext);
       // A smaller look-ahead time reduces scheduling latency. The default of 100ms
@@ -62,27 +59,27 @@ class AudioEngine {
 
       // Create a reusable synth for keystrokes and connect it to our main gain.
       this.keystrokeSynth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'triangle' },
+        oscillator: { type: "triangle" },
         envelope: { attack: 0.005, decay: 0.05, sustain: 0.2, release: 0.045 },
         volume: -12 // A bit quieter in dB
       });
       this.keystrokeSynth.connect(this.mainGain);
 
-      this.registerInstrument('backspace', backspaceSwoosh);
+      this.registerInstrument("backspace", backspaceSwoosh);
 
-      console.log('AudioEngine Initialized.')
+      console.log("AudioEngine Initialized.");
     } else {
-      console.error('Web Audio API is not supported in this browser.')
+      console.error("Web Audio API is not supported in this browser.");
     }
   }
 
   public getLatencyInfo(): LatencyInfo | null {
-    if (!this.audioContext) return null
+    if (!this.audioContext) return null;
     return {
       baseLatency: this.audioContext.baseLatency,
       outputLatency: this.audioContext.outputLatency,
-      sinkId: this.audioContext.sinkId || ''
-    }
+      sinkId: this.audioContext.sinkId || ""
+    };
   }
 
   /**
@@ -97,7 +94,7 @@ class AudioEngine {
     // with minimal latency. If the context is suspended, Tone.js will queue this
     // event and play it as soon as the context is resumed by Tone.start().
     this.ensureActiveContext();
-    this.keystrokeSynth.triggerAttackRelease(frequency, '16n', Tone.now());
+    this.keystrokeSynth.triggerAttackRelease(frequency, "16n", Tone.now());
   }
 
   /**
@@ -113,7 +110,7 @@ class AudioEngine {
     // We only take the first source for the basic oscillator type.
     const synthOptions: any = {
       oscillator: {
-        type: (blueprint.sources[0] as any)?.oscillatorType || 'sine'
+        type: (blueprint.sources[0] as any)?.oscillatorType || "sine"
       },
       envelope: blueprint.envelope
     };
@@ -122,7 +119,7 @@ class AudioEngine {
 
     // Create the effects chain from the blueprint
     const effects = [];
-    if (blueprint.filter && blueprint.filter.type === 'biquad') {
+    if (blueprint.filter && blueprint.filter.type === "biquad") {
       effects.push(new Tone.Filter(blueprint.filter.frequency, blueprint.filter.filterType));
     }
     if (blueprint.distortion) {
@@ -150,7 +147,7 @@ class AudioEngine {
     // Fire-and-forget to avoid adding latency on a hot path.
     this.ensureActiveContext();
     // For one-shot sounds, we can use a default note and duration.
-    instrument.triggerAttackRelease('C4', '8n', Tone.now());
+    instrument.triggerAttackRelease("C4", "8n", Tone.now());
   }
 
   /**
@@ -180,16 +177,13 @@ class AudioEngine {
       effectsChain.push(nodes.distortion);
     }
     // Add a type guard for safer filter creation
-    if (blueprint.filter && blueprint.filter.type === 'biquad') {
-      nodes.filter = new Tone.Filter(
-        blueprint.filter.frequency,
-        blueprint.filter.filterType
-      );
+    if (blueprint.filter && blueprint.filter.type === "biquad") {
+      nodes.filter = new Tone.Filter(blueprint.filter.frequency, blueprint.filter.filterType);
       (nodes.filter as Tone.Filter).Q.value = blueprint.filter.Q;
       if (blueprint.filter.gain) (nodes.filter as Tone.Filter).gain.value = blueprint.filter.gain;
       effectsChain.push(nodes.filter);
     }
-    if (blueprint.panner && blueprint.panner.type === 'stereo') {
+    if (blueprint.panner && blueprint.panner.type === "stereo") {
       nodes.panner = new Tone.Panner(blueprint.panner.pan);
       effectsChain.push(nodes.panner);
     }
@@ -201,11 +195,11 @@ class AudioEngine {
     // Create sources and connect them through the chain to the envelope
     const sources = blueprint.sources.map((sourceBp) => {
       let sourceNode: Tone.Noise | Tone.Oscillator;
-      if (sourceBp.type === 'oscillator') {
+      if (sourceBp.type === "oscillator") {
         sourceNode = new Tone.Oscillator({
           type: sourceBp.oscillatorType,
           frequency: sourceBp.frequency,
-          detune: sourceBp.detune ?? 0,
+          detune: sourceBp.detune ?? 0
         });
       } else {
         sourceNode = new Tone.Noise(sourceBp.noiseType);
@@ -238,25 +232,25 @@ class AudioEngine {
         // The LFO will oscillate between -depth and +depth, which is
         // then added to the target parameter's base value.
         min: -blueprint.lfo.depth,
-        max: blueprint.lfo.depth,
+        max: blueprint.lfo.depth
       });
       lfo.type = blueprint.lfo.type;
 
       const { target, param } = blueprint.lfo.affects;
 
       switch (target) {
-        case 'source':
-          if (param === 'frequency') {
-            (nodes.sources as (Tone.Oscillator | Tone.Noise)[]).forEach(s => {
+        case "source":
+          if (param === "frequency") {
+            (nodes.sources as (Tone.Oscillator | Tone.Noise)[]).forEach((s) => {
               if (s instanceof Tone.Oscillator) {
                 lfo.connect(s.frequency);
               }
             });
           }
           break;
-        case 'filter':
+        case "filter":
           const filterNode = nodes.filter as Tone.Filter;
-          if (filterNode && (param === 'frequency' || param === 'Q')) {
+          if (filterNode && (param === "frequency" || param === "Q")) {
             lfo.connect(filterNode[param]);
           }
           break;
@@ -269,14 +263,14 @@ class AudioEngine {
   // --- Singleton Access ---
   public static getInstance(): AudioEngine {
     if (!AudioEngine.instance) {
-      AudioEngine.instance = new AudioEngine()
+      AudioEngine.instance = new AudioEngine();
     }
-    return AudioEngine.instance
+    return AudioEngine.instance;
   }
 
   public reset() {
     // 1. Stop all synths/instruments and disconnect
-    this.instruments.forEach(synth => {
+    this.instruments.forEach((synth) => {
       synth.releaseAll();
       synth.disconnect();
     });
@@ -297,17 +291,16 @@ class AudioEngine {
 
     // 4. Close AudioContext and null it out
     if (this.audioContext) {
-      this.audioContext.close()
-        .then(() => {
-          this.initialize();
-        });
+      this.audioContext.close().then(() => {
+        this.initialize();
+      });
       this.audioContext = null;
     }
     return true;
   }
 
   public async ensureActiveContext(): Promise<void> {
-    if (this.audioContext && this.audioContext.state === 'suspended') {
+    if (this.audioContext && this.audioContext.state === "suspended") {
       // Tone.start() will resume the underlying AudioContext.
 
       this.audioContext?.resume();
@@ -315,8 +308,6 @@ class AudioEngine {
       await Tone.start();
     }
   }
-
-
 }
 
-export const audioEngine = AudioEngine.getInstance()
+export const audioEngine = AudioEngine.getInstance();

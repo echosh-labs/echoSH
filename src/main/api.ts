@@ -1,9 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron";
-import settings from 'electron-settings';
+import settings from "electron-settings";
 import { HistoryItem } from "@/renderer/types/terminal";
 import { AppInitData, AppSettings } from "@/renderer/types/app";
-
-
 
 async function saveHistory(history: HistoryItem[] = []): Promise<void> {
   await settings.set("history", history as any);
@@ -11,20 +9,18 @@ async function saveHistory(history: HistoryItem[] = []): Promise<void> {
 // --- End History Persistence Setup ---
 
 export async function sendAppInit(mainWindow: BrowserWindow) {
+  const history = (await settings.get("history")) ?? ([] as unknown as HistoryItem[]);
 
-  const history = await settings.get("history") ?? [] as unknown as HistoryItem[];
-
-  const preferences = await settings.get("settings") ?? {};
+  const preferences = (await settings.get("settings")) ?? {};
 
   const payload: AppInitData = {
     arch: process.platform,
-    version: require('electron').app.getVersion(),
-    history: history as undefined|HistoryItem[],
-    settings: preferences as Partial<AppSettings>,
+    version: require("electron").app.getVersion(),
+    history: history as undefined | HistoryItem[],
+    settings: preferences as Partial<AppSettings>
   };
-  mainWindow.webContents.send('app:init', payload);
+  mainWindow.webContents.send("app:init", payload);
 }
-
 
 ipcMain.on("request:appInit", (event) => {
   const contents = BrowserWindow.fromWebContents(event.sender);
@@ -37,10 +33,9 @@ ipcMain.on("request:appInit", (event) => {
   }
 });
 
-
 ipcMain.handle("history:save", (_event, args) => {
   saveHistory(args);
-})
+});
 ipcMain.handle("settings:save", (_event, userPreferences) => {
   settings.set("settings", userPreferences);
-})
+});

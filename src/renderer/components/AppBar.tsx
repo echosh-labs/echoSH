@@ -5,12 +5,7 @@ import { Home, Settings2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 export default function AppBar() {
-
-  const {
-    version,
-    arch,
-    latency
-  } = useTerminalContext();
+  const { version, arch, latency } = useTerminalContext();
 
   const { pathname } = useLocation();
 
@@ -22,15 +17,13 @@ export default function AppBar() {
       }}
       className="app-bar sticky top-0 flex justify-between border-b border-accent text-nowrap overflow-visible"
     >
-      <div
-        className={`p-2 h-full w-full flex items-center justify-between`}
-      >
+      <div className={`p-2 h-full w-full flex items-center justify-between`}>
         <h1 className="text-lg font-bold text-shadow-background pl-2">Sirocco v{version}</h1>
-        {latency && (<LatencyWidget />)}
+        {latency && <LatencyWidget />}
         {pathname === "/settings" && (
           <Link to="">
             <Button variant="ghost">
-              <Home/>
+              <Home />
             </Button>
           </Link>
         )}

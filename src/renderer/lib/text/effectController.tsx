@@ -3,15 +3,91 @@ import wordsToColors from "@/renderer/assets/words.json";
 import { ReactNode } from "react";
 
 const EXCLUDED_WORDS: string[] = [
-  "the","and","a","an","of","in","on","at","to","for","from","by","with","about","as","is","it","this","that",
-  "these","those","be","was","were","am","are","but","or","if","than","then","so","not","no","nor","do","does",
-  "did","has","have","had","can","could","will","would","shall","should","may","might","must","been","he","she",
-  "him","her","his","hers","they","them","their","theirs","we","us","our","ours","you","your","yours","i","me",
-  "my","mine","just","who","whom","whose","which","what","when","where","why","how"
+  "the",
+  "and",
+  "a",
+  "an",
+  "of",
+  "in",
+  "on",
+  "at",
+  "to",
+  "for",
+  "from",
+  "by",
+  "with",
+  "about",
+  "as",
+  "is",
+  "it",
+  "this",
+  "that",
+  "these",
+  "those",
+  "be",
+  "was",
+  "were",
+  "am",
+  "are",
+  "but",
+  "or",
+  "if",
+  "than",
+  "then",
+  "so",
+  "not",
+  "no",
+  "nor",
+  "do",
+  "does",
+  "did",
+  "has",
+  "have",
+  "had",
+  "can",
+  "could",
+  "will",
+  "would",
+  "shall",
+  "should",
+  "may",
+  "might",
+  "must",
+  "been",
+  "he",
+  "she",
+  "him",
+  "her",
+  "his",
+  "hers",
+  "they",
+  "them",
+  "their",
+  "theirs",
+  "we",
+  "us",
+  "our",
+  "ours",
+  "you",
+  "your",
+  "yours",
+  "i",
+  "me",
+  "my",
+  "mine",
+  "just",
+  "who",
+  "whom",
+  "whose",
+  "which",
+  "what",
+  "when",
+  "where",
+  "why",
+  "how"
 ];
 
 export class EffectController {
-
   // Add this if you want the array per-instance:
   private excludedWords: string[];
   private relatedWordsMemo: Record<string, string[]> = {};
@@ -19,7 +95,7 @@ export class EffectController {
   public maxCompareWords = 100;
 
   constructor() {
-    this.excludedWords = EXCLUDED_WORDS.map(w => w.toLowerCase());
+    this.excludedWords = EXCLUDED_WORDS.map((w) => w.toLowerCase());
   }
 
   tokenize(text: string): string[] {
@@ -30,7 +106,7 @@ export class EffectController {
     const tokens = this.tokenize(txt);
 
     let toCheck = tokens.filter(
-      t => /^\w+$/.test(t) && !this.excludedWords.includes(t.toLowerCase())
+      (t) => /^\w+$/.test(t) && !this.excludedWords.includes(t.toLowerCase())
     );
 
     const relatedWordsMap: Record<string, string[]> = {};
@@ -66,7 +142,9 @@ export class EffectController {
     // Check memoization first
     if (this.relatedWordsMemo[key]) return this.relatedWordsMemo[key];
 
-    const resp = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(word)}&max=${this.maxCompareWords}`);
+    const resp = await fetch(
+      `https://api.datamuse.com/words?ml=${encodeURIComponent(word)}&max=${this.maxCompareWords}`
+    );
     const data = (await resp.json()) as DataMuseWord[];
     const result = [word].concat(data.map((d) => d.word));
     this.relatedWordsMemo[key] = result; // memoize for next time

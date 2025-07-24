@@ -1,7 +1,7 @@
 // A token can be a word or punctuation
 export type Token = {
   value: string;
-  type: 'word' | 'punctuation' | 'whitespace';
+  type: "word" | "punctuation" | "whitespace";
 };
 
 // An effect applies a React style or element to a token

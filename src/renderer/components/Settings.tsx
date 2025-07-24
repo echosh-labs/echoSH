@@ -1,4 +1,11 @@
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/renderer/components/ui/form.tsx";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/renderer/components/ui/form.tsx";
 import { useForm } from "react-hook-form";
 import { AppSettings } from "@/renderer/types/app.ts";
 import { useTerminalContext } from "@/renderer/lib/contexts/terminalContext.tsx";
@@ -9,8 +16,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Settings() {
-
-  const [saving, setSaving]   = useState(false);
+  const [saving, setSaving] = useState(false);
   const [changed, setChanged] = useState(false);
 
   const terminalContext = useTerminalContext();

@@ -7,20 +7,20 @@ import { coreCommands } from "@/renderer/definitions/commands/core/index.ts";
 const HELP_PAD_WIDTH = 28;
 
 export const helpCommand: CommandDefinition = {
-  name: 'help',
-  description: 'Displays a list of available commands.',
+  name: "help",
+  description: "Displays a list of available commands.",
   soundBlueprint: {
-    sources: [{ type: 'oscillator', oscillatorType: 'sine', frequency: 440 }],
+    sources: [{ type: "oscillator", oscillatorType: "sine", frequency: 440 }],
     envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.1 },
     duration: 0.4
   },
   execute: (args = []) => {
-    let helpText = 'Available commands:';
+    let helpText = "Available commands:";
     let commands = coreCommands;
 
     if (args.length > 0) {
       const targetCommand = args[0].toLowerCase();
-      const foundCommand = commands.find(cmd => cmd.name === targetCommand);
+      const foundCommand = commands.find((cmd) => cmd.name === targetCommand);
       if (foundCommand) {
         helpText = `Help for command: ${foundCommand.name}`;
         commands = [foundCommand];
@@ -33,7 +33,7 @@ export const helpCommand: CommandDefinition = {
       helpText += `\n\n  ${command.name.padEnd(HELP_PAD_WIDTH - 2)}${command.description}`;
 
       if (command.argSet) {
-        command.argSet.forEach(arg => {
+        command.argSet.forEach((arg) => {
           helpText += `\n${mapHelpArg(arg, 2)}`;
         });
       }
@@ -44,20 +44,20 @@ export const helpCommand: CommandDefinition = {
     };
   },
   argSet: []
-}
+};
 
 function mapHelpArg(arg: CommandArg, depth = 1): string {
-  if (typeof arg === 'string') return arg;
-  if (depth >= 5) return '`' + (arg.placeholder ?? arg) + '`';
+  if (typeof arg === "string") return arg;
+  if (depth >= 5) return "`" + (arg.placeholder ?? arg) + "`";
 
-  const indent = '  '.repeat(depth);
-  let argDisplay = '';
+  const indent = "  ".repeat(depth);
+  let argDisplay = "";
 
   if (arg.flag || arg.placeholder) {
     argDisplay = [
       ...(arg.flag ? [arg.flag] : []),
-      ...(arg.placeholder ? [`<${arg.placeholder}>`] : []),
-    ].join(' ');
+      ...(arg.placeholder ? [`<${arg.placeholder}>`] : [])
+    ].join(" ");
   } else if (arg.literal) {
     argDisplay = arg.literal;
   }
@@ -69,7 +69,7 @@ function mapHelpArg(arg: CommandArg, depth = 1): string {
   }
 
   if (arg.args) {
-    const subArgs = arg.args.map((a) => mapHelpArg(a, depth + 1)).join('\n');
+    const subArgs = arg.args.map((a) => mapHelpArg(a, depth + 1)).join("\n");
     line += `\n${subArgs}`;
   }
 

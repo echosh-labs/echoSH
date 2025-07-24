@@ -5,7 +5,7 @@
  * ending with `?asset`. Vite uses this suffix to return the
  * resolved public path of a static asset as a string.
  */
-declare module '*?asset' {
-  const src: string
-  export default src
+declare module "*?asset" {
+  const src: string;
+  export default src;
 }

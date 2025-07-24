@@ -5,8 +5,8 @@ export type AppInitData = {
   version: string;
   history?: HistoryItem[];
   settings: Partial<AppSettings>;
-}
+};
 
 export type AppSettings = {
-  outputDevice: any
+  outputDevice: any;
 };

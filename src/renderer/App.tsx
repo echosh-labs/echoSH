@@ -1,8 +1,8 @@
 // src/renderer/src/App.tsx
 
 import React from "react";
-import { Terminal } from './components/Terminal'
-import './assets/App.css'
+import { Terminal } from "./components/Terminal";
+import "./assets/App.css";
 
 /**
  * @file App.tsx
@@ -17,4 +17,4 @@ function App(): React.ReactElement {
   );
 }
 
-export default App
+export default App;
