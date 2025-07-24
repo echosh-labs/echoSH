@@ -88,7 +88,7 @@
     },
     "linux": {
       "target": "deb",
-      "icon": "resources/icon.ico"
+      "icon": "resources/icon.png"
     }
   }
 }
