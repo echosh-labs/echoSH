@@ -79,22 +79,19 @@
       "node_modules/**/*"
     ],
     "directories": {
-      "output": "dist/mac"
+      "output": "dist"
     },
     "mac": {
       "target": "dmg",
-      "icon": "resources/icon.icns",
-      "output": "dist/mac"
+      "icon": "resources/icon.icns"
     },
     "win": {
       "target": "nsis",
-      "icon": "resources/icon.ico",
-      "output": "dist/win"
+      "icon": "resources/icon.ico"
     },
     "linux": {
       "target": "deb",
-      "icon": "resources/icon.ico",
-      "output": "dist/linux"
+      "icon": "resources/icon.ico"
     }
   }
 }
