@@ -9,7 +9,9 @@ import {
   SoundBlueprint
 } from './audioBlueprints';
 import * as Tone from 'tone';
+
 import { backspaceSwoosh } from "@/renderer/lib/audio/keys/backspace.ts";
+
 
 interface ExtendedWindow extends Window {
   AudioContext?: typeof AudioContext
@@ -307,7 +309,9 @@ class AudioEngine {
   public async ensureActiveContext(): Promise<void> {
     if (this.audioContext && this.audioContext.state === 'suspended') {
       // Tone.start() will resume the underlying AudioContext.
+
       this.audioContext?.resume();
+
       await Tone.start();
     }
   }
