@@ -1,7 +1,7 @@
 {
   "name": "sirocco",
   "version": "0.5.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "echoSH transforms your command-line workflow into an immersive, generative audio experience. Every keystroke, command, and process is transmuted into a unique sonic event, turning the act of coding into a practice of composition.",
   "main": "dist/main/index.js",
   "author": {
     "name": "Justin Wood, Josh Wood",
@@ -18,6 +18,7 @@
     "lint": "eslint --cache .",
     "typecheck": "tsc --noEmit --build",
     "dev": "concurrently \"vite\" \"cross-env DEV= ELECTRON_GTK_VERSION=3 tsc-watch -p tsconfig.electron.json --onSuccess \\\"electron .\\\"\"",
+    "preview": "vite build && tsc -p tsconfig.electron.json && cross-env PREVIEW= electron .",
     "build:app": "vite build && tsc -p tsconfig.electron.json",
     "build": "npm run build:app && electron-builder",
     "build:mac": "npm run build:app && electron-builder --mac",
@@ -30,6 +31,7 @@
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
+    "dotenv": "^17.2.0",
     "electron-settings": "^4.0.4",
     "electron-updater": "^6.6.2",
     "lucide-react": "^0.525.0",
@@ -72,8 +74,7 @@
     "productName": "Sirocco",
     "publish": null,
     "files": [
-      "dist/**/*",
-      "node_modules/**/*"
+      "dist/**/*"
     ],
     "directories": {
       "output": "dist"

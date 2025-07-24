@@ -1,6 +1,12 @@
 import { app, BrowserWindow, shell } from 'electron'
 import * as path from 'path'
 
+import dotenv from "dotenv";
+dotenv.config()
+
+const isDev = process.env.DEV != undefined;
+const isPreview = process.env.PREVIEW != undefined;
+
 // Force GTK3 to avoid conflicts with native modules that might be linked against it.
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('gtk-version', '3');
@@ -28,13 +34,18 @@ function createWindow(): BrowserWindow {
 
   })
   // Use the built-in `isPackaged` property to check for development mode
-  if (!app.isPackaged) {
+  if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
+    // ^^^^ make sure this port
+    // matches the port used when
+    // you run 'npm run dev'
     mainWindow.webContents.openDevTools();
-    // mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  }
-  else {
-    mainWindow.loadFile(path.join(app.getAppPath(), '../renderer/index.html'))
+  } else if (isPreview) {
+    mainWindow.webContents.openDevTools();
+    mainWindow.loadFile("dist/index.html");
+    // 3. ^^^^^ this 'dist' folder will be our output folder
+  } else {
+    mainWindow.loadFile("dist/index.html");
   }
 
   return mainWindow;
