@@ -7,6 +7,7 @@ import { Link, useLocation } from "react-router-dom";
 export default function AppBar() {
 
   const {
+    version,
     arch,
     latency
   } = useTerminalContext();
@@ -24,7 +25,7 @@ export default function AppBar() {
       <div
         className={`p-2 h-full w-full flex items-center justify-between`}
       >
-        <h1 className="text-lg font-bold text-shadow-background pl-2">Sirocco v0.2.0</h1>
+        <h1 className="text-lg font-bold text-shadow-background pl-2">Sirocco v{version}</h1>
         {latency && (<LatencyWidget />)}
         {pathname === "/settings" && (
           <Link to="">

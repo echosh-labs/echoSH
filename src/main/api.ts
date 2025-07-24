@@ -22,7 +22,6 @@ export async function sendAppInit(mainWindow: BrowserWindow) {
     history: history as undefined|HistoryItem[],
     settings: preferences as Partial<AppSettings>,
   };
-  console.log("[MAIN] sendAppInit payload:", payload);
   mainWindow.webContents.send('app:init', payload);
 }
 

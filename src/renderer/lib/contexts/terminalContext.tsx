@@ -10,6 +10,7 @@ import { AppSettings } from "@/renderer/types/app.ts";
 
 
 export type TerminalContext = {
+  version: string;
   predictor: CommandPrediction;
   arch: string;
   latency: boolean;
@@ -32,6 +33,7 @@ const TerminalContext = createContext<TerminalContext>();
 
 export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
 
+  const [version, setVersion]           = useState<string>("0.0.0");
   const [arch, setArch]                 = useState<string>("unknown");
   const [latency, setLatency]           = useState<boolean>(false);
   const [history, _setHistory]          = useState<HistoryItem[]>([]);
@@ -68,6 +70,7 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
   }
 
   const value: TerminalContext = {
+    version,
     predictor,
     arch,
     latency,
@@ -103,6 +106,7 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
 
   useEffect(() => {
     window.BRIDGE.onAppInit((data) => {
+      setVersion(data.version);
       setArch(data.arch);
       if (data.history) {
         setHistory(data.history);
