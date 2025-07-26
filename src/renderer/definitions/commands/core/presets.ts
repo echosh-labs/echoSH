@@ -8,7 +8,7 @@
 import { CommandDefinition, CommandResult } from '../types'
 // It's generally better to keep source files within the `src` directory.
 // Consider moving `raw-presets.ts` to `src/renderer/lib/audio/presets/` for better organization.
-import { rawPresets } from '../../../../../raw-presets'
+import { rawPresets } from '../../../lib/audio/raw-presets.ts'
 import { buildBlueprintFromKeywords } from './raw'
 
 const HELP_TEXT = `Usage: presets [subcommand] [query]

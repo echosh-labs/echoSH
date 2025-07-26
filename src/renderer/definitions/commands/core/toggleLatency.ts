@@ -2,15 +2,19 @@
 import { CommandDefinition } from '../types'
 
 export const toggleLatencyCommand: CommandDefinition = {
-  name: 'toggle:latency',
-  description: 'Shows or hides the audio latency diagnostic widget.',
-  staticActions: ['toggleLatencyWidget'],
+  name: "toggle:latency",
+  description: "Shows or hides the audio latency diagnostic widget.",
+  staticActions: ["toggleLatencyWidget"],
   soundBlueprint: {
-    sources: [{ type: 'oscillator', oscillatorType: 'triangle', frequency: 600 }],
+    sources: [{ type: "oscillator", oscillatorType: "triangle", frequency: 600 }],
     envelope: { attack: 0.02, decay: 0.1, sustain: 0.1, release: 0.1 },
     duration: 0.3
   },
-  execute: () => ({
-    output: 'Toggling audio latency widget...'
-  })
-}
+  execute: (_args, contexts) => {
+    contexts.setLatency(!contexts.latency)
+    return {
+      output: "Toggling audio latency widget..."
+    }
+  },
+  argSet: []
+};

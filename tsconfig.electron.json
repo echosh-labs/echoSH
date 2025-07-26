@@ -3,7 +3,8 @@
   "compilerOptions": {
     "module": "CommonJS",
     "outDir": "dist",
-    "noEmit": false
+    "noEmit": false,
+    "esModuleInterop": true
   },
   "include": [
     "src/main",

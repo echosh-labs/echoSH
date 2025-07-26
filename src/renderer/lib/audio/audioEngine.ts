@@ -10,6 +10,9 @@ import {
 } from './audioBlueprints';
 import * as Tone from 'tone';
 
+import { backspaceSwoosh } from "@/renderer/lib/audio/keys/backspace.ts";
+
+
 interface ExtendedWindow extends Window {
   AudioContext?: typeof AudioContext
   webkitAudioContext?: typeof AudioContext
@@ -36,7 +39,7 @@ class AudioEngine {
   private constructor() {
     /* linter-disable-line no-empty-function */
   }
-  
+
   public initialize(): void {
     if (this.audioContext) return
     const extendedWindow = window as unknown as ExtendedWindow
@@ -64,6 +67,8 @@ class AudioEngine {
         volume: -12 // A bit quieter in dB
       });
       this.keystrokeSynth.connect(this.mainGain);
+
+      this.registerInstrument('backspace', backspaceSwoosh);
 
       console.log('AudioEngine Initialized.')
     } else {
@@ -192,7 +197,7 @@ class AudioEngine {
       nodes.compressor = new Tone.Compressor(blueprint.compressor);
       effectsChain.push(nodes.compressor);
     }
-    
+
     // Create sources and connect them through the chain to the envelope
     const sources = blueprint.sources.map((sourceBp) => {
       let sourceNode: Tone.Noise | Tone.Oscillator;
@@ -236,7 +241,7 @@ class AudioEngine {
         max: blueprint.lfo.depth,
       });
       lfo.type = blueprint.lfo.type;
-      
+
       const { target, param } = blueprint.lfo.affects;
 
       switch (target) {
@@ -269,12 +274,49 @@ class AudioEngine {
     return AudioEngine.instance
   }
 
+  public reset() {
+    // 1. Stop all synths/instruments and disconnect
+    this.instruments.forEach(synth => {
+      synth.releaseAll();
+      synth.disconnect();
+    });
+    this.instruments.clear();
+
+    // 2. Stop and disconnect keystroke synth
+    if (this.keystrokeSynth) {
+      this.keystrokeSynth.releaseAll();
+      this.keystrokeSynth.disconnect();
+      this.keystrokeSynth = null;
+    }
+
+    // 3. Disconnect and null main gain
+    if (this.mainGain) {
+      this.mainGain.disconnect();
+      this.mainGain = null;
+    }
+
+    // 4. Close AudioContext and null it out
+    if (this.audioContext) {
+      this.audioContext.close()
+        .then(() => {
+          this.initialize();
+        });
+      this.audioContext = null;
+    }
+    return true;
+  }
+
   public async ensureActiveContext(): Promise<void> {
     if (this.audioContext && this.audioContext.state === 'suspended') {
       // Tone.start() will resume the underlying AudioContext.
+
+      this.audioContext?.resume();
+
       await Tone.start();
     }
   }
+
+
 }
 
 export const audioEngine = AudioEngine.getInstance()

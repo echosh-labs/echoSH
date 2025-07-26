@@ -1,5 +1,5 @@
 import { CommandDefinition, CommandResult } from '../types'
-import { rawPresets } from '../../../../../raw-presets'
+import { rawPresets } from '../../../lib/audio/raw-presets.ts'
 import {
   SoundBlueprint,
   OscillatorType,
@@ -174,6 +174,7 @@ const keywordHandlers: Record<string, KeywordHandler> = {
       type: (parts[1] as OscillatorType) || 'sine',
       frequency: parseFloat(parts[2]) || 5,
       depth: parseFloat(parts[3]) || 100,
+      // @ts-ignore
       affects: (parts[4] as LfoAffects) || 'frequency'
     }
     report.push(`+ Set LFO: ${parts.slice(1).join(':')}`)

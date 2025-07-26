@@ -1,6 +1,7 @@
 // file: src/renderer/src/definitions/commands/core/clear.ts
 import { CommandDefinition } from '../types'
 import { SoundBlueprint } from '../../../lib/audio/audioBlueprints'
+import { stopCommand } from "@/renderer/definitions/commands/core/stop.ts";
 
 /**
  * A subtle "swoosh" sound made from filtered white noise.
@@ -29,7 +30,18 @@ export const clearCommand: CommandDefinition = {
   description: 'Clears the terminal output.',
   staticActions: ['clearHistory'],
   soundBlueprint: clearSound,
-  execute: () => ({
-    output: ''
-  })
+  execute: (_args, contexts) => {
+
+    contexts.setHistory((contexts.history ?? []).map(lh => {
+      lh.cleared = true;
+      return lh;
+    }));
+
+    stopCommand.execute(_args, contexts);
+
+    return {
+      output: ""
+    }
+  },
+  argSet: []
 }

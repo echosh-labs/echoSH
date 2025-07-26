@@ -1,10 +1,12 @@
 {
   "name": "sirocco",
-  "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "version": "0.5.0",
+  "description": "echoSH transforms your command-line workflow into an immersive, generative audio experience. Every keystroke, command, and process is transmuted into a unique sonic event, turning the act of coding into a practice of composition.",
   "main": "dist/main/index.js",
   "author": {
-    "name": "Justin Wood, Josh Wood"
+    "name": "Justin Wood, Josh Wood",
+    "email": "kalaghni@gmail.com",
+    "url": "https://github.com/stiamprie"
   },
   "homepage": "",
   "repository": {
@@ -19,20 +21,29 @@
     "dev:renderer": "vite",
     "dev:main": "tsc-watch -p tsconfig.electron.json --onFirstSuccess \"electron . --use-gl=swiftshader\"",
     "dev": "concurrently \"npm:dev:renderer\" \"npm:dev:main\"",
-    "build": "npm run typecheck && electron-vite build",
-    "postinstall": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-builder",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "preview": "vite build && tsc -p tsconfig.electron.json && cross-env PREVIEW= electron .",
+    "build:app": "vite build && tsc -p tsconfig.electron.json",
+    "build": "npm run build:app && electron-builder",
+    "build:mac": "npm run build:app && electron-builder --mac",
+    "build:win": "npm run build:app && electron-builder --win",
+    "build:linux": "npm run build:app && electron-builder --linux"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.1.1",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
+    "dotenv": "^17.2.0",
+    "electron-settings": "^4.0.4",
     "electron-updater": "^6.6.2",
     "lucide-react": "^0.525.0",
+    "next-themes": "^0.4.6",
+    "react-hook-form": "^7.61.0",
     "react-router-dom": "^7.7.0",
-    "tone": "^15.1.22"
+    "sonner": "^2.0.6",
+    "tone": "^15.1.22",
+    "zod": "^4.0.7"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.1",
@@ -61,30 +72,24 @@
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@tailwindcss/oxide",
-      "electron",
-      "esbuild"
-    ]
-  },
   "build": {
     "appId": "com.jw.sirocco",
     "productName": "Sirocco",
+    "publish": null,
     "files": [
-      "dist/**/*",
-      "node_modules/**/*"
+      "dist/**/*"
     ],
     "directories": {
-      "output": "dist/mac"
+      "output": "dist"
     },
     "mac": {
-      "target": "dmg",
-      "icon": "resources/icon.icns"
+      "target": "dmg"
     },
     "win": {
-      "target": "nsis",
-      "icon": "resources/icon.ico"
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "deb"
     }
   }
 }

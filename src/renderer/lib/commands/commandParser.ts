@@ -1,14 +1,24 @@
+import CommandProcessor from "@/renderer/lib/commands/commandProcessor.ts";
+
 type ParsedCommand = {
   variables: Record<string, string>;
   command: string;
   args: string[];
 };
 
+// MAX_DEPTH prevents infinite recursion on nested $()
+const MAX_DEPTH = 10;
+
 export class CommandParser {
   static parse(
     input: string,
-    providedVariables: Record<string, string> = {}
+    providedVariables: Record<string, string> = {},
+    processor: CommandProcessor,
+    depth: number = 0  // Used for recursion guard
   ): ParsedCommand {
+    if (depth > MAX_DEPTH) {
+      throw new Error("Too many levels of command substitution");
+    }
     const trimmedInput = input.trim();
     if (!trimmedInput)
       return { variables: {}, command: '', args: [] };
@@ -38,24 +48,76 @@ export class CommandParser {
       i++;
     }
 
-    // Next token is the command (quoted or unquoted)
+    // The next token is the command (quoted or unquoted)
     let command = tokens[i] ? stripQuotes(tokens[i]) : '';
     i++;
 
     // The rest are arguments
     const args = tokens.slice(i).map(stripQuotes);
 
+
+
+    function substituteCommands(str: string): string {
+      let result = '';
+      let i = 0;
+      while (i < str.length) {
+        if (str[i] === '$' && str[i + 1] === '(') {
+          let depth = 1;
+          let start = i + 2;
+          let j = start;
+          while (j < str.length && depth > 0) {
+            if (str[j] === '$' && str[j + 1] === '(') { depth++; j++; }
+            else if (str[j] === ')') depth--;
+            j++;
+          }
+          if (depth === 0) {
+            const inner = str.slice(start, j - 1);
+            let subResult = '';
+            if (processor) {
+              // Actually process the inner command!
+              const processed = processor.process(inner, mergedVariables, depth + 1);
+              subResult = processed.output;
+            } else {
+              // Fallback: just parse
+              const parsed = CommandParser.parse(inner, providedVariables, processor);
+              subResult = [parsed.command, ...parsed.args].join(' ').trim();
+            }
+            result += subResult;
+            i = j;
+            continue;
+          }
+        }
+        result += str[i];
+        i++;
+      }
+      return result;
+    }
+
     // Substitute variables in command and args
-    const varPattern = /\$(\w+)|\$\{(\w+)\}/g;
-    function substitute(str: string): string {
+    const varPattern = /\$(\w+)|\$\{(\w+)}/g;
+    function substituteVars(str: string): string {
       return str.replace(varPattern, (_, var1, var2) => {
         const name = var1 || var2;
         return mergedVariables.hasOwnProperty(name) ? mergedVariables[name] : '';
       });
     }
 
-    command = substitute(command);
-    const resolvedArgs = args.map(substitute);
+    function fullySubstituteCommands(str: string, maxDepth = 10): string {
+      let prev: string;
+      let curr = str;
+      let count = 0;
+      do {
+        prev = curr;
+        curr = substituteCommands(prev);
+        count++;
+      } while (curr !== prev && count < maxDepth);
+      return curr;
+    }
+
+    command = substituteVars(fullySubstituteCommands(command));
+    const resolvedArgs = args.map(arg =>
+      substituteVars(fullySubstituteCommands(arg))
+    );
 
     return { variables: mergedVariables, command, args: resolvedArgs };
   }
