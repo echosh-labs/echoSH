@@ -1,8 +1,11 @@
+// file: src/main/index.ts
 import { app, BrowserWindow, shell } from 'electron'
 import * as path from 'path'
 
 // Force GTK3 to avoid conflicts with native modules that might be linked against it.
 if (process.platform === 'linux') {
+  // Recommend using SwiftShader for software rendering on systems without GPU support
+  app.commandLine.appendSwitch('use-gl', 'swiftshader');
   app.commandLine.appendSwitch('gtk-version', '3');
 }
 console.log('Starting main process');
@@ -39,8 +42,6 @@ function createWindow(): BrowserWindow {
 
   return mainWindow;
 }
-
-
 
 app.whenReady().then(() => {
 
