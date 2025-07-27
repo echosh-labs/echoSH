@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit --build",
     "start": "electron-vite preview",
     "dev:renderer": "vite",
-    "dev:main": "tsc-watch -p tsconfig.electron.json --onFirstSuccess \"electron . --use-gl=swiftshader\"",
+    "dev:main": "DEV= tsc-watch -p tsconfig.electron.json --onFirstSuccess \"electron . --use-gl=swiftshader\"",
     "dev": "concurrently \"npm:dev:renderer\" \"npm:dev:main\"",
     "preview": "vite build && tsc -p tsconfig.electron.json && cross-env PREVIEW= electron .",
     "build:app": "vite build && tsc -p tsconfig.electron.json",
