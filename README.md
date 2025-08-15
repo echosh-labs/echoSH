@@ -1,11 +1,9 @@
 # echoSH - The Synesthetic Terminal
 
-*Formerly known as Sirocco*
-
 [![Build Electron App](https://github.com/stiamprie/echoSH/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/stiamprie/echoSH/actions/workflows/build.yml)
 
 [![Version](https://img.shields.io/badge/version-0.5.0-blue)](https://github.com/stiamprie/echoSH/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 **echoSH transforms your command-line workflow into an immersive, generative audio experience. Every keystroke, command, and process is transmuted into a unique sonic event, turning the act of coding into a practice of composition.**
@@ -27,7 +25,9 @@
 * [Getting Started (for Developers)](#getting-started-for-developers)
 * [Usage](#usage)
 * [Roadmap](#roadmap)
+* [Monetization Strategy](#monetization-strategy)
 * [Contributing](#contributing)
+* [License](#license)
 
 ---
 
@@ -75,7 +75,7 @@ This project is in its early stages. The following instructions are for setting 
 
 1.  Clone the repository (the URL will need updating if you rename the repo):
     ```sh
-    git clone https://github.com/stiamprie/echoSH.git
+    git clone [https://github.com/stiamprie/echoSH.git](https://github.com/stiamprie/echoSH.git)
     ```
 2.  Navigate to the project directory (you may want to rename the folder):
     ```sh
@@ -103,12 +103,20 @@ The terminal functions like a standard shell, but with a few special commands:
 
 This project is in its early stages, with many exciting features planned.
 
-*   [ ] **Custom Sound Blueprints:** Allow users to define their own sound palettes in simple JSON files. Map custom sounds to specific commands, events (like errors or success), or even command arguments and flags.
-*   [ ] **Advanced Synthesis Engine:** Move beyond basic oscillators to include filters (LPF, HPF), envelopes (ADSR), and effects (reverb, delay) for richer, more complex soundscapes.
-*   [ ] **Deeper Command Analysis:** Parse command flags and arguments for more nuanced and context-aware audio feedback. Imagine `git commit` sounding different from `git push`.
-*   [ ] **Visual Theming:** Full customization of the terminal's color scheme and typography.
-*   [ ] **Plugin Architecture:** An API for users to extend echoSH with new commands and corresponding sound generators.
-*   [ ] **User-friendly Installers:** Provide packaged installers for macOS, Windows, and Linux.
+* [ ] **Custom Sound Blueprints:** Allow users to define their own sound palettes in simple JSON files. Map custom sounds to specific commands, events (like errors or success), or even command arguments and flags.
+* [ ] **Advanced Synthesis Engine:** Move beyond basic oscillators to include filters (LPF, HPF), envelopes (ADSR), and effects (reverb, delay) for richer, more complex soundscapes.
+* [ ] **Deeper Command Analysis:** Parse command flags and arguments for more nuanced and context-aware audio feedback. Imagine `git commit` sounding different from `git push`.
+* [ ] **Visual Theming:** Full customization of the terminal's color scheme and typography.
+* [ ] **Plugin Architecture:** An API for users to extend echoSH with new commands and corresponding sound generators.
+* [ ] **User-friendly Installers:** Provide packaged installers for macOS, Windows, and Linux.
+
+### Monetization Strategy
+
+echoSH is a community-driven project, but to ensure its long-term sustainability, we are planning an open-core model.
+
+* **Personal Edition (Free):** The core echoSH experience will always be free and open-source (AGPL v3). Our goal is to provide a powerful and engaging tool for the entire community.
+* **Professional Edition (Paid):** A paid tier for individual developers will offer advanced features, including deep customization of sound blueprints, an advanced synthesis engine, and cloud sync for profiles.
+* **Enterprise Edition (Paid):** A commercial license for teams will provide collaborative features like shared sound themes, centralized policy management, and dedicated support.
 
 ### Contributing
 
@@ -122,4 +130,6 @@ Contributions are what make the open-source community such an amazing place to l
 
 ### License
 
-Distributed under the MIT License. See `LICENSE.md` for more information.
+The open-source version of echoSH is distributed under the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0). See the `LICENSE.md` file for the full license text.
+
+A separate commercial license is available for Professional and Enterprise editions.
