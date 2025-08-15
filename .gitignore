@@ -73,3 +73,8 @@ logs
 # TypeScript build output
 # If you have separate build steps for TypeScript.
 *.tsbuildinfo
+
+# Gemini-related files
+**/GEMINI.md
+**/AGENTS.md
+**/SCOPE.md
