@@ -2,9 +2,9 @@
 
 *Formerly known as Sirocco*
 
-[![Build Electron App](https://github.com/stiamprie/sirocco/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/stiamprie/sirocco/actions/workflows/build.yml)
+[![Build Electron App](https://github.com/stiamprie/echoSH/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/stiamprie/echoSH/actions/workflows/build.yml)
 
-[![Version](https://img.shields.io/badge/version-0.5.0-blue)](https://github.com/stiamprie/sirocco/releases)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue)](https://github.com/stiamprie/echoSH/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
@@ -75,11 +75,11 @@ This project is in its early stages. The following instructions are for setting 
 
 1.  Clone the repository (the URL will need updating if you rename the repo):
     ```sh
-    git clone https://github.com/stiamprie/sirocco.git
+    git clone https://github.com/stiamprie/echoSH.git
     ```
 2.  Navigate to the project directory (you may want to rename the folder):
     ```sh
-    cd sirocco
+    cd echoSH
     ```
 3.  Install dependencies:
     ```sh

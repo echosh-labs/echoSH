@@ -25,7 +25,7 @@ export default function AppBar() {
       <div
         className={`p-2 h-full w-full flex items-center justify-between`}
       >
-        <h1 className="text-lg font-bold text-shadow-background pl-2">Sirocco v{version}</h1>
+        <h1 className="text-lg font-bold text-shadow-background pl-2">echoSH v{version}</h1>
         {latency && (<LatencyWidget />)}
         {pathname === "/settings" && (
           <Link to="">

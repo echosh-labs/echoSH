@@ -1,5 +1,5 @@
 {
-  "name": "sirocco",
+  "name": "echosh",
   "version": "0.5.0",
   "description": "echoSH transforms your command-line workflow into an immersive, generative audio experience. Every keystroke, command, and process is transmuted into a unique sonic event, turning the act of coding into a practice of composition.",
   "main": "dist/main/index.js",
@@ -11,7 +11,7 @@
   "homepage": "",
   "repository": {
     "directory": "/",
-    "url": "https://github.com/stiamprie/sirocco"
+    "url": "https://github.com/stiamprie/echoSH"
   },
   "scripts": {
     "format": "prettier --write .",
@@ -70,8 +70,8 @@
     "vite": "^6.3.5"
   },
   "build": {
-    "appId": "com.jw.sirocco",
-    "productName": "Sirocco",
+    "appId": "com.jw.echosh",
+    "productName": "echoSH",
     "publish": null,
     "files": [
       "dist/**/*"
