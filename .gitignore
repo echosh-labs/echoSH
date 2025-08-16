@@ -13,7 +13,7 @@ node_modules
 .pnpm-debug.log*
 npm-debug.log*
 yarn-error.log
-package-lock.json
+# package-lock.json
 pnpm-lock.yaml
 
 # Vite build and cache directories
