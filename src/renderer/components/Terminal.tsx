@@ -23,6 +23,31 @@ export const Terminal = () => {
     }
   }, [terminalContext.history])
 
+  // Focus the command input when the user starts typing anywhere in the app,
+  // so they don't have to click the input first.
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: globalThis.KeyboardEvent): void => {
+      const input = inputRef.current
+      if (!input || document.activeElement === input) return
+
+      // Ignore modifier combos (shortcuts) and non-character keys.
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.key.length !== 1) return
+
+      // Don't steal focus from other editable fields (e.g. settings inputs).
+      const active = document.activeElement as HTMLElement | null
+      if (active && (active.isContentEditable ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName))) {
+        return
+      }
+
+      input.focus()
+    }
+
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
+
   // Handles keyboard input for keystroke sounds and command history navigation.
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
     terminalContext.handleKey(e, setInput);

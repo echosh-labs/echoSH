@@ -28,12 +28,33 @@ export interface LatencyInfo {
   sinkId: string
 }
 
+/**
+ * A single scheduled event in a sequence. Either a musical note (played on the
+ * melody synth via `frequency`) or a full generative `blueprint` (e.g. a drum
+ * hit). `time` is an offset in seconds from when the sequence starts.
+ */
+export interface SequenceEvent {
+  frequency?: number
+  blueprint?: SoundBlueprint
+  time: number
+  duration: number
+}
+
 class AudioEngine {
   private static instance: AudioEngine
   private audioContext: CustomAudioContext | null = null
   private mainGain: Tone.Gain | null = null;
   private keystrokeSynth: Tone.PolySynth | null = null;
+  private melodySynth: Tone.PolySynth | null = null;
   private instruments: Map<string, Tone.PolySynth> = new Map();
+
+  // Master volume / mute state. `mainGain` is the single point of volume control.
+  private masterVolume = 0.75;
+  private muted = false;
+
+  // Shared playback tempo (beats per minute) used by the sequencer-driven
+  // commands (melody, scale, arp, beat). Adjusted via the `tempo` command.
+  private bpm = 120;
 
   // Private constructor is intentional for the singleton pattern.
   private constructor() {
@@ -58,7 +79,7 @@ class AudioEngine {
 
       // Create a master gain node that all other nodes will connect to.
       // This gives us a single point of control for master volume.
-      this.mainGain = new Tone.Gain(0.75).toDestination();
+      this.mainGain = new Tone.Gain(this.muted ? 0 : this.masterVolume).toDestination();
 
       // Create a reusable synth for keystrokes and connect it to our main gain.
       this.keystrokeSynth = new Tone.PolySynth(Tone.Synth, {
@@ -67,6 +88,15 @@ class AudioEngine {
         volume: -12 // A bit quieter in dB
       });
       this.keystrokeSynth.connect(this.mainGain);
+
+      // A dedicated, slightly warmer synth used by the musical commands
+      // (note/chord/scale/melody/arp) so sequenced notes have their own voice.
+      this.melodySynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.01, decay: 0.15, sustain: 0.3, release: 0.3 },
+        volume: -8
+      });
+      this.melodySynth.connect(this.mainGain);
 
       this.registerInstrument('backspace', backspaceSwoosh);
 
@@ -158,12 +188,14 @@ class AudioEngine {
    * from a blueprint and plays it.
    * @param blueprint The declarative object describing the sound.
    */
-  public async playSoundFromBlueprint(blueprint: SoundBlueprint): Promise<void> {
+  public async playSoundFromBlueprint(blueprint: SoundBlueprint, startTime?: number): Promise<void> {
     if (!this.audioContext || !this.mainGain) return;
 
     await this.ensureActiveContext();
 
-    const now = Tone.now();
+    // Allow callers (e.g. the step sequencer) to schedule a sound at a precise
+    // future time. Defaults to "now" for the normal one-shot case.
+    const now = startTime ?? Tone.now();
 
     // This map will hold references to all created Tone.js nodes for modulation.
     const nodes: Record<string, Tone.ToneAudioNode | Tone.ToneAudioNode[]> = {};
@@ -266,6 +298,68 @@ class AudioEngine {
     }
   }
 
+  /**
+   * Schedules a sequence of notes and/or blueprints relative to the current
+   * time. Used by the musical commands (melody, scale, arp, beat).
+   * @param events The events to schedule, each with a `time` offset in seconds.
+   */
+  public async playSequence(events: SequenceEvent[]): Promise<void> {
+    if (!this.melodySynth) return;
+    await this.ensureActiveContext();
+
+    const start = Tone.now();
+    for (const event of events) {
+      const when = start + event.time;
+      if (event.blueprint) {
+        // Fire-and-forget: each blueprint schedules itself at the given time.
+        this.playSoundFromBlueprint(event.blueprint, when);
+      } else if (event.frequency != null) {
+        this.melodySynth.triggerAttackRelease(event.frequency, event.duration, when);
+      }
+    }
+  }
+
+  /** Sets the master output volume. `level` is clamped to the range 0..1. */
+  public setMasterVolume(level: number): void {
+    this.masterVolume = Math.max(0, Math.min(1, level));
+    if (this.mainGain && !this.muted) {
+      this.mainGain.gain.rampTo(this.masterVolume, 0.02);
+    }
+  }
+
+  /** Returns the current master volume (0..1), ignoring mute state. */
+  public getMasterVolume(): number {
+    return this.masterVolume;
+  }
+
+  /** Mutes or unmutes the master output without losing the chosen volume. */
+  public setMuted(muted: boolean): void {
+    this.muted = muted;
+    if (this.mainGain) {
+      this.mainGain.gain.rampTo(muted ? 0 : this.masterVolume, 0.02);
+    }
+  }
+
+  /** Toggles mute and returns the new muted state. */
+  public toggleMute(): boolean {
+    this.setMuted(!this.muted);
+    return this.muted;
+  }
+
+  public isMuted(): boolean {
+    return this.muted;
+  }
+
+  /** Returns the shared playback tempo in beats per minute. */
+  public getBpm(): number {
+    return this.bpm;
+  }
+
+  /** Sets the shared playback tempo. `bpm` is clamped to a sane 20..400 range. */
+  public setBpm(bpm: number): void {
+    this.bpm = Math.max(20, Math.min(400, bpm));
+  }
+
   // --- Singleton Access ---
   public static getInstance(): AudioEngine {
     if (!AudioEngine.instance) {
@@ -282,11 +376,16 @@ class AudioEngine {
     });
     this.instruments.clear();
 
-    // 2. Stop and disconnect keystroke synth
+    // 2. Stop and disconnect keystroke + melody synths
     if (this.keystrokeSynth) {
       this.keystrokeSynth.releaseAll();
       this.keystrokeSynth.disconnect();
       this.keystrokeSynth = null;
+    }
+    if (this.melodySynth) {
+      this.melodySynth.releaseAll();
+      this.melodySynth.disconnect();
+      this.melodySynth = null;
     }
 
     // 3. Disconnect and null main gain
@@ -297,11 +396,14 @@ class AudioEngine {
 
     // 4. Close AudioContext and null it out
     if (this.audioContext) {
-      this.audioContext.close()
-        .then(() => {
-          this.initialize();
-        });
+      const closing = this.audioContext;
       this.audioContext = null;
+      // Re-initialize whether or not close() succeeds, and swallow rejections
+      // so a failed close never leaves the engine dead or surfaces an
+      // unhandled promise rejection.
+      closing.close()
+        .catch((err) => console.error('Failed to close AudioContext:', err))
+        .finally(() => this.initialize());
     }
     return true;
   }

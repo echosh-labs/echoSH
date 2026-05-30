@@ -28,6 +28,8 @@ export interface CommandContexts {
   predictions: string[];
   history: HistoryItem[];
   localHistory?: string[];
+  arch?: string;
+  version?: string;
 
   setLatency: (c: boolean) => void;
   setPredictions: (p: string[]) => void;

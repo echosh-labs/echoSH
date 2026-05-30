@@ -22,19 +22,32 @@ const themeColors: { [key: string]: string } = {
   ring: 'bg-ring'
 }
 
+const VALID_THEMES = ['dark', 'light', 'system'] as const;
+
 export const themeCommand: CommandDefinition = {
   name: "theme",
-  description: 'Displays the application color palette.',
-  execute: (args) => {
+  description: 'Switches between dark/light/system themes, or lists the color palette.',
+  execute: (args, contexts) => {
+    const arg = args[0]?.toLowerCase();
 
-    let output = 'Unrecognized parameter';
-    if (args.length === 0 || args[0] === 'list') {
-      output = Object.entries(themeColors).map(tc => tc[0]).join(', ');
+    if (!arg || arg === 'list') {
+      const palette = Object.keys(themeColors).join(', ');
+      return {
+        output: `Current theme: ${contexts.theme.theme}\nUsage: theme <dark|light|system>\n\nPalette: ${palette}`
+      };
     }
 
-    return {
-      output
+    if ((VALID_THEMES as readonly string[]).includes(arg)) {
+      contexts.theme.setTheme(arg as (typeof VALID_THEMES)[number]);
+      return { output: `Theme set to '${arg}'.` };
     }
+
+    return { output: `Invalid theme '${arg}'. Choose one of: ${VALID_THEMES.join(', ')}.` };
   },
-  argSet: []
+  argSet: [
+    { literal: 'dark', description: 'Use the dark theme.' },
+    { literal: 'light', description: 'Use the light theme.' },
+    { literal: 'system', description: 'Follow the system theme.' },
+    { literal: 'list', description: 'List the color palette.' }
+  ]
 }

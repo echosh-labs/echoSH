@@ -7,10 +7,6 @@ dotenv.config()
 const isDev = process.env.DEV != undefined;
 const isPreview = process.env.PREVIEW != undefined;
 
-// Force GTK3 to avoid conflicts with native modules that might be linked against it.
-if (process.platform === 'linux') {
-  app.commandLine.appendSwitch('gtk-version', '3');
-}
 console.log('Starting main process');
 
 import './api'
@@ -50,6 +46,14 @@ function createWindow(): BrowserWindow {
     mainWindow.loadFile("dist/index.html");
   }
 
+  // Force external links to open in the system browser and deny in-app
+  // navigation. Registered here (rather than only on the first window) so that
+  // windows re-created on macOS `activate` also get the handler.
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
+
   return mainWindow;
 }
 
@@ -57,12 +61,7 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
 
-  const win = createWindow()
-
-  win.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+  createWindow()
 
   // console.log('Registered IPC handlers');
 

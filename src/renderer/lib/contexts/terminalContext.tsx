@@ -57,6 +57,8 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
       effects,
       predictions,
       history,
+      arch,
+      version,
 
       setLatency,
       setPredictions,
@@ -90,8 +92,12 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
     execute: (command) => {
       const result = processor.current.process(command);
       const oldHistory = history.slice(-999);
-      const newHistory = oldHistory.slice(-999).concat([
-        { id: oldHistory.length, command: command, output: result.output, cleared: command === "clear" }
+      // Derive a monotonically increasing id from the last entry. Using
+      // `oldHistory.length` would collide once the history is capped at 999,
+      // producing duplicate React keys and reconciliation glitches.
+      const nextId = oldHistory.length ? oldHistory[oldHistory.length - 1].id + 1 : 0;
+      const newHistory = oldHistory.concat([
+        { id: nextId, command: command, output: result.output, cleared: command === "clear" }
       ])
       setHistory(newHistory);
       return result;
@@ -108,6 +114,9 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
     window.BRIDGE.onAppInit((data) => {
       setVersion(data.version);
       setArch(data.arch);
+      // Keep the processor's contexts in sync so commands like `whoami` see them.
+      processor.current.contexts.version = data.version;
+      processor.current.contexts.arch = data.arch;
       if (data.history) {
         setHistory(data.history);
         processor.current.setLocalHistory(data.history.map(h => h.command));

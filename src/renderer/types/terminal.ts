@@ -1,7 +1,8 @@
+import type { ReactNode } from "react";
 
 export interface HistoryItem {
   id: number
   command: string;
-  output: React.ReactNode;
+  output: ReactNode;
   cleared?: boolean;
 }
