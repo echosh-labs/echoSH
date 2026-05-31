@@ -50,6 +50,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build and run smc_read on macOS
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          xcode-select -p || xcode-select --install
+          gcc -o smc_read smc_read.c -framework IOKit
+          ./smc_read
+
       # Build the app (renderer + main) for Electron
       - name: Build Electron App for platform
         run: npm run ${{ matrix.build_script }}
