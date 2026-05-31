@@ -54,9 +54,13 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          xcode-select -p || xcode-select --install
+          xcode-select -p
           gcc -o smc_read smc_read.c -framework IOKit
-          ./smc_read
+          if ioreg -r -c AppleSMC | grep -q "AppleSMC"; then
+            ./smc_read
+          else
+            echo "AppleSMC is not available on this GitHub Actions runner; skipping smc_read."
+          fi
 
       # Build the app (renderer + main) for Electron
       - name: Build Electron App for platform

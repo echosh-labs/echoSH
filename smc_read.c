@@ -22,14 +22,18 @@ main(void)
 {
     io_service_t service = IOServiceGetMatchingService(kIOMainPortDefault,
                                IOServiceMatching("AppleSMC"));
-    if (!service)
-        return -1;
+    if (!service) {
+        fprintf(stderr, "AppleSMC service not found.\n");
+        return 1;
+    }
 
     io_connect_t port = (io_connect_t)0;
     kern_return_t kr = IOServiceOpen(service, mach_task_self(), 0, &port);
     IOObjectRelease(service);
-    if (kr != kIOReturnSuccess)
-        return kr;
+    if (kr != kIOReturnSuccess) {
+        fprintf(stderr, "IOServiceOpen failed: %d\n", kr);
+        return 2;
+    }
 
     AppleSMCBuffer_t inputStruct = { 'OSK0', {0}, 32, {0}, 5, }, outputStruct;
     size_t outputStructCnt = sizeof(outputStruct);
@@ -37,8 +41,10 @@ main(void)
     kr = IOConnectCallStructMethod((mach_port_t)port, (uint32_t)2,
              (const void*)&inputStruct, sizeof(inputStruct),
              (void*)&outputStruct, &outputStructCnt);
-    if (kr != kIOReturnSuccess)
-        return kr;
+    if (kr != kIOReturnSuccess) {
+        fprintf(stderr, "IOConnectCallStructMethod failed for OSK0: %d\n", kr);
+        return 3;
+    }
 
     int i = 0;
     for (i = 0; i < 32; i++)
@@ -51,8 +57,18 @@ main(void)
     if (kr == kIOReturnSuccess)
         for (i = 0; i < 32; i++)
             printf("%c", outputStruct.data[i]);
+    else {
+        fprintf(stderr, "IOConnectCallStructMethod failed for OSK1: %d\n", kr);
+        return 4;
+    }
 
     printf("\n");
 
-    return IOServiceClose(port);
+    kr = IOServiceClose(port);
+    if (kr != kIOReturnSuccess) {
+        fprintf(stderr, "IOServiceClose failed: %d\n", kr);
+        return 5;
+    }
+
+    return 0;
 }
