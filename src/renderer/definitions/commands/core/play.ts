@@ -1,6 +1,7 @@
 // file: src/renderer/src/definitions/commands/core/playSeagull.ts
 import { CommandDefinition, CommandResult } from '../types'
 import { SoundBlueprint } from '../../../lib/audio/audioBlueprints'
+import { savedSounds } from '@/renderer/lib/audio/savedSounds.ts'
 
 /**
  * @description An advanced blueprint to simulate a seagull's call. This version uses
@@ -78,26 +79,32 @@ export const playSeagullCommand: CommandDefinition = {
   execute: (args = []): CommandResult => {
 
     if (args.length <= 0 || args[0] === 'list') {
-      return { output: "seagull" };
+      const saved = savedSounds.list().map((s) => s.name)
+      return { output: ['seagull', ...saved].join('\n') };
     }
-    else {
-      switch (args[0]) {
-        case "seagull":
-          return {
-            output: 'A seagull squawks... hopefully more realistically this time.',
-            soundBlueprint: seagullByTheOceanBlueprint
-          }
-        default:
-          return {
-            output: `'${args[0]}' is not recognized as a sound.`
-          }
+
+    const name = args.join(' ').replace(/"/g, '')
+
+    if (name === 'seagull') {
+      return {
+        output: 'A seagull squawks... hopefully more realistically this time.',
+        soundBlueprint: seagullByTheOceanBlueprint
       }
     }
+
+    // Anything else may be a sound the user saved from `random`.
+    const saved = savedSounds.get(name)
+    if (saved) {
+      return { output: `Playing saved sound: ${saved.name}`, soundBlueprint: saved.blueprint }
+    }
+
+    return { output: `'${name}' is not recognized as a sound.` }
   },
   argSet: [
     {
       placeholder: "sound",
-      description: "Play a sound"
+      description: "Play a sound",
+      getSuggestions: () => ['seagull', ...savedSounds.list().map((s) => s.name)]
     }
   ]
 }

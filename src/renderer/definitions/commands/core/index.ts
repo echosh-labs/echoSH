@@ -28,10 +28,12 @@ import { randomCommand } from "@/renderer/definitions/commands/core/random.ts";
 import { fortuneCommand } from "@/renderer/definitions/commands/core/fortune.ts";
 import { cowsayCommand } from "@/renderer/definitions/commands/core/cowsay.ts";
 import { rollCommand } from "@/renderer/definitions/commands/core/roll.ts";
+import { claudeCommand } from "@/renderer/definitions/commands/core/claude.ts";
 // Audio engine controls
 import { volumeCommand } from "@/renderer/definitions/commands/core/volume.ts";
 import { muteCommand } from "@/renderer/definitions/commands/core/mute.ts";
 import { latencyCommand } from "@/renderer/definitions/commands/core/latency.ts";
+import { saveCommand } from "@/renderer/definitions/commands/core/save.ts";
 
 export const coreCommands: CommandDefinition[] = [
   clearCommand,
@@ -63,8 +65,10 @@ export const coreCommands: CommandDefinition[] = [
   fortuneCommand,
   cowsayCommand,
   rollCommand,
+  claudeCommand,
   // Audio engine controls
   volumeCommand,
   muteCommand,
-  latencyCommand
+  latencyCommand,
+  saveCommand
 ]

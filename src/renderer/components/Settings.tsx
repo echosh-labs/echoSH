@@ -4,29 +4,46 @@ import { AppSettings } from "@/renderer/types/app.ts";
 import { useTerminalContext } from "@/renderer/lib/contexts/terminalContext.tsx";
 import AudioDeviceSelect from "@/renderer/components/inputs/audioDevice.tsx";
 import { Button } from "./ui/button";
-import { useEffect, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/renderer/components/ui/select.tsx";
+import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
+import { applyStyleSettings, FONT_OPTIONS, STYLE_DEFAULTS } from "@/renderer/lib/styleSettings.ts";
 
 export default function Settings() {
 
-  const [saving, setSaving]   = useState(false);
-  const [changed, setChanged] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const terminalContext = useTerminalContext();
 
   const form = useForm<AppSettings>({
-    defaultValues: terminalContext.settings
+    defaultValues: { ...STYLE_DEFAULTS, ...terminalContext.settings }
   });
 
   useEffect(() => {
-    form.reset(terminalContext.settings);
+    form.reset({ ...STYLE_DEFAULTS, ...terminalContext.settings });
   }, [terminalContext.settings]);
+
+  // Live preview: push every edit to the glass CSS variables as the user
+  // adjusts the controls, so changes are visible before saving.
+  useEffect(() => {
+    const sub = form.watch((values) => applyStyleSettings(values as Partial<AppSettings>));
+    return () => sub.unsubscribe();
+  }, [form]);
+
+  // If the user leaves without saving, revert the preview to the saved values.
+  const savedSettings = useRef(terminalContext.settings);
+  savedSettings.current = terminalContext.settings;
+  useEffect(() => () => applyStyleSettings(savedSettings.current), []);
 
   function handleSubmit(data: AppSettings) {
     setSaving(true);
     window.BRIDGE.saveSettings(data)
       .then(() => {
+        // Propagate into the app so the styling sticks after leaving the page.
+        terminalContext.setSettings(data);
+        form.reset(data);
         toast.success("Settings updated successfully.");
       })
       .catch((reason) => {
@@ -34,7 +51,6 @@ export default function Settings() {
       })
       .finally(() => {
         setSaving(false);
-        setChanged(false);
       });
   }
 
@@ -43,8 +59,7 @@ export default function Settings() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-3"
-          onChange={() => setChanged(true)}
+          className="space-y-4"
         >
           <FormField
             control={form.control}
@@ -63,7 +78,113 @@ export default function Settings() {
               </FormItem>
             )}
           />
-          <Button variant="secondary" type="submit" disabled={saving || !changed}>
+
+          <div className="pt-1 text-xs uppercase tracking-widest text-output">Appearance</div>
+
+          <div className="flex gap-6">
+            <FormField
+              control={form.control}
+              name="accentColor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Accent</FormLabel>
+                  <FormControl>
+                    <input
+                      type="color"
+                      value={field.value ?? STYLE_DEFAULTS.accentColor}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="h-9 w-14 cursor-pointer rounded-md border border-border bg-transparent"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="glassColor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Glass Tint</FormLabel>
+                  <FormControl>
+                    <input
+                      type="color"
+                      value={field.value ?? STYLE_DEFAULTS.glassColor}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="h-9 w-14 cursor-pointer rounded-md border border-border bg-transparent"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="glassOpacity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Glass Opacity — {Math.round((field.value ?? STYLE_DEFAULTS.glassOpacity) * 100)}%</FormLabel>
+                <FormControl>
+                  <input
+                    type="range"
+                    min={0.2}
+                    max={0.95}
+                    step={0.01}
+                    value={field.value ?? STYLE_DEFAULTS.glassOpacity}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    className="w-full accent-[var(--glass-accent)]"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="cornerRadius"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Corner Radius — {field.value ?? STYLE_DEFAULTS.cornerRadius}px</FormLabel>
+                <FormControl>
+                  <input
+                    type="range"
+                    min={0}
+                    max={28}
+                    step={1}
+                    value={field.value ?? STYLE_DEFAULTS.cornerRadius}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    className="w-full accent-[var(--glass-accent)]"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="fontFamily"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Terminal Font</FormLabel>
+                <FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Font" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FONT_OPTIONS.map((f) => (
+                        <SelectItem key={f.label} value={f.value} style={{ fontFamily: f.value }}>
+                          {f.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <Button variant="secondary" type="submit" disabled={saving || !form.formState.isDirty}>
             Save Settings
             {saving && <Loader2 className="animate-spin" />}
           </Button>

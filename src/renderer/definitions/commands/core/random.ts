@@ -64,8 +64,10 @@ function randomBlueprint(): SoundBlueprint {
 export const randomCommand: CommandDefinition = {
   name: 'random',
   description: 'Generates and plays a completely random sound.',
-  execute: (): CommandResult => {
+  execute: (_args, contexts): CommandResult => {
     const blueprint = randomBlueprint()
+    // Stash it so `save` can persist the sound the user just heard.
+    contexts.lastBlueprint = blueprint
     const summary = blueprint.sources
       .map((s) => (s.type === 'oscillator' ? `${s.oscillatorType}@${s.frequency.toFixed(0)}Hz` : `${s.noiseType} noise`))
       .join(' + ')

@@ -7,6 +7,7 @@ import { EffectController } from "@/renderer/lib/text/effectController.tsx";
 import { HistoryItem } from "@/renderer/types/terminal.ts";
 import { ProcessedCommandResult } from "@/renderer/lib/commands/processedCommandResult.ts";
 import { AppSettings } from "@/renderer/types/app.ts";
+import { applyStyleSettings } from "@/renderer/lib/styleSettings.ts";
 
 
 export type TerminalContext = {
@@ -23,6 +24,7 @@ export type TerminalContext = {
   setLatency: (c: boolean) => void;
   setPredictions: (c: string[]) => void;
   setHistory: (c: HistoryItem[]) => void;
+  setSettings: (s: Partial<AppSettings>) => void;
 
   handleKey: (e: React.KeyboardEvent<HTMLInputElement>, setInput: (text: string) => void) => void;
   execute: (text: string) => ProcessedCommandResult;
@@ -85,6 +87,7 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
     setLatency,
     setPredictions,
     setHistory,
+    setSettings,
 
     handleKey: (e, setInput) => {
       processor.current.handleKey(e, setInput);
@@ -109,6 +112,12 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
       window.BRIDGE.saveHistory(history);
     }
   }, [history]);
+
+  // Apply the appearance settings to the liquid-glass CSS variables whenever
+  // they change (initial load, app:init, or after a save).
+  useEffect(() => {
+    applyStyleSettings(settings);
+  }, [settings]);
 
   useEffect(() => {
     window.BRIDGE.onAppInit((data) => {

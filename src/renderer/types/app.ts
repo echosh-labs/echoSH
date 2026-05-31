@@ -9,4 +9,10 @@ export type AppInitData = {
 
 export type AppSettings = {
   outputDevice: any
+  /** Appearance / liquid-glass styling. */
+  accentColor: string   // hex, e.g. #58a6ff
+  glassColor: string    // hex base tint, e.g. #181f2c
+  glassOpacity: number  // 0..1 tint strength
+  cornerRadius: number  // px
+  fontFamily: string    // CSS font-family stack
 };

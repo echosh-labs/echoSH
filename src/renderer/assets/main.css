@@ -367,3 +367,166 @@ html,
   background: var(--accent-foreground);
   opacity: 0.9;
 }
+
+/* ============================================================
+   Liquid Glass
+   The whole window is one floating, frosted glass slab. The native
+   window frame is transparent (see main process), so the desktop —
+   icons and all — shows through the translucent tint below.
+   ============================================================ */
+
+:root {
+  /* Cool, blue-tinted obsidian glass, driven by user style settings (see
+     lib/styleSettings.ts). --glass-rgb / --glass-opacity / --glass-radius /
+     --terminal-font / --glass-accent are overridden at runtime; the values
+     here are the defaults. */
+  --glass-rgb: 24, 31, 44;
+  --glass-opacity: 0.55;
+  --glass-radius: 14px;
+  --terminal-font: 'Fira Code', 'Source Code Pro', monospace;
+  --glass-top: rgba(var(--glass-rgb), var(--glass-opacity));
+  --glass-bottom: rgba(var(--glass-rgb), calc(var(--glass-opacity) - 0.11));
+  --glass-rim: rgba(255, 255, 255, 0.16);
+  --glass-hairline: rgba(255, 255, 255, 0.09);
+  --glass-accent: #58a6ff;
+  --glass-accent-2: #7ee7ff;
+}
+
+/* Strip every opaque backdrop so the transparent window reads through. */
+html,
+body,
+#root {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* The glass slab itself — fills the window, tinted + frosted. */
+#root {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  /* Rounded glass slab. overflow:hidden clips the glow + grain to the curve. */
+  border-radius: var(--glass-radius, 14px);
+  color: var(--foreground);
+  font-family: var(--terminal-font, 'Fira Code', 'Source Code Pro', monospace);
+  background: linear-gradient(165deg, var(--glass-top) 0%, var(--glass-bottom) 100%);
+  /* The desktop blur comes from the OS acrylic material; we just boost the
+     saturation a touch so colours behind the glass stay lively. */
+  -webkit-backdrop-filter: saturate(160%);
+  backdrop-filter: saturate(160%);
+  /* Top specular rim + a 1px inner hairline + a vignette that grounds the slab. */
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim),
+    inset 0 0 0 1px var(--glass-hairline),
+    inset 0 -60px 140px -40px rgba(0, 0, 0, 0.5);
+  animation: glass-in 620ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes glass-in {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Ambient light: a cyan glow bleeding from the top corners — the "liquid"
+   sheen of the glass. Sits behind the UI, never intercepts clicks. */
+#root::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 90% at -5% -15%, rgba(88, 166, 255, 0.22), transparent 55%),
+    radial-gradient(110% 80% at 105% -10%, rgba(126, 231, 255, 0.14), transparent 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 16%);
+  mix-blend-mode: screen;
+}
+
+/* Fine frosted micro-grain so the glass isn't a flat tint. */
+#root::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* All UI content rides above the glow + grain layers. */
+.app-bar,
+.app-container,
+.terminal-surface {
+  position: relative;
+  z-index: 1;
+}
+
+.app-container,
+.terminal-surface,
+.terminal-container {
+  background: transparent !important;
+}
+
+/* Keep text crisp over whatever wallpaper sits behind the glass. */
+.app-bar,
+.terminal-surface {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* Title bar: a brighter highlight band, like light catching the top of glass. */
+.app-bar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0));
+  border-bottom: 1px solid var(--glass-hairline);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Glowing gradient wordmark. */
+.app-bar h1 {
+  background: linear-gradient(92deg, #e8f1ff, var(--glass-accent) 55%, var(--glass-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.16em;
+  font-weight: 700;
+  text-transform: lowercase;
+  filter: drop-shadow(0 0 12px rgba(88, 166, 255, 0.4));
+}
+
+/* Input bar: a faint frosted shelf seated under the output. */
+.glass-input-bar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.055));
+  border-top: 1px solid var(--glass-hairline) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* The prompt caret line gets a soft accent glow when focused. */
+.glass-input-bar input {
+  caret-color: var(--glass-accent);
+}
+
+.cmd-predictions {
+  color: var(--glass-accent-2);
+  opacity: 0.75;
+}
+
+/* Translucent scrollbars so they melt into the glass. */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+  opacity: 1;
+}

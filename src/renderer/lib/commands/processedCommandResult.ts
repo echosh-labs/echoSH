@@ -30,6 +30,8 @@ export interface CommandContexts {
   localHistory?: string[];
   arch?: string;
   version?: string;
+  /** The most recent blueprint produced by `random`/`raw`, so `save` can persist it. */
+  lastBlueprint?: SoundBlueprint;
 
   setLatency: (c: boolean) => void;
   setPredictions: (p: string[]) => void;

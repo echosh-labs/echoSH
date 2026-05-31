@@ -1,6 +1,6 @@
 {
   "name": "echosh",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "echoSH transforms your command-line workflow into an immersive, generative audio experience. Every keystroke, command, and process is transmuted into a unique sonic event, turning the act of coding into a practice of composition.",
   "main": "dist/main/index.js",
   "author": {
@@ -41,6 +41,9 @@
     "sonner": "^2.0.6",
     "tone": "^15.1.22",
     "zod": "^4.0.7"
+  },
+  "optionalDependencies": {
+    "electron-liquid-glass": "^1.1.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.1",

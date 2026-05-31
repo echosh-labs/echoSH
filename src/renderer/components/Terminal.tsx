@@ -23,16 +23,22 @@ export const Terminal = () => {
     }
   }, [terminalContext.history])
 
-  // Focus the command input when the user starts typing anywhere in the app,
-  // so they don't have to click the input first.
+  // Keep the command input focused whenever the window itself is focused, so
+  // every keypress — characters, arrows, Tab, etc. — is handled by the
+  // terminal without the user having to click the input first.
   useEffect(() => {
+    const focusInput = () => inputRef.current?.focus()
+
+    // Focus on mount and whenever the window regains focus.
+    focusInput()
+    window.addEventListener('focus', focusInput)
+
+    // Safety net: if focus ever lands elsewhere while the window is focused,
+    // route the next keypress back to the input (any key, not just printable).
     const handleGlobalKeyDown = (e: globalThis.KeyboardEvent): void => {
       const input = inputRef.current
       if (!input || document.activeElement === input) return
-
-      // Ignore modifier combos (shortcuts) and non-character keys.
       if (e.ctrlKey || e.metaKey || e.altKey) return
-      if (e.key.length !== 1) return
 
       // Don't steal focus from other editable fields (e.g. settings inputs).
       const active = document.activeElement as HTMLElement | null
@@ -43,9 +49,31 @@ export const Terminal = () => {
 
       input.focus()
     }
-
     window.addEventListener('keydown', handleGlobalKeyDown)
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+
+    // When a click finishes, return focus to the input so typing just works —
+    // BUT only if the user didn't select any text. This lets people drag-select
+    // and copy output without the input immediately stealing focus and
+    // collapsing the selection. Clicks that land on real controls are left be.
+    const handleMouseUp = (): void => {
+      const selection = window.getSelection()
+      if (selection && !selection.isCollapsed) return
+
+      const active = document.activeElement as HTMLElement | null
+      if (active && (active.isContentEditable ||
+        ['A', 'BUTTON', 'INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName))) {
+        return
+      }
+
+      inputRef.current?.focus()
+    }
+    window.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      window.removeEventListener('focus', focusInput)
+      window.removeEventListener('keydown', handleGlobalKeyDown)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
   }, [])
 
   // Handles keyboard input for keystroke sounds and command history navigation.
@@ -67,7 +95,7 @@ export const Terminal = () => {
   return (
     <div
       style={{height: 'calc(100vh - 54px)'}}
-      className={`flex flex-col bg-background text-sm`}>
+      className={`flex flex-col text-sm terminal-surface`}>
       <div className="flex-grow overflow-y-auto p-4 output-area" ref={outputContainerRef}>
         {terminalContext.history.filter(h => !h.cleared).map((item) => (
           <div key={item.id} className="mb-2">
@@ -87,7 +115,7 @@ export const Terminal = () => {
             </div>
           </div>
         )}
-      <div className="border-t border-border p-4">
+      <div className="glass-input-bar border-t border-border p-4">
         <form onSubmit={handleCommandSubmit}>
           <div className="flex items-center">
             <span className="mr-2 select-none">$</span>
@@ -95,6 +123,7 @@ export const Terminal = () => {
               ref={inputRef}
               type="text"
               value={input}
+              autoFocus
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               className="w-full border-none bg-transparent p-0 caret-primary focus:outline-none focus:ring-0"

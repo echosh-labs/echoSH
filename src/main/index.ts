@@ -11,6 +11,28 @@ console.log('Starting main process');
 
 import './api'
 
+/**
+ * Applies Apple's native "Liquid Glass" material (macOS 26+) to the window via
+ * the optional `electron-liquid-glass` dependency. It's gated to darwin and
+ * lazy-required inside a try/catch so that on Windows/Linux — where the package
+ * is OS-skipped and never installed — this is a harmless no-op.
+ */
+function applyLiquidGlass(win: BrowserWindow): void {
+  if (process.platform !== 'darwin') return
+  try {
+    const mod = require('electron-liquid-glass')
+    const liquidGlass = mod?.default ?? mod
+    liquidGlass.addView(win.getNativeWindowHandle(), {
+      cornerRadius: 14,
+      tintColor: '#0d1117aa'
+    })
+    // The liquid-glass view hides the traffic lights unless we re-show them.
+    win.setWindowButtonVisibility?.(true)
+  } catch (err) {
+    console.warn('[liquid-glass] effect unavailable, falling back:', err)
+  }
+}
+
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -24,6 +46,21 @@ function createWindow(): BrowserWindow {
       symbolColor: '#C9D1D9',
       height: 54
     },
+    // Liquid-glass window: a frosted, translucent frame.
+    //   - macOS 26+: Apple's native "Liquid Glass" via electron-liquid-glass,
+    //                applied after creation (requires transparent: true and
+    //                no vibrancy). See the applyLiquidGlass() call below.
+    //   - Windows 11: acrylic background material (frosted desktop). Note that
+    //                Windows dims acrylic on inactive windows, so the frost
+    //                softens a little when the window loses focus — that's an
+    //                unavoidable OS behaviour and the cost of real frosted-blur.
+    // The window stays non-transparent on Windows so the OS rounds the corners;
+    // on macOS transparency is required and corners are rounded by the effect.
+    backgroundColor: '#00000000',
+    roundedCorners: true,
+    ...(process.platform === 'darwin'
+      ? { transparent: true }
+      : { backgroundMaterial: 'acrylic' as const }),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -31,6 +68,10 @@ function createWindow(): BrowserWindow {
     },
 
   })
+
+  // macOS-only native liquid glass (no-op elsewhere).
+  applyLiquidGlass(mainWindow)
+
   // Use the built-in `isPackaged` property to check for development mode
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");

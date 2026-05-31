@@ -1,5 +1,6 @@
 import { CommandDefinition, CommandResult } from '../types'
 import { rawPresets } from '../../../lib/audio/raw-presets.ts'
+import { savedSounds } from '@/renderer/lib/audio/savedSounds.ts'
 import {
   SoundBlueprint,
   OscillatorType,
@@ -17,6 +18,9 @@ Generates a sound on-the-fly from keyword arguments.
 Each keyword modifies a part of the sound blueprint, processed in order.
 
 Example: raw osc:sawtooth:220 filter:lowpass:800 dur:0.5
+
+Add --save [name] to keep the sound (replay later with 'play <name>').
+Example: raw osc:sine:440 --save beep
 
 --- KEYWORDS ---
 
@@ -214,7 +218,7 @@ keywordHandlers.panner = keywordHandlers.pan
 keywordHandlers.compressor = keywordHandlers.comp
 
 const keywordSuggestions = [
-  'preset:', 'osc:', 'noise:', 'filter:', 'env:', 'reverb:', 'delay:', 'dur:', 'lfo:', 'distort:', 'pan:', 'comp:', 'set:'
+  'preset:', 'osc:', 'noise:', 'filter:', 'env:', 'reverb:', 'delay:', 'dur:', 'lfo:', 'distort:', 'pan:', 'comp:', 'set:', '--save'
 ];
 
 /**
@@ -335,12 +339,42 @@ export function buildBlueprintFromKeywords(keywords: string[]): {
 export const rawCommand: CommandDefinition = {
   name: 'raw',
   description: 'Generates a sound on-the-fly from keyword arguments.',
-  execute: (args = []): CommandResult => {
+  execute: (args = [], contexts): CommandResult => {
     if (args.length === 0) {
       return { output: HELP_TEXT }
     }
 
-    const { blueprint, report } = buildBlueprintFromKeywords(args)
+    // Pull an optional `--save [name]` flag out before parsing keywords.
+    let save = false
+    let saveName: string | undefined
+    const keywords: string[] = []
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '--save') {
+        save = true
+        // The next token is the name, unless it's another keyword.
+        const next = args[i + 1]
+        if (next && !next.includes(':') && next !== '--save') {
+          saveName = next
+          i++
+        }
+        continue
+      }
+      keywords.push(args[i])
+    }
+
+    if (keywords.length === 0) {
+      return { output: HELP_TEXT }
+    }
+
+    const { blueprint, report } = buildBlueprintFromKeywords(keywords)
+    // Stash it so a later bare `save` can persist this sound too.
+    contexts.lastBlueprint = blueprint
+
+    if (save) {
+      const name = (saveName ?? savedSounds.nextName()).replace(/"/g, '')
+      savedSounds.save(name, blueprint)
+      report.push(`💾 Saved as "${name}". Replay it with: play ${name}`)
+    }
 
     return {
       output: `Generating sound with blueprint:\n${report.join('\n')}`,
