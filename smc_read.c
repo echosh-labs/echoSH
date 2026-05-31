@@ -20,7 +20,7 @@ typedef struct {
 int
 main(void)
 {
-    io_service_t service = IOServiceGetMatchingService(kIOMasterPortDefault,
+    io_service_t service = IOServiceGetMatchingService(kIOMainPortDefault,
                                IOServiceMatching("AppleSMC"));
     if (!service)
         return -1;
