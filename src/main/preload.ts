@@ -48,12 +48,17 @@ export const BRIDGE = {
     id: string,
     handlers: {
       onChunk: (text: string) => void;
+      /** Summarised reasoning so far. Restarts on each tool-loop iteration. */
+      onThinking: (text: string) => void;
       onDone: (text: string) => void;
       onError: (message: string) => void;
     },
   ) => {
     const chunk = (_e: unknown, data: ClaudeChunk) => {
       if (data.id === id) handlers.onChunk(data.text);
+    };
+    const thinking = (_e: unknown, data: ClaudeChunk) => {
+      if (data.id === id) handlers.onThinking(data.text);
     };
     const done = (_e: unknown, data: ClaudeChunk) => {
       if (data.id !== id) return;
@@ -70,11 +75,13 @@ export const BRIDGE = {
     // them attached would leak one set per `claude` invocation.
     function cleanup(): void {
       ipcRenderer.off("claude:chunk", chunk);
+      ipcRenderer.off("claude:thinking", thinking);
       ipcRenderer.off("claude:done", done);
       ipcRenderer.off("claude:error", error);
     }
 
     ipcRenderer.on("claude:chunk", chunk);
+    ipcRenderer.on("claude:thinking", thinking);
     ipcRenderer.on("claude:done", done);
     ipcRenderer.on("claude:error", error);
 

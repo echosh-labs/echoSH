@@ -13,11 +13,28 @@ export interface ScrollbackEntry {
  * A snapshot of the live terminal, assembled by the renderer and handed to
  * Claude so it can answer questions about what the user just did.
  */
+/** One argument of a command, flattened for the model. */
+export interface CommandArgReference {
+  /** Literal, flag, or `<placeholder>` as the user would type it. */
+  label: string
+  description?: string
+}
+
+/**
+ * A command's full signature. Sent so Claude knows the syntax up front instead
+ * of burning a tool call on `help <name>` before it can do anything.
+ */
+export interface CommandReference {
+  name: string
+  description: string
+  args: CommandArgReference[]
+}
+
 export interface ClaudeSessionContext {
   platform: string
   version: string
-  /** Names of the commands echoSH provides. */
-  commands: string[]
+  /** Every command echoSH provides, with its arguments. */
+  commands: CommandReference[]
   /** Current synth tempo, so Claude can pitch note lengths sensibly. */
   bpm: number
   /** Recent scrollback, oldest first. */

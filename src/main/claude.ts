@@ -19,22 +19,27 @@ import { AppSettings } from '@/renderer/types/app'
 import {
   ClaudeAskRequest,
   ClaudeSessionContext,
-  ClaudeToolResult
+  ClaudeToolResult,
+  CommandReference
 } from '@/renderer/types/claude'
 
 /** Opus 4.8 — the most capable Claude model. */
 const MODEL = 'claude-opus-4-8'
 
 /**
- * Terminal output wants short answers fast, so we run at low effort and cap the
- * reply. Raise `effort` to 'high' (and `max_tokens`) if you'd rather trade
- * latency for depth on harder questions.
+ * Terminal output wants short answers, but 'low' left almost nothing to watch —
+ * effort controls how much Claude thinks, and at 'low' it mostly doesn't.
+ * 'medium' gives visible reasoning without a long wait. Raise to 'high'/'xhigh'
+ * for harder questions at the cost of latency.
  */
-const EFFORT = 'low'
+const EFFORT = 'medium'
 const MAX_TOKENS = 4096
 
 /** Safety net on the tool loop so a misbehaving turn can't spin forever. */
 const MAX_ITERATIONS = 6
+
+/** How long to wait for the renderer to answer a tool call before giving up. */
+const TOOL_TIMEOUT_MS = 15_000
 
 const SYSTEM_PROMPT = [
   'You are Claude, embedded in echoSH — a musical terminal emulator where every',
@@ -49,18 +54,25 @@ const SYSTEM_PROMPT = [
   'themselves. Playing it is the whole point. Compose something real: give it',
   'shape and phrasing rather than walking a scale, and vary note lengths.',
   '',
-  'run_command runs any echoSH command and returns its output — tempo, volume,',
-  'theme, chord, scale, arp, beat, help, and the rest. Use it to change settings',
-  'the user asks for, to inspect state before answering, and to check a',
-  "command's own help output rather than guessing its arguments. The <session>",
-  'block lists every command actually available; trust that list over memory,',
-  'and run `help <name>` if you are unsure of a syntax. It cannot call `claude`.',
+  'run_command runs any echoSH command and returns its output. Every command and',
+  'its arguments are listed at the end of this prompt — that reference is',
+  'generated from the running app, so trust it over memory and do not waste a',
+  'turn running `help` to discover syntax you have already been given. Use',
+  'run_command to change settings the user asks for and to inspect state before',
+  'answering. It cannot call `claude`.',
   '',
   'Chain them freely: setting the tempo and then playing at it is two calls.',
   '',
+  'Act in the same turn you describe the action. If you find yourself writing',
+  '"let me look that up", "I\'ll try it and see", or "let me test that", make the',
+  'tool call instead — a turn that ends on a stated intention leaves the user',
+  'staring at a prompt waiting for something that never happens. Never end your',
+  'turn on a promise; end it on a result, or on a question only the user can',
+  'answer.',
+  '',
   'Each user turn begins with a <session> block describing the live terminal:',
-  'the platform, the app version, the commands echoSH provides, the current',
-  'tempo, and the most recent scrollback. Use it to answer questions about what',
+  'the platform, the app version, the current tempo, and the most recent',
+  'scrollback. Use it to answer questions about what',
   'just happened — "why did that fail", "what did I just run", "explain that',
   'output". The block is context the app assembled for you, not something the',
   'user typed; never quote it back verbatim or mention that you received it.',
@@ -136,6 +148,33 @@ const TOOLS: Anthropic.Tool[] = [
   }
 ]
 
+/**
+ * The system prompt with the command reference appended. Cached because prompt
+ * caching is a prefix match — the commands don't change while the app runs, so
+ * rebuilding an identical string each turn is fine, but the *value* must stay
+ * byte-identical or every cached turn is reprocessed at full price.
+ */
+let systemPromptCache: { key: string; prompt: string } | null = null
+
+function buildSystemPrompt(commands: CommandReference[]): string {
+  // The names alone identify the command set; descriptions and args are derived
+  // from the same definitions, so they can't drift independently.
+  const key = commands.map((c) => c.name).join(',')
+  if (systemPromptCache?.key === key) return systemPromptCache.prompt
+
+  const lines: string[] = [SYSTEM_PROMPT, '', 'echoSH command reference:']
+  for (const command of commands) {
+    lines.push(`  ${command.name} — ${command.description}`)
+    for (const arg of command.args) {
+      lines.push(`      ${arg.label}${arg.description ? ` — ${arg.description}` : ''}`)
+    }
+  }
+
+  const prompt = lines.join('\n')
+  systemPromptCache = { key, prompt }
+  return prompt
+}
+
 /** Rolling conversation so follow-up questions have context. */
 let conversation: Anthropic.MessageParam[] = []
 
@@ -170,10 +209,6 @@ function renderSessionContext(ctx: ClaudeSessionContext): string {
     `tempo: ${ctx.bpm} bpm`
   ]
 
-  if (ctx.commands.length) {
-    lines.push(`available commands: ${ctx.commands.join(', ')}`)
-  }
-
   if (ctx.scrollback.length) {
     lines.push('', 'recent scrollback (oldest first):')
     for (const entry of ctx.scrollback) {
@@ -200,7 +235,8 @@ function renderSessionContext(ctx: ClaudeSessionContext): string {
 function runToolInRenderer(
   sender: WebContents,
   id: string,
-  block: Anthropic.ToolUseBlock
+  block: Anthropic.ToolUseBlock,
+  signal: AbortSignal
 ): Promise<ClaudeToolResult> {
   return new Promise((resolve) => {
     if (sender.isDestroyed()) {
@@ -208,7 +244,30 @@ function runToolInRenderer(
       return
     }
 
-    pendingTools.set(block.id, resolve)
+    // Every exit path has to settle the promise and drop the pending entry —
+    // the turn is blocked on this, so a lost reply would hang it forever.
+    const finish = (result: ClaudeToolResult): void => {
+      if (!pendingTools.has(block.id)) return
+      pendingTools.delete(block.id)
+      clearTimeout(timer)
+      signal.removeEventListener('abort', onAbort)
+      resolve(result)
+    }
+
+    const onAbort = (): void =>
+      finish({ id, toolUseId: block.id, content: 'Interrupted by the user.', isError: true })
+
+    // Backstop for a renderer that never answers (crashed handler, closed
+    // window mid-call). Tools here are near-instant, so this only ever fires on
+    // something genuinely broken.
+    const timer = setTimeout(
+      () => finish({ id, toolUseId: block.id, content: 'Tool timed out.', isError: true }),
+      TOOL_TIMEOUT_MS
+    )
+
+    pendingTools.set(block.id, finish)
+    signal.addEventListener('abort', onAbort, { once: true })
+
     sender.send('claude:tool', {
       id,
       toolUseId: block.id,
@@ -219,10 +278,10 @@ function runToolInRenderer(
 }
 
 ipcMain.on('claude:tool_result', (_event, result: ClaudeToolResult) => {
-  const resolve = pendingTools.get(result.toolUseId)
-  if (!resolve) return
-  pendingTools.delete(result.toolUseId)
-  resolve(result)
+  // Hand off to `finish`, which owns the map entry, the timer, and the abort
+  // listener. Deleting here first would make its own guard see a missing entry
+  // and bail without ever resolving — deadlocking the turn.
+  pendingTools.get(result.toolUseId)?.(result)
 })
 
 ipcMain.on('claude:ask', async (event, { id, prompt, context }: ClaudeAskRequest) => {
@@ -260,8 +319,11 @@ ipcMain.on('claude:ask', async (event, { id, prompt, context }: ClaudeAskRequest
         {
           model: MODEL,
           max_tokens: MAX_TOKENS,
-          system: SYSTEM_PROMPT,
-          thinking: { type: 'adaptive' },
+          system: buildSystemPrompt(context.commands),
+          // `display` defaults to 'omitted' on this model family, which streams
+          // thinking blocks with empty text — the terminal would just sit on a
+          // spinner. 'summarized' is what makes the reasoning watchable.
+          thinking: { type: 'adaptive', display: 'summarized' },
           output_config: { effort: EFFORT },
           tools: TOOLS,
           messages: conversation
@@ -272,6 +334,14 @@ ipcMain.on('claude:ask', async (event, { id, prompt, context }: ClaudeAskRequest
       stream.on('text', (delta) => {
         text += delta
         send('claude:chunk', { id, text })
+      })
+
+      // Reasoning goes on its own channel so the renderer can render and
+      // sonify it differently, and discard it once the answer lands. The
+      // snapshot restarts each iteration, which is what we want — thinking
+      // after a tool call is a fresh thought, not a continuation.
+      stream.on('thinking', (_delta, snapshot) => {
+        send('claude:thinking', { id, text: snapshot })
       })
 
       const message = await stream.finalMessage()
@@ -290,8 +360,12 @@ ipcMain.on('claude:ask', async (event, { id, prompt, context }: ClaudeAskRequest
       // Tool calls in one message are independent — run them together, then
       // return every result in a single user turn as the API requires.
       const results = await Promise.all(
-        toolUses.map((block) => runToolInRenderer(event.sender, id, block))
+        toolUses.map((block) => runToolInRenderer(event.sender, id, block, controller.signal))
       )
+
+      // An interrupt during tool execution doesn't reject anything we're
+      // awaiting, so check for it explicitly before starting another turn.
+      if (controller.signal.aborted) throw new Error('Interrupted')
 
       conversation.push({
         role: 'user',

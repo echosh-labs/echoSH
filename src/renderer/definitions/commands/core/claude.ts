@@ -2,6 +2,7 @@ import { CommandDefinition, CommandResult } from '../types'
 import { SoundBlueprint } from '@/renderer/lib/audio/audioBlueprints.ts'
 import { CommandContexts } from '@/renderer/lib/commands/processedCommandResult.ts'
 import { audioEngine } from '@/renderer/lib/audio/audioEngine.ts'
+import { createSidechain } from '@/renderer/lib/audio/sidechain.ts'
 import { ClaudeSessionContext, ScrollbackEntry } from '@/renderer/types/claude.ts'
 
 // A warm, ascending major-9th shimmer — Claude's little signature jingle.
@@ -65,10 +66,31 @@ function collectContext(contexts: CommandContexts): ClaudeSessionContext {
   return {
     platform: contexts.arch ?? 'unknown',
     version: contexts.version ?? 'unknown',
-    commands: contexts.commandNames ?? [],
+    commands: contexts.commandReference ?? [],
     bpm: audioEngine.getBpm(),
     scrollback
   }
+}
+
+/** Braille spinner — one cell wide, so the line doesn't jitter as it turns. */
+const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+const SPINNER_INTERVAL_MS = 80
+
+/** Longest slice of reasoning shown on the status line. */
+const THINKING_PREVIEW_CHARS = 88
+
+/**
+ * Reduces the reasoning snapshot to a single trailing line. Thinking arrives as
+ * paragraphs; showing all of it would shove the terminal around on every tick,
+ * so we show the current thought and let it scroll through in place.
+ */
+function lastLine(thinking: string): string {
+  const line = thinking.trimEnd().split('\n').filter(Boolean).pop()
+  if (!line) return ''
+  const trimmed = line.trim()
+  return trimmed.length > THINKING_PREVIEW_CHARS
+    ? `…${trimmed.slice(-THINKING_PREVIEW_CHARS)}`
+    : trimmed
 }
 
 /** The request currently streaming, if any, so Ctrl+C can abort it. */
@@ -94,22 +116,72 @@ export function askClaude(prompt: string, contexts: CommandContexts): CommandRes
   const context = collectContext(contexts)
 
   return {
-    output: '...',
+    output: `${SPINNER[0]} thinking`,
     stream: (emit) => {
+      // Two voices: the answer across the full range, reasoning low and slow.
+      // Per-request, so overlapping replies can't share a scheduling cursor.
+      const answerVoice = createSidechain('answer')
+      const thinkingVoice = createSidechain('thinking')
+
+      let answer = ''
+      let thinking = ''
+      let frame = 0
+      let done = false
+
+      /**
+       * The answer is the durable output; reasoning is transient scaffolding
+       * shown beneath it and dropped when the turn ends. That keeps what gets
+       * persisted to history clean — just the answer.
+       */
+      const render = (): void => {
+        if (done) {
+          emit(answer || '(no response)')
+          return
+        }
+
+        const spinner = SPINNER[frame % SPINNER.length]
+        const preview = lastLine(thinking)
+        const status = preview ? `${spinner} ${preview}` : `${spinner} thinking`
+        emit(answer ? `${answer}\n${status}` : status)
+      }
+
+      // Animate independently of the network so the terminal stays alive during
+      // the long quiet stretch before the first token.
+      const ticker = setInterval(() => {
+        frame++
+        render()
+      }, SPINNER_INTERVAL_MS)
+
       const settle = (): void => {
+        done = true
+        clearInterval(ticker)
         if (activeRequestId === id) activeRequestId = null
+        answerVoice.stop()
+        thinkingVoice.stop()
       }
 
       window.BRIDGE.onClaudeStream(id, {
         // Chunks carry the full response so far, so this is a plain replace.
-        onChunk: (text) => emit(text),
+        onChunk: (text) => {
+          answer = text
+          answerVoice.feed(text)
+          render()
+        },
+        onThinking: (text) => {
+          thinking = text
+          thinkingVoice.feed(text)
+          render()
+        },
         onDone: (text) => {
+          answer = text
+          answerVoice.feed(text)
           settle()
-          emit(text || '(no response)')
+          render()
         },
         onError: (message) => {
+          answer = `claude: ${message}`
           settle()
-          emit(`claude: ${message}`)
+          render()
         }
       })
 

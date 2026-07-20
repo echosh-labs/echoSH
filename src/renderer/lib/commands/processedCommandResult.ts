@@ -4,6 +4,7 @@ import { SoundBlueprint } from "@/renderer/lib/audio/audioBlueprints.ts";
 import { ThemeProviderState } from "@/renderer/lib/contexts/themeProvider.tsx";
 import { EffectController } from "@/renderer/lib/text/effectController.tsx";
 import { HistoryItem } from "@/renderer/types/terminal.ts";
+import { CommandReference } from "@/renderer/types/claude.ts";
 
 /**
  * The final, consolidated result object that is returned to the Terminal component.
@@ -31,10 +32,11 @@ export interface CommandContexts {
   history: HistoryItem[];
   localHistory?: string[];
   /**
-   * Names of every loaded command. Supplied by the processor so commands can
-   * introspect the command set without importing the registry they live in.
+   * Every loaded command with its signature. Supplied by the processor so
+   * commands can introspect the command set without importing the registry
+   * they live in.
    */
-  commandNames?: string[];
+  commandReference?: CommandReference[];
   /**
    * When true, bare terminal input is sent to Claude instead of being parsed as
    * a command. Entered by `claude`, left with `exit`.

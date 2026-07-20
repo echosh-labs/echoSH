@@ -34,6 +34,7 @@ import { volumeCommand } from "@/renderer/definitions/commands/core/volume.ts";
 import { muteCommand } from "@/renderer/definitions/commands/core/mute.ts";
 import { latencyCommand } from "@/renderer/definitions/commands/core/latency.ts";
 import { saveCommand } from "@/renderer/definitions/commands/core/save.ts";
+import { sidechainCommand } from "@/renderer/definitions/commands/core/sidechain.ts";
 
 export const coreCommands: CommandDefinition[] = [
   clearCommand,
@@ -70,5 +71,6 @@ export const coreCommands: CommandDefinition[] = [
   volumeCommand,
   muteCommand,
   latencyCommand,
-  saveCommand
+  saveCommand,
+  sidechainCommand
 ]

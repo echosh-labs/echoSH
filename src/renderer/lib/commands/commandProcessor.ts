@@ -4,7 +4,8 @@
  * combining static and runtime effects into a single result for the orchestrator.
  */
 
-import { CommandAction, CommandDefinition, CommandResult } from "../../definitions/commands/types";
+import { CommandAction, CommandArg, CommandDefinition, CommandResult } from "../../definitions/commands/types";
+import { CommandArgReference } from "@/renderer/types/claude.ts";
 import { coreCommands } from "../../definitions/commands/core";
 import {
   askClaude,
@@ -17,6 +18,21 @@ import { errorSound } from "@/renderer/lib/audio/sounds/error.ts";
 import { keySounds } from "@/renderer/lib/audio/keys/special.ts";
 import { CommandContexts, ProcessedCommandResult } from "@/renderer/lib/commands/processedCommandResult.ts";
 import React from "react";
+
+/**
+ * Flattens one declared argument into the label a user would actually type.
+ * Returns null for entries that carry no typeable token (a bare description or
+ * a nested-only group), so they're dropped rather than rendered blank.
+ */
+function describeArg(arg: CommandArg): CommandArgReference | null {
+  if (typeof arg === "string") return { label: arg };
+
+  const label =
+    arg.literal ?? arg.flag ?? (arg.placeholder ? `<${arg.placeholder}>` : null);
+  if (!label) return null;
+
+  return arg.description ? { label, description: arg.description } : { label };
+}
 
 /**
  * A class-based command processor for better state management and initialization.
@@ -55,9 +71,13 @@ class CommandProcessor {
     commandList.forEach((command) => {
       this.commands.set(command.name.toLowerCase(), command);
     });
-    // Expose the names so commands can introspect without importing the
+    // Expose the signatures so commands can introspect without importing the
     // registry (which imports them — that would be a cycle).
-    this.contexts.commandNames = [...this.commands.keys()];
+    this.contexts.commandReference = [...this.commands.values()].map((command) => ({
+      name: command.name,
+      description: command.description,
+      args: command.argSet.map(describeArg).filter((a): a is CommandArgReference => a !== null)
+    }));
   }
 
   /**

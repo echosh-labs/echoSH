@@ -46,6 +46,7 @@ class AudioEngine {
   private mainGain: Tone.Gain | null = null;
   private keystrokeSynth: Tone.PolySynth | null = null;
   private melodySynth: Tone.PolySynth | null = null;
+  private sidechainSynth: Tone.PolySynth | null = null;
   private instruments: Map<string, Tone.PolySynth> = new Map();
 
   // Master volume / mute state. `mainGain` is the single point of volume control.
@@ -98,6 +99,16 @@ class AudioEngine {
       });
       this.melodySynth.connect(this.mainGain);
 
+      // A soft, plucky voice for sonifying Claude's streaming response. It sits
+      // well under the other synths so it reads as texture beneath the text
+      // rather than competing with keystrokes or the musical commands.
+      this.sidechainSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.004, decay: 0.12, sustain: 0.0, release: 0.12 },
+        volume: -22
+      });
+      this.sidechainSynth.connect(this.mainGain);
+
       this.registerInstrument('backspace', backspaceSwoosh);
 
       console.log('AudioEngine Initialized.')
@@ -128,6 +139,24 @@ class AudioEngine {
     // event and play it as soon as the context is resumed by Tone.start().
     this.ensureActiveContext();
     this.keystrokeSynth.triggerAttackRelease(frequency, '16n', Tone.now());
+  }
+
+  /**
+   * Plays one note of the response sonification. `time` is an absolute Tone
+   * time, letting the caller schedule a run of notes ahead of the clock rather
+   * than firing them all at once as text arrives.
+   */
+  public playSidechainNote(frequency: number, time?: number): void {
+    if (!this.sidechainSynth) return;
+    // Same fire-and-forget rationale as playKeystroke: this is a hot path and
+    // Tone queues the event if the context is still suspended.
+    this.ensureActiveContext();
+    this.sidechainSynth.triggerAttackRelease(frequency, '32n', time ?? Tone.now());
+  }
+
+  /** Current audio-clock time, for callers scheduling their own sequences. */
+  public now(): number {
+    return Tone.now();
   }
 
   /**
@@ -386,6 +415,11 @@ class AudioEngine {
       this.melodySynth.releaseAll();
       this.melodySynth.disconnect();
       this.melodySynth = null;
+    }
+    if (this.sidechainSynth) {
+      this.sidechainSynth.releaseAll();
+      this.sidechainSynth.disconnect();
+      this.sidechainSynth = null;
     }
 
     // 3. Disconnect and null main gain
