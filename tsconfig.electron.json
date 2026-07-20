@@ -5,7 +5,12 @@
     "outDir": "dist",
     "rootDir": "./src",
     "noEmit": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    // Third-party .d.ts files aren't ours to fix. @google/genai's bundled types
+    // reference @modelcontextprotocol/sdk, an optional peer we don't install.
+    // The other projects already set this; the electron one had been relying on
+    // main having no heavyweight dependencies.
+    "skipLibCheck": true
   },
   "include": [
     "src/main",

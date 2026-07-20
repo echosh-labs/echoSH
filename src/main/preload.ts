@@ -28,7 +28,16 @@ export const BRIDGE = {
   saveSettings: async (historyData: any) =>
     await ipcRenderer.invoke("settings:save", historyData),
 
-  // --- Claude ---
+  // --- AI ---
+  /**
+   * Fetches the live model list from the given provider using its stored key.
+   * Rejects with a short, user-facing message when no key is set yet.
+   */
+  listModels: async (
+    provider: string,
+  ): Promise<{ id: string; label: string }[]> =>
+    await ipcRenderer.invoke("ai:listModels", provider),
+
   /** Fire a prompt at Claude. Replies arrive on the listeners below. */
   askClaude: (request: ClaudeAskRequest) => {
     ipcRenderer.send("claude:ask", request);

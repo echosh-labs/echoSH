@@ -3,6 +3,68 @@
  * @description Shared shapes for the renderer <-> main Claude bridge.
  */
 
+/**
+ * Selectable response-length caps, shared so the Settings dropdown and the main
+ * process can't drift apart.
+ *
+ * This is `max_tokens`, which bounds thinking *and* visible reply together — so
+ * the floor is deliberately well above zero. Anything much under 4k risks the
+ * reasoning eating the whole budget and truncating before the answer starts.
+ */
+export const TOKEN_LIMIT_OPTIONS = [
+  { value: 4096, label: 'Short — 4K (fastest)' },
+  { value: 8192, label: 'Normal — 8K' },
+  { value: 16000, label: 'Long — 16K' },
+  { value: 32000, label: 'Very long — 32K' },
+  { value: 64000, label: 'Maximum — 64K (slowest)' }
+] as const
+
+export const DEFAULT_TOKEN_LIMIT = 4096
+
+/** Clamps a stored value to a known option, so a hand-edited config can't 400. */
+export function resolveTokenLimit(value: unknown): number {
+  return TOKEN_LIMIT_OPTIONS.some((option) => option.value === value)
+    ? (value as number)
+    : DEFAULT_TOKEN_LIMIT
+}
+
+/**
+ * The selectable AI providers, and which settings fields each one uses. Keeping
+ * the field names here lets the Settings form drive every provider off one set
+ * of controls instead of triplicating them.
+ */
+export const PROVIDER_OPTIONS = [
+  {
+    id: 'anthropic',
+    label: 'Claude',
+    keyField: 'anthropicApiKey',
+    modelField: 'anthropicModel',
+    keyHint: 'console.anthropic.com'
+  },
+  {
+    id: 'openai',
+    label: 'OpenAI',
+    keyField: 'openaiApiKey',
+    modelField: 'openaiModel',
+    keyHint: 'platform.openai.com'
+  },
+  {
+    id: 'gemini',
+    label: 'Gemini',
+    keyField: 'geminiApiKey',
+    modelField: 'geminiModel',
+    keyHint: 'aistudio.google.com'
+  }
+] as const
+
+export type ProviderOption = (typeof PROVIDER_OPTIONS)[number]
+
+export const DEFAULT_PROVIDER = 'anthropic'
+
+export function providerOption(id: unknown): ProviderOption {
+  return PROVIDER_OPTIONS.find((option) => option.id === id) ?? PROVIDER_OPTIONS[0]
+}
+
 /** One command and its rendered output, as it appeared in the terminal. */
 export interface ScrollbackEntry {
   command: string

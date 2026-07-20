@@ -17,7 +17,7 @@ app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 console.log('Starting main process');
 
 import './api'
-import './claude'
+import './ai'
 
 /**
  * Applies Apple's native "Liquid Glass" material (macOS 26+) to the window via

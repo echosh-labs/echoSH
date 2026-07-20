@@ -5,11 +5,18 @@ import { useTerminalContext } from "@/renderer/lib/contexts/terminalContext.tsx"
 import AudioDeviceSelect from "@/renderer/components/inputs/audioDevice.tsx";
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/renderer/components/ui/select.tsx";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { applyStyleSettings, FONT_OPTIONS, STYLE_DEFAULTS } from "@/renderer/lib/styleSettings.ts";
+import {
+  DEFAULT_PROVIDER,
+  DEFAULT_TOKEN_LIMIT,
+  PROVIDER_OPTIONS,
+  providerOption,
+  TOKEN_LIMIT_OPTIONS,
+} from "@/renderer/types/claude.ts";
 
 export default function Settings() {
 
@@ -31,6 +38,40 @@ export default function Settings() {
     const sub = form.watch((values) => applyStyleSettings(values as Partial<AppSettings>));
     return () => sub.unsubscribe();
   }, [form]);
+
+  // Which provider's key/model fields the single set of controls is editing.
+  const providerId = form.watch("aiProvider") ?? DEFAULT_PROVIDER;
+  const activeProvider = providerOption(providerId);
+
+  const [models, setModels] = useState<{ id: string; label: string }[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+
+  /**
+   * Model lists come from the provider's own API rather than a hardcoded table,
+   * so the dropdown can't go stale. Main fetches using the key already on disk,
+   * which is why a freshly typed key has to be saved before this will work.
+   */
+  const loadModels = useCallback(() => {
+    setLoadingModels(true);
+    setModelsError(null);
+    window.BRIDGE.listModels(activeProvider.id)
+      .then(setModels)
+      .catch((reason: unknown) => {
+        setModels([]);
+        setModelsError(reason instanceof Error ? reason.message : String(reason));
+      })
+      .finally(() => setLoadingModels(false));
+  }, [activeProvider.id]);
+
+  // Refetch when the provider changes; each has its own list and key.
+  useEffect(() => {
+    loadModels();
+  }, [loadModels]);
+
+  const modelsStatus = loadingModels
+    ? "Loading models…"
+    : modelsError ?? (models.length ? "Select a model" : "No models available");
 
   // If the user leaves without saving, revert the preview to the saved values.
   const savedSettings = useRef(terminalContext.settings);
@@ -79,29 +120,131 @@ export default function Settings() {
             )}
           />
 
-          <div className="pt-1 text-xs uppercase tracking-widest text-output">Claude</div>
+          <div className="pt-1 text-xs uppercase tracking-widest text-output">AI</div>
 
           <FormField
             control={form.control}
-            name="anthropicApiKey"
+            name="aiProvider"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Anthropic API Key</FormLabel>
+                <FormLabel>Provider</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value ?? DEFAULT_PROVIDER}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROVIDER_OPTIONS.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <p className="text-xs text-output">
+                  Backs the <code>claude</code> command. Switching starts a new conversation.
+                </p>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name={activeProvider.keyField}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{activeProvider.label} API Key</FormLabel>
                 <FormControl>
                   <input
                     type="password"
                     autoComplete="off"
                     spellCheck={false}
-                    placeholder="sk-ant-..."
-                    value={field.value ?? ""}
+                    value={(field.value as string) ?? ""}
                     onChange={(e) => field.onChange(e.target.value)}
                     className="w-full rounded-md border border-border bg-transparent px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[var(--glass-accent)]"
                   />
                 </FormControl>
                 <p className="text-xs text-output">
-                  Powers the <code>claude</code> command. Get one at console.anthropic.com.
+                  Get one at {activeProvider.keyHint}. Keys are kept per provider.
                 </p>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name={activeProvider.modelField}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Model</FormLabel>
+                <FormControl>
+                  <div className="flex gap-2">
+                    <Select
+                      value={(field.value as string) ?? ""}
+                      onValueChange={field.onChange}
+                      disabled={!models.length}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder={modelsStatus} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {models.map((model) => (
+                          <SelectItem key={model.id} value={model.id}>
+                            {model.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={loadModels}
+                      disabled={loadingModels}
+                    >
+                      {loadingModels ? <Loader2 className="animate-spin" /> : "Refresh"}
+                    </Button>
+                  </div>
+                </FormControl>
+                <p className="text-xs text-output">
+                  Fetched live from {activeProvider.label}. Save a new key before refreshing —
+                  the list is fetched with the key already on disk.
+                </p>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="claudeMaxTokens"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Response Limit</FormLabel>
+                <FormControl>
+                  {/* Select works in strings; the setting is a number. */}
+                  <Select
+                    value={String(field.value ?? DEFAULT_TOKEN_LIMIT)}
+                    onValueChange={(v) => field.onChange(Number(v))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Response limit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TOKEN_LIMIT_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={String(option.value)}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <p className="text-xs text-output">
+                  Caps reasoning and reply together. Longer limits cost more and take longer.
+                </p>
               </FormItem>
             )}
           />
