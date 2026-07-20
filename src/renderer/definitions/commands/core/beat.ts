@@ -30,7 +30,8 @@ const LEGEND = 'x=kick  o=snare  -=hi-hat  .=rest'
 
 export const beatCommand: CommandDefinition = {
   name: 'beat',
-  description: 'Plays a step-sequenced drum pattern (e.g. beat "x..o..x.x..o....").',
+  description:
+    'Plays a step-sequenced drum pattern once (e.g. beat "x..o..x.x..o...."). Use `loop` instead for continuous playback.',
   execute: (args = []): CommandResult => {
     if (!args[0] || args[0] === 'list') {
       const names = Object.keys(NAMED_PATTERNS).join(', ')

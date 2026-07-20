@@ -57,6 +57,11 @@ class AudioEngine {
   // commands (melody, scale, arp, beat). Adjusted via the `tempo` command.
   private bpm = 120;
 
+  // Called before the engine tears its graph down, so anything holding nodes
+  // that hang off `mainGain` (the loop engine) can dispose them first rather
+  // than being left connected to a disposed output.
+  private resetHandlers = new Set<() => void>();
+
   // Private constructor is intentional for the singleton pattern.
   private constructor() {
     /* linter-disable-line no-empty-function */
@@ -157,6 +162,23 @@ class AudioEngine {
   /** Current audio-clock time, for callers scheduling their own sequences. */
   public now(): number {
     return Tone.now();
+  }
+
+  /**
+   * The master gain every voice connects to. Exposed so modules that own their
+   * own instruments (the loop engine) can route through the same volume and
+   * mute controls as everything else. Null until `initialize` has run.
+   */
+  public getOutputNode(): Tone.Gain | null {
+    return this.mainGain;
+  }
+
+  /** Registers a teardown callback. Returns an unsubscribe function. */
+  public onReset(handler: () => void): () => void {
+    this.resetHandlers.add(handler);
+    return () => {
+      this.resetHandlers.delete(handler);
+    };
   }
 
   /**
@@ -387,6 +409,9 @@ class AudioEngine {
   /** Sets the shared playback tempo. `bpm` is clamped to a sane 20..400 range. */
   public setBpm(bpm: number): void {
     this.bpm = Math.max(20, Math.min(400, bpm));
+    // Keep the Transport in step so running loops follow `tempo` live. Ramped
+    // rather than set, so a tempo change mid-groove glides instead of jumping.
+    Tone.getTransport().bpm.rampTo(this.bpm, 0.1);
   }
 
   // --- Singleton Access ---
@@ -398,6 +423,19 @@ class AudioEngine {
   }
 
   public reset() {
+    // 0. Let holders of external nodes dispose before the graph goes away.
+    //    Copied first: a handler that unsubscribes itself would otherwise
+    //    mutate the set mid-iteration.
+    [...this.resetHandlers].forEach((handler) => {
+      try {
+        handler();
+      } catch (err) {
+        // One bad handler must not leave the engine half-torn-down.
+        console.error('Reset handler failed:', err);
+      }
+    });
+    this.resetHandlers.clear();
+
     // 1. Stop all synths/instruments and disconnect
     this.instruments.forEach(synth => {
       synth.releaseAll();

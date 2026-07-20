@@ -96,7 +96,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="settings-widget p-3">
+    <div className="settings-widget p-3 pb-8 h-[calc(100vh-55px)] w-full max-w-xl overflow-y-auto">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}

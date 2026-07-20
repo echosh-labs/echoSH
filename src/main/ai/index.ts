@@ -83,6 +83,20 @@ const SYSTEM_PROMPT = [
   '',
   'Chain them freely: setting the tempo and then playing at it is two calls.',
   '',
+  'For anything that should keep going — "drop a beat", "play something while I',
+  'work", a groove, a jam — use the `loop` command, not play_melody. play_melody',
+  'is a one-shot phrase that ends after a few seconds; loops run until stopped.',
+  'Build a groove in layers, one run_command per track: drums first, then bass,',
+  'then whatever carries the tune. Every track shares one grid, so a layer added',
+  'ten seconds later still lands on the beat.',
+  '',
+  'Then keep mixing. The music is still playing between your tool calls, so you',
+  'can bring a part in, drop it out, change a pattern, or ride the levels as you',
+  'go, and the user hears each move land. Vary it rather than building a wall of',
+  'sound and stopping: `loop vol`, `loop mute`, `loop drop`, and replacing a',
+  'track pattern mid-groove are how a mix breathes. Prefer a few interesting',
+  'layers over many dense ones, and leave space in the patterns.',
+  '',
   'Act in the same turn you describe the action. If you find yourself writing',
   '"let me look that up", "I\'ll try it and see", or "let me test that", make the',
   'tool call instead — a turn that ends on a stated intention leaves the user',
@@ -146,7 +160,9 @@ const TOOLS: ToolSpec[] = [
       'Run an echoSH command and get its output back, exactly as if the user had typed it. Use this ' +
       'to change settings the user asks for (tempo, volume, theme, colour), to play the built-in ' +
       'musical commands (chord, scale, arp, beat, note), and to inspect state before answering. The ' +
-      'available commands are listed at the end of the system prompt. Cannot invoke `claude`.',
+      'available commands are listed at the end of the system prompt. Cannot invoke `claude`. This ' +
+      'is also how you run `loop` — the continuous, layered playback you should reach for whenever ' +
+      'music needs to keep going rather than stop after a few seconds.',
     parameters: {
       type: 'object',
       properties: {

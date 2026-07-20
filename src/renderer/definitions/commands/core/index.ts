@@ -18,6 +18,7 @@ import { scaleCommand } from "@/renderer/definitions/commands/core/scale.ts";
 import { melodyCommand } from "@/renderer/definitions/commands/core/melody.ts";
 import { arpCommand } from "@/renderer/definitions/commands/core/arp.ts";
 import { beatCommand } from "@/renderer/definitions/commands/core/beat.ts";
+import { loopCommand } from "@/renderer/definitions/commands/core/loop.ts";
 import { tempoCommand } from "@/renderer/definitions/commands/core/tempo.ts";
 // Shell utilities
 import { historyCommand } from "@/renderer/definitions/commands/core/history.ts";
@@ -56,6 +57,7 @@ export const coreCommands: CommandDefinition[] = [
   melodyCommand,
   arpCommand,
   beatCommand,
+  loopCommand,
   tempoCommand,
   // Shell utilities
   historyCommand,
