@@ -18,6 +18,8 @@ export interface ClaudeSessionContext {
   version: string
   /** Names of the commands echoSH provides. */
   commands: string[]
+  /** Current synth tempo, so Claude can pitch note lengths sensibly. */
+  bpm: number
   /** Recent scrollback, oldest first. */
   scrollback: ScrollbackEntry[]
 }
@@ -38,4 +40,53 @@ export interface ClaudeChunk {
 export interface ClaudeError {
   id: string
   message: string
+}
+
+// --- Tools ---------------------------------------------------------------
+//
+// Claude's tools run in the renderer, because that's where the audio engine
+// lives. Main drives the conversation and dispatches each tool call across the
+// IPC boundary, then waits for the result before continuing the turn.
+
+/** A single note in a melody: a scientific-pitch name and a length in beats. */
+export interface MelodyNote {
+  note: string
+  beats: number
+}
+
+export interface PlayMelodyInput {
+  notes: MelodyNote[]
+  /** Overrides the session tempo for this melody only. */
+  bpm?: number
+  /** Short label shown in the terminal while it plays. */
+  title?: string
+}
+
+export interface RunCommandInput {
+  /** A full echoSH command line, e.g. "tempo 140" or "theme matrix". */
+  command: string
+}
+
+/** Main -> renderer: run this tool call and report back. */
+export interface ClaudeToolCall {
+  id: string
+  toolUseId: string
+  name: string
+  input: unknown
+}
+
+/** Renderer -> main: the outcome of a tool call. */
+export interface ClaudeToolResult {
+  id: string
+  toolUseId: string
+  /** What Claude sees as the tool_result. */
+  content: string
+  isError?: boolean
+  /**
+   * An optional line for the user to see in the terminal (e.g. "♫ Playing ...").
+   * Main splices it into the streamed text so the displayed output has a single
+   * source of truth — the renderer can't append locally without the next chunk
+   * overwriting it.
+   */
+  transcript?: string
 }

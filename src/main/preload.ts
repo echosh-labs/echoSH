@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { AppInitData } from "@/renderer/types/app";
-import { ClaudeAskRequest, ClaudeChunk, ClaudeError } from "@/renderer/types/claude";
+import {
+  ClaudeAskRequest,
+  ClaudeChunk,
+  ClaudeError,
+  ClaudeToolCall,
+  ClaudeToolResult,
+} from "@/renderer/types/claude";
 
 console.log("[PRELOAD] Loaded at", Date.now());
 
@@ -73,6 +79,47 @@ export const BRIDGE = {
     ipcRenderer.on("claude:error", error);
 
     return cleanup;
+  },
+
+  /**
+   * Registers the handler that executes Claude's tool calls. Tools run in the
+   * renderer because that's where the audio engine lives. Registered once at
+   * startup, not per request.
+   */
+  onClaudeToolCall: (
+    handler: (
+      call: ClaudeToolCall,
+    ) => Promise<Omit<ClaudeToolResult, "id" | "toolUseId">>,
+  ) => {
+    const listener = (_e: unknown, call: ClaudeToolCall) => {
+      handler(call)
+        .then((result) => {
+          const payload: ClaudeToolResult = {
+            id: call.id,
+            toolUseId: call.toolUseId,
+            ...result,
+          };
+          ipcRenderer.send("claude:tool_result", payload);
+        })
+        .catch((reason: unknown) => {
+          // Main blocks the turn until it hears back, so a thrown handler must
+          // still produce a result — as an error Claude can read and adapt to.
+          const payload: ClaudeToolResult = {
+            id: call.id,
+            toolUseId: call.toolUseId,
+            content: reason instanceof Error ? reason.message : String(reason),
+            isError: true,
+          };
+          ipcRenderer.send("claude:tool_result", payload);
+        });
+    };
+
+    ipcRenderer.on("claude:tool", listener);
+    // Braced so the callback returns void rather than `ipcRenderer` — React
+    // effect destructors must not return a value.
+    return () => {
+      ipcRenderer.off("claude:tool", listener);
+    };
   },
 };
 

@@ -8,6 +8,7 @@ import { HistoryItem } from "@/renderer/types/terminal.ts";
 import { ProcessedCommandResult } from "@/renderer/lib/commands/processedCommandResult.ts";
 import { AppSettings } from "@/renderer/types/app.ts";
 import { applyStyleSettings } from "@/renderer/lib/styleSettings.ts";
+import { runClaudeTool } from "@/renderer/lib/commands/claudeTools.ts";
 
 
 export type TerminalContext = {
@@ -19,6 +20,8 @@ export type TerminalContext = {
   predictions: string[];
   history: HistoryItem[];
   settings: Partial<AppSettings>;
+  /** True while the terminal is routing input to Claude instead of commands. */
+  chatMode: boolean;
 
   setArch: (c: string) => void;
   setLatency: (c: boolean) => void;
@@ -41,6 +44,7 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
   const [history, _setHistory]          = useState<HistoryItem[]>([]);
   const [predictions, setPredictions]   = useState<string[]>([]);
   const [settings, setSettings]         = useState<Partial<AppSettings>>({})
+  const [chatMode, _setChatMode]        = useState<boolean>(false);
 
   const theme          = useTheme();
 
@@ -62,11 +66,24 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
       arch,
       version,
 
+      chatMode,
+
       setLatency,
       setPredictions,
       setHistory: _setHistory,
+      setChatMode,
     })
   );
+
+  /**
+   * Chat mode is read by the processor (plain object) and rendered by React
+   * (state), so both have to be updated together — the processor reads
+   * `contexts.chatMode` synchronously on the very next keystroke.
+   */
+  function setChatMode(on: boolean) {
+    _setChatMode(on);
+    processor.current.contexts.chatMode = on;
+  }
 
   function setHistory(history: HistoryItem[]) {
     _setHistory(history);
@@ -97,6 +114,7 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
     predictions,
     history,
     settings,
+    chatMode,
 
     setArch,
     setLatency,
@@ -108,6 +126,11 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
       processor.current.handleKey(e, setInput);
     },
     execute: (command) => {
+      // Captured before `process`, which can toggle chat mode: `claude` turns it
+      // on and `exit` turns it off, and each of those lines should be labelled
+      // with the prompt it was actually typed at, not the one it produced.
+      const prompt = processor.current.contexts.chatMode ? "claude>" : "$";
+
       const result = processor.current.process(command);
       const oldHistory = history.slice(-999);
       // Derive a monotonically increasing id from the last entry. Using
@@ -115,7 +138,7 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
       // producing duplicate React keys and reconciliation glitches.
       const nextId = oldHistory.length ? oldHistory[oldHistory.length - 1].id + 1 : 0;
       const newHistory = oldHistory.concat([
-        { id: nextId, command: command, output: result.output, cleared: command === "clear" }
+        { id: nextId, command: command, output: result.output, cleared: command === "clear", prompt }
       ])
       setHistory(newHistory);
 
@@ -126,6 +149,20 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
       return result;
     }
   };
+
+  // Claude's tools run here, not in main, because the audio engine and the
+  // command processor both live in the renderer. Registered once — the handler
+  // reads the processor through a ref, so it never goes stale.
+  useEffect(() => {
+    return window.BRIDGE.onClaudeToolCall(async (call) => {
+      const outcome = runClaudeTool(call, processor.current);
+      return {
+        content: outcome.content,
+        isError: outcome.isError,
+        transcript: outcome.transcript,
+      };
+    });
+  }, []);
 
   // Debounced so streaming commands don't hit the disk once per token — a
   // `claude` reply changes `history` on every chunk, and each save is an IPC

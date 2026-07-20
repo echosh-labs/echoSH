@@ -35,6 +35,12 @@ export interface CommandContexts {
    * introspect the command set without importing the registry they live in.
    */
   commandNames?: string[];
+  /**
+   * When true, bare terminal input is sent to Claude instead of being parsed as
+   * a command. Entered by `claude`, left with `exit`.
+   */
+  chatMode?: boolean;
+  setChatMode?: (on: boolean) => void;
   arch?: string;
   version?: string;
   /** The most recent blueprint produced by `random`/`raw`, so `save` can persist it. */

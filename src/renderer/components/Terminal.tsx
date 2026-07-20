@@ -100,7 +100,7 @@ export const Terminal = () => {
         {terminalContext.history.filter(h => !h.cleared).map((item) => (
           <div key={item.id} className="mb-2">
             <div className="flex">
-              <span className="mr-2 select-none">$</span>
+              <span className="mr-2 select-none">{item.prompt ?? '$'}</span>
               <span className="flex-shrink-1">{item.command}</span>
             </div>
             <div className="whitespace-pre-wrap">{item.output}</div>
@@ -118,7 +118,9 @@ export const Terminal = () => {
       <div className="glass-input-bar border-t border-border p-4">
         <form onSubmit={handleCommandSubmit}>
           <div className="flex items-center">
-            <span className="mr-2 select-none">$</span>
+            <span className="mr-2 select-none">
+              {terminalContext.chatMode ? 'claude>' : '$'}
+            </span>
             <input
               ref={inputRef}
               type="text"

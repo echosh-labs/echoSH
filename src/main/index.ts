@@ -7,6 +7,13 @@ dotenv.config()
 const isDev = process.env.DEV != undefined;
 const isPreview = process.env.PREVIEW != undefined;
 
+// Quiet Chromium's disk-cache warnings on Windows. When a previous Electron
+// instance still holds a lock on the GPU shader cache (common with tsc-watch
+// hot-reload restarts), Chromium logs "Gpu Cache Creation failed" / "Unable to
+// move the cache" and falls back to an in-memory cache. Disabling the on-disk
+// shader cache removes the noise with no functional impact.
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+
 console.log('Starting main process');
 
 import './api'

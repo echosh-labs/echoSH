@@ -6,7 +6,11 @@
 
 import { CommandAction, CommandDefinition, CommandResult } from "../../definitions/commands/types";
 import { coreCommands } from "../../definitions/commands/core";
-import { cancelActiveClaudeRequest } from "@/renderer/definitions/commands/core/claude.ts";
+import {
+  askClaude,
+  cancelActiveClaudeRequest,
+  isChatExitCommand
+} from "@/renderer/definitions/commands/core/claude.ts";
 import { CommandParser } from "@/renderer/lib/commands/commandParser.ts";
 import { audioEngine } from "@/renderer/lib/audio/audioEngine.ts";
 import { errorSound } from "@/renderer/lib/audio/sounds/error.ts";
@@ -64,12 +68,32 @@ class CommandProcessor {
    * @param depth
    * @returns A ProcessedCommandResult object for the Terminal to orchestrate.
    */
-  process(input: string, providedVars: Record<string, string> = this.vars, depth = 0): ProcessedCommandResult {
+  process(
+    input: string,
+    providedVars: Record<string, string> = this.vars,
+    depth = 0,
+    options: { bypassChat?: boolean } = {}
+  ): ProcessedCommandResult {
     this.setLocalHistory(this.localHistory.concat([input]));
 
     const trimmedInput = input.trim();
     if (!trimmedInput) {
       return { output: "", actions: [] };
+    }
+
+    // In chat mode the input is a message, not a command — route it to Claude
+    // before the parser gets a chance to interpret it. This is checked first so
+    // a message like "help me" reaches Claude rather than running `help`.
+    // `bypassChat` is how Claude's own run_command tool escapes this branch;
+    // without it every tool-run command would loop straight back into Claude.
+    if (this.contexts.chatMode && !options.bypassChat) {
+      if (isChatExitCommand(trimmedInput)) {
+        this.contexts.setChatMode?.(false);
+        return { output: "Left Claude chat.", actions: [] };
+      }
+
+      const result = askClaude(trimmedInput, this.contexts);
+      return { output: result.output, actions: [], stream: result.stream };
     }
 
     let { variables, command: commandName, args } = CommandParser.parse(input, providedVars, this, depth);
@@ -122,6 +146,22 @@ class CommandProcessor {
     }
   }
 
+  /**
+   * Runs a command on Claude's behalf. Bypasses chat-mode routing (or the
+   * command would come straight back to Claude) and refuses to re-enter
+   * `claude` itself, which would nest one conversation inside another.
+   */
+  public runForTool(command: string): ProcessedCommandResult {
+    const name = command.trim().split(/\s+/)[0]?.toLowerCase();
+    if (name === "claude") {
+      return {
+        output: "Refused: `claude` cannot invoke itself.",
+        actions: []
+      };
+    }
+    return this.process(command, undefined, 0, { bypassChat: true });
+  }
+
   public handleKey(e: React.KeyboardEvent<HTMLInputElement>, setInput: (item: string) => void): void {
 
     if (e.key !== 'Tab') {
@@ -161,6 +201,9 @@ class CommandProcessor {
         break;
       case "Tab":
         e.preventDefault();
+        // Chat input is prose, not commands — completing it against the command
+        // list would mangle what the user is typing.
+        if (this.contexts.chatMode) break;
         const element = e.target as HTMLInputElement;
         const prediction = this.contexts.predictor.predict(element.value);
 

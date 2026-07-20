@@ -1,6 +1,7 @@
 import { CommandDefinition, CommandResult } from '../types'
 import { SoundBlueprint } from '@/renderer/lib/audio/audioBlueprints.ts'
 import { CommandContexts } from '@/renderer/lib/commands/processedCommandResult.ts'
+import { audioEngine } from '@/renderer/lib/audio/audioEngine.ts'
 import { ClaudeSessionContext, ScrollbackEntry } from '@/renderer/types/claude.ts'
 
 // A warm, ascending major-9th shimmer — Claude's little signature jingle.
@@ -37,6 +38,13 @@ const pick = (xs: string[]): string => xs[Math.floor(Math.random() * xs.length)]
 /** How many past commands to show Claude. */
 const SCROLLBACK_DEPTH = 12
 
+/** Words that leave chat mode, matched case-insensitively. */
+const EXIT_WORDS = new Set(['exit', 'quit', '/exit', '/quit', ':q'])
+
+export function isChatExitCommand(input: string): boolean {
+  return EXIT_WORDS.has(input.trim().toLowerCase())
+}
+
 /**
  * Snapshots the terminal so Claude can answer questions about what just
  * happened ("why did that fail?") rather than only the literal prompt.
@@ -58,6 +66,7 @@ function collectContext(contexts: CommandContexts): ClaudeSessionContext {
     platform: contexts.arch ?? 'unknown',
     version: contexts.version ?? 'unknown',
     commands: contexts.commandNames ?? [],
+    bpm: audioEngine.getBpm(),
     scrollback
   }
 }
@@ -76,50 +85,65 @@ export function cancelActiveClaudeRequest(): boolean {
   return true
 }
 
+/**
+ * Builds the streaming result for one prompt. Shared by the `claude` command
+ * and by chat mode, which routes bare input here instead of the command parser.
+ */
+export function askClaude(prompt: string, contexts: CommandContexts): CommandResult {
+  const id = crypto.randomUUID()
+  const context = collectContext(contexts)
+
+  return {
+    output: '...',
+    stream: (emit) => {
+      const settle = (): void => {
+        if (activeRequestId === id) activeRequestId = null
+      }
+
+      window.BRIDGE.onClaudeStream(id, {
+        // Chunks carry the full response so far, so this is a plain replace.
+        onChunk: (text) => emit(text),
+        onDone: (text) => {
+          settle()
+          emit(text || '(no response)')
+        },
+        onError: (message) => {
+          settle()
+          emit(`claude: ${message}`)
+        }
+      })
+
+      activeRequestId = id
+      window.BRIDGE.askClaude({ id, prompt, context })
+    }
+  }
+}
+
 export const claudeCommand: CommandDefinition = {
   name: 'claude',
-  description: 'Ask Claude about your session — it can see your recent commands.',
+  description: 'Start a chat with Claude — it can see your session and play sound.',
   soundBlueprint: jingle,
   execute: (args = [], contexts): CommandResult => {
     const prompt = args.join(' ').trim()
 
-    if (!prompt) {
-      return { output: `${BURST}\n\n${pick(GREETINGS)}` }
-    }
-
     // `claude reset` starts a fresh conversation without restarting the app.
     if (prompt === 'reset' || prompt === '--reset') {
       window.BRIDGE.resetClaude()
+      contexts.setChatMode?.(false)
       return { output: 'Conversation cleared.' }
     }
 
-    const id = crypto.randomUUID()
-    const context = collectContext(contexts)
+    // Every entry point drops the user into chat mode; from here on, plain
+    // input goes to Claude until they type `exit`.
+    contexts.setChatMode?.(true)
 
-    return {
-      output: '...',
-      stream: (emit) => {
-        const settle = (): void => {
-          if (activeRequestId === id) activeRequestId = null
-        }
-
-        window.BRIDGE.onClaudeStream(id, {
-          // Chunks carry the full response so far, so this is a plain replace.
-          onChunk: (text) => emit(text),
-          onDone: (text) => {
-            settle()
-            emit(text || '(no response)')
-          },
-          onError: (message) => {
-            settle()
-            emit(`claude: ${message}`)
-          }
-        })
-
-        activeRequestId = id
-        window.BRIDGE.askClaude({ id, prompt, context })
+    if (!prompt) {
+      return {
+        output: `${BURST}\n\n${pick(GREETINGS)}\n\nChat mode on — just type. 'exit' to leave, Ctrl+C to interrupt.`
       }
     }
+
+    return askClaude(prompt, contexts)
   },
   argSet: [
     { literal: 'reset', description: 'Forget the conversation so far.' },
