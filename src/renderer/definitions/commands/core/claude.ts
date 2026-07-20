@@ -1,5 +1,7 @@
 import { CommandDefinition, CommandResult } from '../types'
 import { SoundBlueprint } from '@/renderer/lib/audio/audioBlueprints.ts'
+import { CommandContexts } from '@/renderer/lib/commands/processedCommandResult.ts'
+import { ClaudeSessionContext, ScrollbackEntry } from '@/renderer/types/claude.ts'
 
 // A warm, ascending major-9th shimmer — Claude's little signature jingle.
 const jingle: SoundBlueprint = {
@@ -30,29 +32,97 @@ const GREETINGS: string[] = [
   "Claude online. Tabs or spaces? ...I'll match your existing style."
 ]
 
-// Tongue-in-cheek "answers" so `claude <question>` feels alive offline.
-const QUIPS: string[] = [
-  "Great question. The answer is almost certainly 'it depends'.",
-  "Let me think... done. Have you tried turning the bug into a feature?",
-  "I'd run the tests first, but you didn't ask, so: looks good to me. 🚀",
-  "That's a one-liner. It's just a very, very long line.",
-  "Working on it... 100% (this percentage is not based on real data).",
-  "Have you considered solving it with more music? This terminal can.",
-  "I checked the docs so you don't have to. They were, regrettably, fine."
-]
-
 const pick = (xs: string[]): string => xs[Math.floor(Math.random() * xs.length)]
+
+/** How many past commands to show Claude. */
+const SCROLLBACK_DEPTH = 12
+
+/**
+ * Snapshots the terminal so Claude can answer questions about what just
+ * happened ("why did that fail?") rather than only the literal prompt.
+ *
+ * History outputs are typed as ReactNode because commands may render rich
+ * output; in practice they're strings, and anything else is skipped rather than
+ * stringified into `[object Object]`.
+ */
+function collectContext(contexts: CommandContexts): ClaudeSessionContext {
+  const scrollback: ScrollbackEntry[] = contexts.history
+    .filter((item) => !item.cleared)
+    .slice(-SCROLLBACK_DEPTH)
+    .map((item) => ({
+      command: item.command,
+      output: typeof item.output === 'string' ? item.output : ''
+    }))
+
+  return {
+    platform: contexts.arch ?? 'unknown',
+    version: contexts.version ?? 'unknown',
+    commands: contexts.commandNames ?? [],
+    scrollback
+  }
+}
+
+/** The request currently streaming, if any, so Ctrl+C can abort it. */
+let activeRequestId: string | null = null
+
+/**
+ * Aborts an in-flight `claude` reply. Returns whether there was one — the
+ * caller (Ctrl+C handling) uses that to decide if it also clears the input.
+ */
+export function cancelActiveClaudeRequest(): boolean {
+  if (!activeRequestId) return false
+  window.BRIDGE.cancelClaude(activeRequestId)
+  activeRequestId = null
+  return true
+}
 
 export const claudeCommand: CommandDefinition = {
   name: 'claude',
-  description: 'Summon Claude for a greeting — or ask it anything.',
+  description: 'Ask Claude about your session — it can see your recent commands.',
   soundBlueprint: jingle,
-  execute: (args = []): CommandResult => {
+  execute: (args = [], contexts): CommandResult => {
     const prompt = args.join(' ').trim()
-    const message = prompt ? `> ${prompt}\n\n${pick(QUIPS)}` : pick(GREETINGS)
-    return { output: `${BURST}\n\n${message}` }
+
+    if (!prompt) {
+      return { output: `${BURST}\n\n${pick(GREETINGS)}` }
+    }
+
+    // `claude reset` starts a fresh conversation without restarting the app.
+    if (prompt === 'reset' || prompt === '--reset') {
+      window.BRIDGE.resetClaude()
+      return { output: 'Conversation cleared.' }
+    }
+
+    const id = crypto.randomUUID()
+    const context = collectContext(contexts)
+
+    return {
+      output: '...',
+      stream: (emit) => {
+        const settle = (): void => {
+          if (activeRequestId === id) activeRequestId = null
+        }
+
+        window.BRIDGE.onClaudeStream(id, {
+          // Chunks carry the full response so far, so this is a plain replace.
+          onChunk: (text) => emit(text),
+          onDone: (text) => {
+            settle()
+            emit(text || '(no response)')
+          },
+          onError: (message) => {
+            settle()
+            emit(`claude: ${message}`)
+          }
+        })
+
+        activeRequestId = id
+        window.BRIDGE.askClaude({ id, prompt, context })
+      }
+    }
   },
   argSet: [
-    { placeholder: 'prompt...', description: 'Optionally ask Claude something.' }
+    { literal: 'reset', description: 'Forget the conversation so far.' },
+    { placeholder: 'prompt...', description: 'Ask Claude something.' }
   ]
 }

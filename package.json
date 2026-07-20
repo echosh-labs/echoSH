@@ -26,6 +26,7 @@
     "build:linux": "npm run build:app && electron-builder --linux"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.112.3",
     "@hookform/resolvers": "^5.1.1",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-select": "^2.2.5",
@@ -83,7 +84,13 @@
       "output": "dist"
     },
     "mac": {
-      "target": "dmg"
+      "target": {
+        "target": "dmg",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
+      }
     },
     "win": {
       "target": "nsis"

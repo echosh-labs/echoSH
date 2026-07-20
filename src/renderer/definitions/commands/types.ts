@@ -40,6 +40,16 @@ export interface CommandResult {
 
   /** An optional sound blueprint to be triggered, determined at runtime. */
   soundBlueprint?: SoundBlueprint
+
+  /**
+   * Opts the command into streaming output. `output` is shown immediately as a
+   * placeholder, then the terminal calls this with an `emit` that replaces this
+   * entry's text — as many times as you like, until the work finishes.
+   *
+   * The command can't know its own history id at execute time, so the terminal
+   * supplies the sink after it has appended the entry.
+   */
+  stream?: (emit: (text: string) => void) => void
 }
 
 //==============================================================================

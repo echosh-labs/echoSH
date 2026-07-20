@@ -10,6 +10,7 @@ const isPreview = process.env.PREVIEW != undefined;
 console.log('Starting main process');
 
 import './api'
+import './claude'
 
 /**
  * Applies Apple's native "Liquid Glass" material (macOS 26+) to the window via
@@ -17,8 +18,8 @@ import './api'
  * lazy-required inside a try/catch so that on Windows/Linux — where the package
  * is OS-skipped and never installed — this is a harmless no-op.
  */
-function applyLiquidGlass(win: BrowserWindow): void {
-  if (process.platform !== 'darwin') return
+function applyLiquidGlass(win: BrowserWindow): boolean {
+  if (process.platform !== 'darwin') return false
   try {
     const mod = require('electron-liquid-glass')
     const liquidGlass = mod?.default ?? mod
@@ -28,8 +29,10 @@ function applyLiquidGlass(win: BrowserWindow): void {
     })
     // The liquid-glass view hides the traffic lights unless we re-show them.
     win.setWindowButtonVisibility?.(true)
+    return true
   } catch (err) {
     console.warn('[liquid-glass] effect unavailable, falling back:', err)
+    return false
   }
 }
 
@@ -69,8 +72,19 @@ function createWindow(): BrowserWindow {
 
   })
 
-  // macOS-only native liquid glass (no-op elsewhere).
-  applyLiquidGlass(mainWindow)
+  // macOS-only native liquid glass (no-op elsewhere). The window is created
+  // with `transparent: true` on darwin, which the glass effect fills in. If the
+  // effect can't be applied (older macOS, or the native module failed to load),
+  // fall back to a native vibrancy material so the window isn't left fully
+  // transparent — and if even that fails, paint a solid opaque background.
+  if (process.platform === 'darwin' && !applyLiquidGlass(mainWindow)) {
+    try {
+      mainWindow.setVibrancy('under-window')
+    } catch {
+      mainWindow.setVibrancy(null)
+      mainWindow.setBackgroundColor('#0d1117')
+    }
+  }
 
   // Use the built-in `isPackaged` property to check for development mode
   if (isDev) {

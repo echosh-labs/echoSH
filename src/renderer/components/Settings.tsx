@@ -79,6 +79,33 @@ export default function Settings() {
             )}
           />
 
+          <div className="pt-1 text-xs uppercase tracking-widest text-output">Claude</div>
+
+          <FormField
+            control={form.control}
+            name="anthropicApiKey"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Anthropic API Key</FormLabel>
+                <FormControl>
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="sk-ant-..."
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="w-full rounded-md border border-border bg-transparent px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[var(--glass-accent)]"
+                  />
+                </FormControl>
+                <p className="text-xs text-output">
+                  Powers the <code>claude</code> command. Get one at console.anthropic.com.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <div className="pt-1 text-xs uppercase tracking-widest text-output">Appearance</div>
 
           <div className="flex gap-6">

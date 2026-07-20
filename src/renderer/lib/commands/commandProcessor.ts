@@ -6,6 +6,7 @@
 
 import { CommandAction, CommandDefinition, CommandResult } from "../../definitions/commands/types";
 import { coreCommands } from "../../definitions/commands/core";
+import { cancelActiveClaudeRequest } from "@/renderer/definitions/commands/core/claude.ts";
 import { CommandParser } from "@/renderer/lib/commands/commandParser.ts";
 import { audioEngine } from "@/renderer/lib/audio/audioEngine.ts";
 import { errorSound } from "@/renderer/lib/audio/sounds/error.ts";
@@ -50,6 +51,9 @@ class CommandProcessor {
     commandList.forEach((command) => {
       this.commands.set(command.name.toLowerCase(), command);
     });
+    // Expose the names so commands can introspect without importing the
+    // registry (which imports them — that would be a cycle).
+    this.contexts.commandNames = [...this.commands.keys()];
   }
 
   /**
@@ -103,7 +107,8 @@ class CommandProcessor {
       return {
         output: runtimeResult.output,
         actions: allActions,
-        soundBlueprint
+        soundBlueprint,
+        stream: runtimeResult.stream
       };
     } else {
       // Handle the case where the command is not found.
@@ -171,6 +176,9 @@ class CommandProcessor {
       case "c":
         if (e.ctrlKey) {
           e.preventDefault();
+          // Interrupt a streaming `claude` reply first, the way Ctrl+C would
+          // interrupt any other long-running foreground command.
+          cancelActiveClaudeRequest();
           this.resetIndex();
           setInput("");
         }

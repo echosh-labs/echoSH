@@ -73,6 +73,21 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
     processor.current.contexts.history = history;
   }
 
+  /**
+   * Replaces the output of a single history entry. Streaming commands emit into
+   * this long after `execute` returned, so it takes the functional form of
+   * setState — the `history` captured in that closure is stale by then.
+   */
+  function patchOutput(id: number, output: string) {
+    _setHistory((previous) => {
+      const next = previous.map((item) =>
+        item.id === id ? { ...item, output } : item
+      );
+      processor.current.contexts.history = next;
+      return next;
+    });
+  }
+
   const value: TerminalContext = {
     version,
     predictor,
@@ -103,14 +118,22 @@ export const TerminalContextProvider = ({children}: {children: ReactNode}) => {
         { id: nextId, command: command, output: result.output, cleared: command === "clear" }
       ])
       setHistory(newHistory);
+
+      // Streaming commands (e.g. `claude`) rendered a placeholder above; now
+      // that the entry exists, hand them a sink that rewrites it in place.
+      result.stream?.((text) => patchOutput(nextId, text));
+
       return result;
     }
   };
 
+  // Debounced so streaming commands don't hit the disk once per token — a
+  // `claude` reply changes `history` on every chunk, and each save is an IPC
+  // round-trip plus an electron-settings write.
   useEffect(() => {
-    if (history.length) {
-      window.BRIDGE.saveHistory(history);
-    }
+    if (!history.length) return;
+    const timer = setTimeout(() => window.BRIDGE.saveHistory(history), 500);
+    return () => clearTimeout(timer);
   }, [history]);
 
   // Apply the appearance settings to the liquid-glass CSS variables whenever

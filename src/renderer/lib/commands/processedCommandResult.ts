@@ -13,6 +13,8 @@ export interface ProcessedCommandResult {
   output: string;
   actions: CommandAction[];
   soundBlueprint?: SoundBlueprint;
+  /** See `CommandResult.stream` — the terminal wires this up after appending. */
+  stream?: (emit: (text: string) => void) => void;
 }
 
 export interface TerminalSetters {
@@ -28,6 +30,11 @@ export interface CommandContexts {
   predictions: string[];
   history: HistoryItem[];
   localHistory?: string[];
+  /**
+   * Names of every loaded command. Supplied by the processor so commands can
+   * introspect the command set without importing the registry they live in.
+   */
+  commandNames?: string[];
   arch?: string;
   version?: string;
   /** The most recent blueprint produced by `random`/`raw`, so `save` can persist it. */
