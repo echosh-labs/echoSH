@@ -1,9 +1,9 @@
-# AGENTS.md - Mercury Dasha System Architecture & Agent Instructions
+# AGENTS.md - Echo SH Labs Architecture & Agent Operating Standards
 
-> **Project:** Mercury Dasha (Budha Mahadasha & The Quicksilver Principle)  
+> **Organization:** [Echo SH Labs](https://echosh-labs.com) (`echosh-labs.com`)  
+> **Project:** Mercury Dash Platform (Amra Core & Foundations Engine)  
 > **Author & Architect:** Justin Andrew Wood  
-> **Temporal Context:** Navigating the final **Saturn–Jupiter (*Shani–Guru*)** Antardasha through **April 2028**.  
-> **Target Dawn:** April 2028 (Inception of the 17-Year Mercury Mahadasha).  
+> **Core Engine:** Axis Mundi (Zero-Token Google Workspace / Keep Ingestion & MCP Daemon)  
 > **Repository:** `/home/justin/code/mercury-dasha`
 
 ---
@@ -13,39 +13,42 @@
 ### 1. MANDATORY PLANNING MODE BY DEFAULT
 - **Plan Before Code:** Every agent MUST formulate a detailed `implementation_plan.md` before making changes, creating migrations, or writing code.
 - **Explicit Approval Required:** Stop and await user confirmation before executing any plan.
-- **Temporal Reverence:** Pacing is deliberate, dignified, and anticipatory for the April 2028 horizon.
+- **Organizational Governance:** Echo SH Labs is the primary operational and business entity. All forward-facing branding and documentation adhere to `echosh-labs.com`.
 
 ### 2. ZERO-CONTENT FRONTEND (PURE PRESENTATION SHELL)
 - **No Hardcoded Domain Content:** The Next.js frontend is strictly an **infrastructure, layout, animation, and rendering shell**.
-- **100% Backend-Driven:** Every statement, archetype, correspondence, dasha table, nakshatra description, essay, transit, and reflection MUST be fetched dynamically from PostgreSQL or BoltDB.
+- **100% Backend-Driven:** Every statement, storyboard narrative, archetype, correspondence, dasha table, essay, transit, and directive MUST be fetched dynamically from PostgreSQL, BoltDB, or Axis Mundi APIs.
 - **No Mock Fallbacks:** In loading/error states, use UI skeleton shimmers—NEVER hardcode domain copy or mock fallback text in frontend source files.
 
 ### 3. SERVER-SENT EVENTS (SSE) FOR FAST TRANSACTIONAL STREAMING
-- **Native Go Event Stream:** Fast transactional, reactive, and live data must flow over **Server-Sent Events (`text/event-stream`)** via `/api/stream/events`.
-- **BoltDB & Postgres Reactive Pipeline:** BoltDB updates (oracle aphorisms, associative graph discoveries, thought streams) publish to the Go SSE Hub (`internal/sse/hub.go`) for real-time distribution.
-- **Frontend Reactive Hooks:** Frontend components subscribe to SSE streams via `useSSE` hooks for instant transactional UI updates without client-side polling.
+- **Native Go Event Stream:** Fast transactional, reactive, and live telemetry flows over **Server-Sent Events (`text/event-stream`)** via `/api/stream/events`.
+- **Reactive Stream Distribution:** Real-time countdown ticks (`axismundi_tick`), ingest notifications (`axismundi_ingested`), execute alerts (`axismundi_execute_alert`), and state changes broadcast immediately to connected UI clients.
+- **Frontend Reactive Hooks:** Frontend components subscribe to SSE streams via `useSSE` hooks for instant UI updates without client-side polling.
 
-### 4. RIGOROUS & EVOLVING BACKEND DATA PIPELINE
-- **PostgreSQL as Source of Truth:** Core structured models, histories, essays, and cycles reside in PostgreSQL via versioned SQL migrations (`migrations/*.up.sql`).
-- **BoltDB for High-Velocity & Associative Context:** BoltDB (`bbolt`) manages dynamic non-relational graph traversal, fast in-memory caches, daily oracle states, and stream buffers.
-- **Unified Single Binary:** Root `ui.go` and `embed.go` bundle the static UI and migrations into a singular, highly optimized 11MB Go binary (`./mercury-dasha-server`).
+### 4. AXIS MUNDI ZERO-TOKEN OPERATIONAL ENGINE & MCP DAEMON
+- **Zero-Token Passive Ingestion:** Axis Mundi runs in the background as a native Go daemon, polling Google Keep notes and Google Workspace APIs without consuming AI tokens.
+- **Dual-Mode System Control:**
+  - **`AUTO`:** Continuous background polling with dynamic intervals (`10s`, `30s`, `60s`, `120s`, `300s`) and live 1-second countdown ticks.
+  - **`MANUAL`:** On-demand synchronization via REST/MCP or keyboard shortcut `[S]`.
+- **Auto-Ingest Gatekeeper Policy:**
+  - **`EXECUTE`:** Voice notes or directives tagged with `#amra-exec` or tagged intent are automatically triaged and queued for the agent (`QUEUED_FOR_AGENT`).
+  - **`PENDING`:** Non-executable notes are stored as passive context (`PASSIVE_CONTEXT`).
+- **Model Context Protocol (MCP):** JSON-RPC 2.0 endpoint at `/api/mcp` exposes tools (`axismundi_list_directives`, `axismundi_update_status`, `axismundi_sync_keep`, `axismundi_set_mode`, `axismundi_delete_directive`) to autonomous coding agents.
 
-### 5. MANDATORY BUILD, TEST & TASK LIVENESS PROTOCOL (CRITICAL)
+### 5. RIGOROUS DATA PERSISTENCE PIPELINE
+- **PostgreSQL as Relational Backbone:** Core structured models, historical essays, and cycles reside in PostgreSQL via versioned SQL migrations (`migrations/*.up.sql`).
+- **BoltDB for Context Graph & Ephemeris:** BoltDB (`bbolt`) manages dynamic non-relational graph traversal, fast in-memory caches, daily oracle states, and directives (`data/mercury_context.db` and `data/axismundi.db`).
+- **Unified Single Binary:** Root `ui.go` and `embed.go` bundle the static UI and migrations into a singular, highly optimized Go binary (`./mercury-dasha-server`).
+
+### 6. MANDATORY BUILD, TEST & TASK LIVENESS PROTOCOL (CRITICAL)
 - **Standardized Script Suite:** All build, test, and dev actions MUST be executed through the unified `scripts/` suite and `Makefile`:
-  - `make build` (or `bash scripts/build.sh`): Runs clean, compiles static Next.js export, and produces `./mercury-dasha-server`.
-  - `make dev` (or `bash scripts/dev.sh`): Launches Go on `:8080` and Next.js hot-reloading dev server on `:3000` with signal traps.
-  - `make test` (or `bash scripts/test.sh`): Ephemeral test server on port `:3099`, asserts 11 core HTTP route contracts, and terminates cleanly.
+  - `make build` (or `bash scripts/build.sh`): Compiles static Next.js export and produces singular `./mercury-dasha-server`.
+  - `make dev` (or `bash scripts/dev.sh`): Launches Go on `:8080` and Next.js hot-reloading dev server on `:3000`.
+  - `make test` (or `bash scripts/test.sh`): Ephemeral test server on port `:3099`, asserts 22 core HTTP route contracts and lifecycle mutations, and terminates cleanly.
   - `make run`: Directly executes standalone single binary `./mercury-dasha-server -port 3000`.
   - `make clean` (or `bash scripts/clean.sh`): Force-terminates orphaned server processes and clears lockfiles.
 - **Zero Lingering Tasks Mandate:** The agent MUST ensure that all background tasks and test servers are cleanly terminated (`kill`) before completing a turn.
-- **Quiescence Before User Testing:** The user will wait until there are NO active tasks in the Antigravity container prior to testing. The agent must never leave rogue processes holding the BoltDB (`data/mercury_context.db`) file lock or network ports.
-
-### 6. CONTINUOUS TEST-DRIVEN COVERAGE & ITERATIVE TESTING (CRITICAL)
-- **Test As You Build:** Whenever adding or modifying Go backend packages (`internal/*`) or frontend utilities/components (`frontend/src/*`), the agent MUST author or update corresponding unit and integration tests.
-  - Go Backend: Add tests in `*_test.go` verifying unit logic, error branches, and race conditions (`go test -v -race ./...`).
-  - Frontend: Add unit tests in `src/**/*.test.ts` via Vitest, maintain TypeScript type safety (`pnpm typecheck`), and enforce zero lint errors (`pnpm lint`).
-- **100% Green Verification:** Every agent turn MUST conclude by running `make test` (or `bash scripts/test.sh`) to verify that all 3 testing tiers (Go unit/race tests, Frontend typecheck/unit/lint, and HTTP route assertions) pass with zero errors.
-
+- **Quiescence Before User Testing:** The user will wait until there are NO active background tasks prior to testing.
 
 ---
 
@@ -53,14 +56,15 @@
 
 | Layer | Technology | Role & Details |
 | :--- | :--- | :--- |
-| **Primary Relational Store** | **PostgreSQL (OS Service)** | Authoritative relational backbone for all structured entities, transits, timelines, and essays. |
-| **Database Migrations** | **Standard SQL Migrations** | Embedded via `//go:embed migrations/*.sql` and applied sequentially via `internal/postgres/migrator.go`. |
-| **Unified Backend** | **Go 1.22 (`golang`)** | Root engine using Chi router, CORS, and native `//go:embed`. Serves both API and UI on a single port (`:3000`). |
-| **Embedded Frontend** | **`ui.go` (Root)** | Embeds `frontend/out/*` via `//go:embed` with SPA fallback. |
-| **Contextual & Oracle Store** | **BoltDB (`bbolt`)** | Embedded B+Tree key-value database for "The Fun Stuff": dynamic associative graph, daily oracle, and reflections (`data/mercury_context.db`). |
+| **Organization & Business** | **Echo SH Labs** | Entity stewarding platform, branding, and operations (`echosh-labs.com`). |
+| **Unified Backend** | **Go 1.22 (`golang`)** | Root engine using Chi router, CORS, SSE Hub, and native `//go:embed`. |
+| **Operational Engine** | **Axis Mundi Daemon** | Zero-token Google Keep API syncer, Google Workspace DWD, and MCP server. |
+| **Context & Directives Store** | **BoltDB (`bbolt`)** | Embedded B+Tree key-value database for directives, knowledge graph, and oracle. |
+| **Relational Store** | **PostgreSQL** | Authoritative relational backbone for structured entities and essays. |
 | **Real-Time Streaming** | **Server-Sent Events (SSE)** | Go SSE Broadcast Hub (`/api/stream/events`) for transactional push to frontend. |
-| **Frontend UI Shell** | **Next.js 14 (App Router)** | TypeScript, Tailwind CSS, Lucide icons, HTML5 Canvas physics, Audio synthesis. Pure presentation shell. |
-| **Infrastructure** | **Makefile & Shell** | Zero Python in infrastructure builds. Pure Go, Node/pnpm, and PostgreSQL. |
+| **Frontend UI Shell** | **Next.js 14 (App Router)** | TypeScript, Tailwind CSS, Lucide icons, 3D Buckyball Wireframe, Web Audio 2.0 DSP. |
+| **Terminal Route** | **`/terminal` TUI** | Dedicated Axis Mundi terminal user interface with keyboard shortcuts. |
+| **Foundations Route** | **`/foundations` Storyboard** | Foundations 3-stage visual narrative (Intuition, Idealism, Illumination). |
 
 ---
 
@@ -68,74 +72,63 @@
 
 ```
 /home/justin/code/mercury-dasha/
-├── AGENTS.md                          # [THIS FILE] Core stack, planning mandate & agent instructions
-├── README.md                          # User-facing overview & specs
+├── AGENTS.md                          # [THIS FILE] Echo SH Labs operating standards & agent instructions
+├── README.md                          # Comprehensive documentation & architecture specs
 ├── Makefile                           # Developer commands: dev, build, run, test, clean
 ├── scripts/                           # Standardized developer & agent script pipelines
 │   ├── clean.sh                       # Process killer and lockfile releaser
 │   ├── build.sh                       # Production Next.js static build & Go binary compilation
 │   ├── dev.sh                         # Live hot-reloading development launcher
-│   └── test.sh                        # Automated 11-route HTTP contract assertion test suite
-├── docker-compose.yml                 # Standby PostgreSQL container definition
-├── mercury_foundational_statement.txt # Plaintext foundational axiom
+│   └── test.sh                        # Automated 22-route HTTP contract assertion test suite
 ├── embed.go                           # Root //go:embed for text statement & SQL migrations
 ├── ui.go                              # Root //go:embed for Next.js frontend/out distribution
 ├── main.go                            # HTTP server initialization, migration runner & graceful shutdown
 ├── migrations/                        # Versioned SQL migration files (.up.sql / .down.sql)
-│   ├── 000001_create_foundations.up.sql
-│   ├── 000002_create_dashas_and_nakshatras.up.sql
-│   ├── 000003_create_alchemical_and_opus.up.sql
-│   ├── 000004_seed_foundational_data.up.sql
-│   ├── 000005_create_transitional_portal.up.sql
-│   └── 000006_unify_foundations_manifesto.up.sql
 ├── frontend/                          # Next.js 14 App Router UI (PURE RENDERING SHELL)
-│   ├── package.json
-│   ├── next.config.mjs                # Static export configuration (`output: 'export'`)
-│   ├── tailwind.config.ts             # Custom esoteric theme (Emerald, Quicksilver, Gold, Lead)
 │   ├── src/
-│   │   ├── app/page.tsx               # Master workspace coordinator
+│   │   ├── app/
+│   │   │   ├── page.tsx               # Echo SH Labs Mercury Dash Home Portal
+│   │   │   ├── foundations/page.tsx   # Foundations Storyboard & Engine Architecture
+│   │   │   └── terminal/page.tsx      # Axis Mundi Interactive TUI Console
 │   │   ├── features/                  # Domain-driven features (portal, astrology, audio)
 │   │   ├── components/layout/         # Navbar, Footer
 │   │   ├── hooks/                     # useSSE, useAudioEngine
-│   │   ├── lib/                       # api.ts, utils.ts, audio/ (Web Audio 2.0 DSP)
-│   │   └── types/index.ts             # Shared domain interfaces
+│   │   └── lib/                       # api.ts, utils.ts, audio/ (Web Audio 2.0 DSP)
 │   └── out/                           # Static production export embedded via ui.go
 ├── internal/                          # High-cohesion Go packages
 │   ├── api/                           # Chi router, REST handlers, SSE streaming & middleware
-│   │   ├── routes.go
-│   │   ├── handlers.go
-│   │   └── sse_handler.go
+│   ├── axismundi/                     # Axis Mundi engine: Google Keep syncer, MCP server, models, store
+│   │   ├── daemon.go                  # Daemon coordinator & lifecycle
+│   │   ├── keep_syncer.go             # Google Keep background polling & 1s tick broadcaster
+│   │   ├── mcp.go                     # Model Context Protocol JSON-RPC 2.0 tools
+│   │   ├── models.go                  # Directive & control models
+│   │   ├── store.go                   # BoltDB directives storage
+│   │   ├── handlers.go                # REST handlers for directives & modes
+│   │   └── workspace.go               # Google Workspace auth & DWD client
 │   ├── sse/                           # Real-time Server-Sent Events Broadcast Hub
-│   │   └── hub.go
 │   ├── postgres/                      # PostgreSQL client, migration engine & repository
-│   │   ├── client.go
-│   │   ├── migrator.go
-│   │   └── repo.go
 │   ├── boltdb/                        # BoltDB store, oracle engine & associative graph
-│   │   ├── store.go
-│   │   ├── seed.go
-│   │   └── oracle.go
-│   ├── models/                        # Core domain models
-│   │   └── models.go
-│   └── config/                        # Configuration loader (CLI flags & env vars)
-│       └── config.go
-└── data/
-    └── mercury_context.db             # BoltDB runtime database file
+│   └── models/                        # Core domain models
+└── data/                              # Runtime BoltDB database files
 ```
 
 ---
 
 ## 4. Developer & Operational Workflows
 
-### A. Building Singular Standalone Binary
+### A. Running Full Integration Tests
+```bash
+make test
+```
+Executes Go race tests, Vitest frontend tests, TypeScript typechecking, ESLint validation, and 22 ephemeral HTTP contract assertions.
+
+### B. Building Singular Standalone Binary
 ```bash
 make build
 ```
-1. Builds Next.js static production export into `frontend/out/`.
-2. Compiles root Go engine embedding `frontend/out/*` via `ui.go` and `migrations/*.sql` via `embed.go`.
-3. Outputs **`./mercury-dasha-server`** (11MB self-contained executable).
+Outputs `./mercury-dasha-server` (self-contained executable with embedded Next.js assets).
 
-### B. Running Standalone Binary
+### C. Running Standalone Binary
 ```bash
 make run
 # or: ./mercury-dasha-server -port 3000

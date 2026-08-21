@@ -26,14 +26,21 @@ export default function HomePage() {
       {/* Top Quiet Minimal Bar */}
       <header className="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-serif font-bold text-sm">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-serif font-bold text-sm shadow-[0_0_12px_rgba(16,185,129,0.2)]">
             ☿
           </div>
           <div>
-            <span className="font-serif tracking-widest font-bold text-slate-200 text-sm">
-              FOUNDATIONS
-            </span>
-            <p className="text-[10px] text-slate-500 font-mono tracking-wider">ECHO SH • JUSTIN ANDREW WOOD</p>
+            <div className="flex items-center gap-2">
+              <span className="font-serif tracking-widest font-bold text-slate-200 text-sm">
+                MERCURY DASH
+              </span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono">
+                ECHO SH LABS
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-500 font-mono tracking-wider">
+              OPERATED BY ECHO SH LABS &bull; <a href="https://echosh-labs.com" target="_blank" rel="noopener noreferrer" className="hover:text-slate-400 underline underline-offset-2">echosh-labs.com</a>
+            </p>
           </div>
         </div>
 
@@ -74,18 +81,18 @@ export default function HomePage() {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-[11px] font-mono text-emerald-400">
                 <Sparkles className="w-3 h-3" />
-                <span>TRI-PARTITE CONSCIOUSNESS & ACOUSTIC SYNTHESIS</span>
+                <span>ECHO SH LABS // MERCURY DASH PLATFORM</span>
               </div>
               <h1 className="text-4xl sm:text-6xl font-serif font-bold text-slate-100 tracking-tight leading-tight">
-                The Architecture of Intuition & Sound.
+                The Architecture of Intuition & Action.
               </h1>
               <p className="text-slate-400 text-base sm:text-lg font-light max-w-2xl leading-relaxed">
-                A contemplative exploration of cognitive evolution, procedural Web Audio 2.0 synthesis, and visual narrative architecture.
+                Operated by Echo SH Labs. A unified platform bridging contemplative consciousness models, procedural Web Audio DSP synthesis, and the Axis Mundi autonomous operational engine.
               </p>
             </div>
 
-            {/* Clean Navigation Menu */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+            {/* Clean 3-Pillar Navigation Menu */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
               {/* Option 01: Foundations Route */}
               <Link
                 href="/foundations"
@@ -93,14 +100,14 @@ export default function HomePage() {
                 className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-emerald-500/40 transition-all space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-emerald-400 font-medium">01 / STORY & ARTWORK</span>
+                  <span className="text-xs font-mono text-emerald-400 font-medium">01 / FOUNDATIONS</span>
                   <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </div>
                 <h2 className="text-xl font-serif font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">
-                  Foundations Journey
+                  Foundations
                 </h2>
                 <p className="text-xs text-slate-400 font-light leading-relaxed">
-                  Enter the upgraded visual story engine. Experience high-resolution scene artwork with tuned harmonic frequencies (432 Hz, 528 Hz, 141.27 Hz).
+                  The visual storyboard model (Intuition &bull; Idealism &bull; Illumination) and the technical Axis Mundi engine architecture branching out from it.
                 </p>
               </Link>
 
@@ -117,7 +124,7 @@ export default function HomePage() {
                   Synesthetic Studio
                 </h2>
                 <p className="text-xs text-slate-400 font-light leading-relaxed">
-                  Explore FM synthesis, physical Karplus-Strong plucked strings, planetary celestial octaves, and interactive keyboard synesthesia.
+                  Explore FM synthesis, physical Karplus-Strong strings, planetary celestial harmonics, and interactive synesthetic keyboard frequencies.
                 </p>
               </button>
 
@@ -128,33 +135,16 @@ export default function HomePage() {
                 className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-emerald-500/40 transition-all space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-emerald-400 font-medium">03 / AMRA CORE TUI</span>
+                  <span className="text-xs font-mono text-emerald-400 font-medium">03 / AXIS MUNDI TUI</span>
                   <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </div>
                 <h2 className="text-xl font-serif font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">
-                  Axis Mundi Terminal
+                  Axis Terminal
                 </h2>
                 <p className="text-xs text-slate-400 font-light leading-relaxed">
-                  Interactive TUI command center. Monitor zero-token background Keep ingestion, live SSE telemetry streams, and 3D Buckyball dynamics.
+                  Interactive TUI engine. Dual-mode background Keep ingestion (AUTO/MANUAL), zero-token reactive agent alerts, and 3D Buckyball dynamics.
                 </p>
               </Link>
-
-              {/* Option 04: Legacy Archives */}
-              <a
-                href="/archive/axis-mundi/"
-                className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-slate-700 transition-all space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-slate-500">04 / PRESERVED ARCHIVES</span>
-                  <Archive className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
-                </div>
-                <h2 className="text-xl font-serif font-bold text-slate-200 group-hover:text-slate-100 transition-colors">
-                  Historical Archives
-                </h2>
-                <p className="text-xs text-slate-400 font-light leading-relaxed">
-                  Access the original 2025 Axis Mundi workspace research archive and standalone Foundations story engine.
-                </p>
-              </a>
             </div>
           </div>
         ) : (
@@ -179,11 +169,11 @@ export default function HomePage() {
 
       {/* Clean Minimal Footer */}
       <footer className="w-full max-w-6xl mx-auto px-6 py-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-500">
-        <div>© 2026 Justin Andrew Wood • echoSH Labs</div>
+        <div>&copy; 2026 Echo SH Labs (<a href="https://echosh-labs.com" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 underline underline-offset-2">echosh-labs.com</a>) &bull; Justin Andrew Wood</div>
         <div className="flex items-center gap-4">
           <Link href="/foundations" className="hover:text-emerald-400 transition-colors">Foundations</Link>
-          <a href="/archive/axis-mundi/" className="hover:text-emerald-400 transition-colors">Axis Mundi</a>
-          <a href="/archive/foundations/" className="hover:text-emerald-400 transition-colors">Archive</a>
+          <Link href="/terminal" className="hover:text-emerald-400 transition-colors">Axis Terminal</Link>
+          <a href="https://echosh-labs.com" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-colors">Echo SH Labs</a>
         </div>
       </footer>
     </div>

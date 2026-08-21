@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from "react";
 import { Radio, Archive, Sparkles, Activity, Layers, Volume2, VolumeX, Waves } from "lucide-react";
@@ -69,13 +69,13 @@ export function Navbar({
           <div className="hidden sm:block">
             <div className="flex items-center gap-2">
               <span className="font-serif tracking-wider font-bold text-slate-100 text-sm sm:text-base">
-                MERCURY DASHA
+                MERCURY DASH
               </span>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-medium">
-                BUDHA
+                ECHO SH LABS
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-mono">By Justin Andrew Wood</p>
+            <p className="text-[10px] text-slate-500 font-mono">echosh-labs.com &bull; Justin Andrew Wood</p>
           </div>
         </div>
 
@@ -102,8 +102,26 @@ export function Navbar({
           })}
         </nav>
 
-        {/* Persistent Audio HUD & SSE Status */}
+        {/* Persistent Audio HUD, Foundations Link & SSE Status */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Direct Link to Foundations Storyboard & Architecture */}
+          <a
+            href="/foundations"
+            className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-xs font-mono text-emerald-300 hover:border-emerald-500/40 transition-all"
+            title="Open Foundations Storyboard & Axis Mundi Architecture"
+          >
+            <span>Foundations</span>
+          </a>
+
+          {/* Direct Link to Axis Terminal */}
+          <a
+            href="/terminal"
+            className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-xs font-mono text-slate-300 hover:text-emerald-300 hover:border-emerald-500/40 transition-all"
+            title="Open Axis Mundi Operational Terminal"
+          >
+            <span>Terminal</span>
+          </a>
+
           {/* Ambient Cosmic Drone Button */}
           <button
             onClick={() => toggleAmbient(432)}
@@ -115,7 +133,7 @@ export function Navbar({
             title="Toggle Continuous Generative Cosmic Drone (432 Hz)"
           >
             <Waves className={`w-3 h-3 ${isAmbientActive ? "text-violet-400" : "text-slate-500"}`} />
-            <span className="hidden lg:inline">{isAmbientActive ? "AMBIENT ON" : "AMBIENT"}</span>
+            <span className="hidden xl:inline">{isAmbientActive ? "AMBIENT ON" : "AMBIENT"}</span>
           </button>
 
           {/* Master Mute Button */}
@@ -138,15 +156,6 @@ export function Navbar({
               {isSSEConnected ? "LIVE" : "CONNECTING"}
             </span>
           </div>
-
-          <a
-            href="/archive/axis-mundi/"
-            className="hidden xl:flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900/60 hover:bg-slate-800 border border-slate-800 text-[11px] font-mono text-slate-400 hover:text-emerald-300 transition-colors"
-            title="Access preserved Axis Mundi and Foundations archives"
-          >
-            <Archive className="w-3 h-3 text-slate-400" />
-            <span>Archive</span>
-          </a>
         </div>
       </div>
     </header>

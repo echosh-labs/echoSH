@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from "react";
 import { Archive, ShieldCheck, Terminal, Heart } from "lucide-react";
@@ -9,39 +9,45 @@ export function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Left Info */}
         <div className="flex items-center gap-2">
-          <span className="text-slate-300 font-semibold font-serif">Mercury Dasha v2.3</span>
-          <span>•</span>
-          <span>Authored by <span className="text-slate-300">Justin Andrew Wood</span></span>
-          <span>•</span>
-          <span className="text-emerald-400">Target Dawn: April 2028</span>
+          <span className="text-slate-300 font-semibold font-serif">Mercury Dash</span>
+          <span>&bull;</span>
+          <span>Operated by <a href="https://echosh-labs.com" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-emerald-400 underline underline-offset-2">Echo SH Labs</a></span>
+          <span>&bull;</span>
+          <span>Justin Andrew Wood</span>
         </div>
 
-        {/* Center / Right Archive Links */}
+        {/* Center Links */}
         <div className="flex items-center gap-4 text-[11px]">
-          <span className="text-slate-600">Preserved Legacy Archives:</span>
           <a
-            href="/archive/axis-mundi/"
-            className="text-slate-400 hover:text-emerald-300 transition-colors underline underline-offset-4"
+            href="/foundations"
+            className="text-slate-400 hover:text-emerald-300 transition-colors"
           >
-            Axis Mundi Archive
+            Foundations
           </a>
-          <span>•</span>
+          <span>&bull;</span>
           <a
-            href="/archive/foundations/"
-            className="text-slate-400 hover:text-emerald-300 transition-colors underline underline-offset-4"
+            href="/terminal"
+            className="text-slate-400 hover:text-emerald-300 transition-colors"
           >
-            Foundations Archive
+            Axis Terminal
+          </a>
+          <span>&bull;</span>
+          <a
+            href="https://echosh-labs.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-slate-400 hover:text-emerald-300 transition-colors"
+          >
+            echosh-labs.com
           </a>
         </div>
 
         {/* Right Status */}
         <div className="flex items-center gap-3 text-[11px]">
-          <span className="flex items-center gap-1 text-slate-500">
+          <span className="flex items-center gap-1 text-slate-400">
             <Terminal className="w-3 h-3 text-emerald-500" />
             Go Single Binary Engine
           </span>
-          <span>•</span>
-          <span className="text-slate-600">Local Dev Mode</span>
         </div>
       </div>
     </footer>

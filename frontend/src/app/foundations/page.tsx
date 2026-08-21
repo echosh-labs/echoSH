@@ -3,7 +3,23 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronLeft, ChevronRight, Play, Volume2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Volume2,
+  Terminal,
+  ArrowUpRight,
+  Cpu,
+  Layers,
+  Zap,
+  Cloud,
+  ShieldCheck,
+  Archive,
+  Compass,
+  HeartHandshake
+} from "lucide-react";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import {
   intuitionVioletDrone,
@@ -244,11 +260,156 @@ export default function FoundationsPage() {
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Comprehensive Foundations & Axis Mundi Architectural Matrix */}
+        <section className="mt-20 w-full max-w-5xl border-t border-slate-900 pt-16 space-y-12">
+          {/* Header */}
+          <div className="space-y-3 text-center sm:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono text-emerald-400">
+              <Compass className="w-3.5 h-3.5" />
+              <span>ECHO SH LABS // FOUNDATIONS & AXIS MUNDI ENGINE</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-slate-100">
+              Foundations Storyboard & Engine Architecture
+            </h2>
+            <p className="text-slate-400 text-sm sm:text-base font-light max-w-3xl leading-relaxed">
+              Operated by Echo SH Labs (echosh-labs.com). The Foundations layer serves as the narrative and philosophical core of the Mercury Dash platform, while the Axis Mundi engine forms the foundational operational infrastructure.
+            </p>
+          </div>
+
+          {/* Architecture Tier Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Storyboard Architecture */}
+            <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400 font-mono text-xs font-bold">
+                    01
+                  </div>
+                  <h3 className="font-serif font-bold text-slate-100 text-base">
+                    Storyboard Architecture
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-violet-300">
+                  Tri-Partite
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 font-light leading-relaxed">
+                The Foundations model establishes the three-stage ascent of conscious discernment:
+              </p>
+              <ul className="space-y-2 text-xs font-mono text-slate-400">
+                <li className="flex items-start gap-2">
+                  <span className="text-violet-400 font-bold">&bull;</span>
+                  <span><strong className="text-slate-200">Intuition (432 Hz):</strong> The inner staircase; perception grounded in stillness.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-bold">&bull;</span>
+                  <span><strong className="text-slate-200">Idealism (528 Hz):</strong> The ascent of aspiration; structural purpose and sacred geometry.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">&bull;</span>
+                  <span><strong className="text-slate-200">Illumination (141.27 Hz):</strong> Radiant cosmic clarity; the quicksilver mind in unity.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Axis Mundi Operational Engine */}
+            <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono text-xs font-bold">
+                    02
+                  </div>
+                  <h3 className="font-serif font-bold text-slate-100 text-base">
+                    Axis Mundi Core Engine
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300">
+                  Zero AI Tokens
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 font-light leading-relaxed">
+                Axis Mundi is the autonomous background daemon driving real-time synchronization between the physical author and the agent:
+              </p>
+              <ul className="space-y-2 text-xs font-mono text-slate-400">
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">&bull;</span>
+                  <span><strong className="text-slate-200">Zero-Token Ingestion:</strong> Continuous background polling of Google Keep notes using native Go routines.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">&bull;</span>
+                  <span><strong className="text-slate-200">Workspace API Bridge:</strong> Domain-Wide Delegation (Keep, Docs, Sheets, Drive).</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">&bull;</span>
+                  <span><strong className="text-slate-200">Dual-Mode Control:</strong> AUTO vs MANUAL mode with EXECUTE vs PENDING policy gatekeeping.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Amra Core & Technical Links Card */}
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900/60 to-slate-950/90 border border-slate-800 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                  <HeartHandshake className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-slate-100 text-lg">
+                    Amra Core // The Mechanics of Giving
+                  </h3>
+                  <p className="text-xs text-slate-400 font-mono">
+                    Future Expansion Layer &bull; Universal Value Flow
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                  BoltDB Persisted
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 font-light leading-relaxed">
+              While Mercury Dasha maintains the contextual astrological chronology and ephemeris within BoltDB for future expansions, <strong className="text-emerald-300">Amra Core</strong> defines the overarching mechanics of giving, value distribution, and reciprocal energy exchange. Together with the Foundations narrative and the Axis Mundi execution spine, the platform unifies philosophy with deterministic computation.
+            </p>
+
+            {/* Action Bar */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Link
+                href="/terminal"
+                onClick={playUIClick}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono transition-all shadow-sm group"
+              >
+                <Terminal className="w-4 h-4 text-emerald-400" />
+                <span>Launch Axis Terminal</span>
+                <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </Link>
+
+              <a
+                href="/archive/axis-mundi/"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-slate-100 text-xs font-mono transition-all"
+              >
+                <Archive className="w-4 h-4 text-slate-400" />
+                <span>View Axis Mundi Archive</span>
+              </a>
+
+              <a
+                href="/archive/foundations/"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-slate-100 text-xs font-mono transition-all"
+              >
+                <Archive className="w-4 h-4 text-slate-400" />
+                <span>View Foundations Archive</span>
+              </a>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Subtle Minimal Footer */}
       <footer className="w-full border-t border-slate-900/80 px-6 py-4 text-center text-slate-500 text-[11px] font-mono">
-        Foundations Trilogy • Justin Andrew Wood • Synthesized with Web Audio 2.0
+        Foundations Trilogy &bull; Echo SH Labs (<a href="https://echosh-labs.com" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 underline underline-offset-2">echosh-labs.com</a>) &bull; Justin Andrew Wood
       </footer>
     </div>
   );
