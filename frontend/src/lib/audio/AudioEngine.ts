@@ -1,4 +1,4 @@
-import { SoundBlueprint, SoundSource, FMVoice, PhysicalPluckVoice } from "./types";
+﻿import { SoundBlueprint, SoundSource } from "./types";
 import { createFMVoice } from "./FMSynth";
 import { createPhysicalPluckVoice } from "./KarplusStrong";
 import { createProceduralImpulseResponse, createStereoPingPongDelay } from "./ReverbDelay";
@@ -11,12 +11,11 @@ class AudioEngine {
   private masterLimiter: DynamicsCompressorNode | null = null;
   private analyser: AnalyserNode | null = null;
   private isMuted: boolean = false;
-  private masterVolume: number = 0.65;
+  private masterVolume: number = 0.75;
 
   // Ambient Drone Layer
   private ambientGain: GainNode | null = null;
   private ambientOscs: OscillatorNode[] = [];
-  private ambientLFO: OscillatorNode | null = null;
   private isAmbientActive: boolean = false;
   private currentAmbientFreq: number = 432;
 
@@ -44,15 +43,15 @@ class AudioEngine {
 
       this.ctx = new AudioContextClass({ latencyHint: "interactive" });
 
-      // 1. Master Limiter (Prevents any clipping or distortion)
+      // 1. Master Limiter (Prevents clipping while retaining dynamics)
       this.masterLimiter = this.ctx.createDynamicsCompressor();
-      this.masterLimiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
-      this.masterLimiter.knee.setValueAtTime(4, this.ctx.currentTime);
-      this.masterLimiter.ratio.setValueAtTime(12, this.ctx.currentTime);
+      this.masterLimiter.threshold.setValueAtTime(-6, this.ctx.currentTime);
+      this.masterLimiter.knee.setValueAtTime(6, this.ctx.currentTime);
+      this.masterLimiter.ratio.setValueAtTime(8, this.ctx.currentTime);
       this.masterLimiter.attack.setValueAtTime(0.002, this.ctx.currentTime);
       this.masterLimiter.release.setValueAtTime(0.08, this.ctx.currentTime);
 
-      // 2. Master Gain
+      // 2. Master Gain (Audible default)
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.setValueAtTime(this.masterVolume, this.ctx.currentTime);
 
@@ -63,14 +62,14 @@ class AudioEngine {
 
       // 4. Procedural Convolution Reverb Cache
       this.convolverNode = this.ctx.createConvolver();
-      this.convolverNode.buffer = createProceduralImpulseResponse(this.ctx, 2.8, 1.8);
+      this.convolverNode.buffer = createProceduralImpulseResponse(this.ctx, 2.5, 1.8);
 
       // Graph: MasterGain -> Analyser -> Limiter -> Destination
       this.masterGain.connect(this.analyser);
       this.analyser.connect(this.masterLimiter);
       this.masterLimiter.connect(this.ctx.destination);
 
-      console.log("[AudioEngine] Advanced Multi-Paradigm Web Audio 2.0 DSP Engine initialized.");
+      console.log("[AudioEngine] Native Web Audio 2.0 DSP Engine initialized.");
     } catch (err) {
       console.warn("[AudioEngine] Initialization error:", err);
     }
@@ -143,16 +142,16 @@ class AudioEngine {
     this.ensureContext();
     if (!this.ctx || !this.masterGain) return;
 
-    this.stopAmbientDrone(); // Clean previous if any
+    this.stopAmbientDrone();
     this.currentAmbientFreq = targetFreq;
     this.isAmbientActive = true;
 
     const now = this.ctx.currentTime;
     this.ambientGain = this.ctx.createGain();
     this.ambientGain.gain.setValueAtTime(0.0001, now);
-    this.ambientGain.gain.linearRampToValueAtTime(0.12, now + 3.0); // Gentle 3-second fade in
+    this.ambientGain.gain.linearRampToValueAtTime(0.18, now + 1.5);
 
-    // Multi-Layer Harmonic Drone (Fundamental + Sub-Octave + Fifth)
+    // Triad Drone (Sub-Octave + Fundamental + Fifth)
     const freqs = [targetFreq * 0.5, targetFreq, targetFreq * 1.5];
     const oscTypes: OscillatorType[] = ["sine", "triangle", "sine"];
 
@@ -160,25 +159,17 @@ class AudioEngine {
       const osc = this.ctx!.createOscillator();
       osc.type = oscTypes[i % oscTypes.length];
       osc.frequency.setValueAtTime(f, now);
-      if (i > 0) osc.detune.setValueAtTime((i % 2 === 0 ? 5 : -5), now);
+      if (i > 0) osc.detune.setValueAtTime((i % 2 === 0 ? 4 : -4), now);
 
       const filter = this.ctx!.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.setValueAtTime(800, now);
+      filter.frequency.setValueAtTime(900, now);
 
       osc.connect(filter);
       filter.connect(this.ambientGain!);
       osc.start(now);
       return osc;
     });
-
-    // Slow Celestial LFO Breathing Filter
-    const lfo = this.ctx.createOscillator();
-    lfo.type = "sine";
-    lfo.frequency.setValueAtTime(0.08, now); // 12-second cycle
-    const lfoGain = this.ctx.createGain();
-    lfoGain.gain.setValueAtTime(200, now);
-    lfo.connect(lfoGain);
 
     this.ambientGain.connect(this.masterGain);
   }
@@ -191,7 +182,7 @@ class AudioEngine {
     const ratios = [0.5, 1.0, 1.5];
     this.ambientOscs.forEach((osc, i) => {
       const target = newFreq * (ratios[i] || 1.0);
-      osc.frequency.exponentialRampToValueAtTime(Math.max(20, target), now + 2.0);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, target), now + 1.5);
     });
   }
 
@@ -201,7 +192,7 @@ class AudioEngine {
       return;
     }
     const now = this.ctx.currentTime;
-    this.ambientGain.gain.linearRampToValueAtTime(0.0001, now + 1.5);
+    this.ambientGain.gain.linearRampToValueAtTime(0.0001, now + 0.8);
 
     setTimeout(() => {
       this.ambientOscs.forEach((o) => {
@@ -211,7 +202,7 @@ class AudioEngine {
       try { this.ambientGain?.disconnect(); } catch {}
       this.ambientGain = null;
       this.isAmbientActive = false;
-    }, 1600);
+    }, 900);
   }
 
   // --- PLAY PROCEDURAL BLUEPRINTS & VOICES ---
@@ -219,11 +210,24 @@ class AudioEngine {
     this.ensureContext();
     if (!this.ctx || !this.masterGain || this.isMuted) return;
 
+    if (this.ctx.state === "suspended") {
+      this.ctx.resume().catch(() => {});
+    }
+
     const now = this.ctx.currentTime;
     const duration = Math.max(0.05, blueprint.duration || 1.0);
+    const env = blueprint.envelope;
 
+    const attackEnd = now + Math.max(0.002, env.attack);
+    const decayEnd = attackEnd + Math.max(0.01, env.decay);
+    const sustainVal = Math.max(0.0001, env.sustain);
+    const releaseStart = now + duration;
+    const releasePad = Math.max(0.02, env.release || 0.1);
+    const releaseEnd = releaseStart + releasePad;
+
+    // Master Voice Bus for this blueprint: Must be gain = 1.0
     const bpOutput = this.ctx.createGain();
-    bpOutput.gain.value = 0;
+    bpOutput.gain.setValueAtTime(1.0, now);
 
     // 1. Synthesize All Sound Sources
     blueprint.sources.forEach((src: SoundSource) => {
@@ -252,7 +256,7 @@ class AudioEngine {
         );
         pluckNode.connect(bpOutput);
       } else if (src.type === "noise") {
-        const noiseNode = this.createNoiseSource(src.noiseType, now, duration);
+        const noiseNode = this.createNoiseSource(src.noiseType, now, duration + releasePad);
         noiseNode.connect(bpOutput);
       } else {
         const osc = this.ctx!.createOscillator();
@@ -262,27 +266,24 @@ class AudioEngine {
         if (src.detune) osc.detune.setValueAtTime(src.detune, now);
 
         const oscGain = this.ctx!.createGain();
-        const vol = src.volumeDb ? Math.pow(10, src.volumeDb / 20) : 0.5;
+        const vol = src.volumeDb ? Math.pow(10, src.volumeDb / 20) : 0.65;
         oscGain.gain.setValueAtTime(vol, now);
 
         osc.connect(oscGain);
         oscGain.connect(bpOutput);
 
         osc.start(now);
-        osc.stop(now + duration + 0.1);
+        osc.stop(releaseEnd + 0.1);
       }
     });
 
     // 2. Main ADSR Envelope Node
     const envNode = this.ctx.createGain();
-    const env = blueprint.envelope;
-    const attackEnd = now + Math.max(0.002, env.attack);
-    const decayEnd = attackEnd + Math.max(0.01, env.decay);
-
     envNode.gain.setValueAtTime(0.0001, now);
     envNode.gain.linearRampToValueAtTime(1.0, attackEnd);
-    envNode.gain.exponentialRampToValueAtTime(Math.max(0.0001, env.sustain), decayEnd);
-    envNode.gain.linearRampToValueAtTime(0.0001, now + duration);
+    envNode.gain.exponentialRampToValueAtTime(sustainVal, decayEnd);
+    envNode.gain.setValueAtTime(sustainVal, releaseStart);
+    envNode.gain.exponentialRampToValueAtTime(0.0001, releaseEnd);
 
     bpOutput.connect(envNode);
 
@@ -316,6 +317,7 @@ class AudioEngine {
       this.convolverNode.connect(this.masterGain);
     }
 
+    // Direct Dry Connection
     lastNode.connect(this.masterGain);
   }
 
@@ -332,19 +334,19 @@ class AudioEngine {
     for (let i = 0; i < bufferSize; i++) {
       const white = Math.random() * 2 - 1;
       if (type === "white") {
-        data[i] = white * 0.3;
+        data[i] = white * 0.35;
       } else if (type === "brown") {
         lastOut = (lastOut + 0.02 * white) / 1.02;
-        data[i] = lastOut * 1.5;
+        data[i] = lastOut * 1.6;
       } else {
-        // Pink noise filter
+        // Pink noise
         b0 = 0.99886 * b0 + white * 0.0555179;
         b1 = 0.99332 * b1 + white * 0.0750759;
         b2 = 0.96900 * b2 + white * 0.1538520;
         b3 = 0.86650 * b3 + white * 0.3104856;
         b4 = 0.55000 * b4 + white * 0.5329522;
         b5 = -0.7616 * b5 - white * 0.0168980;
-        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.14;
         b6 = white * 0.115926;
       }
     }

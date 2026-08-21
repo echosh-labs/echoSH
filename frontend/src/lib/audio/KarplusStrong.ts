@@ -12,7 +12,7 @@ export function createPhysicalPluckVoice(
   duration: number
 ): GainNode {
   const voiceOutput = ctx.createGain();
-  voiceOutput.gain.value = 0;
+  voiceOutput.gain.setValueAtTime(1.0, startTime);
 
   const targetFreq = Math.max(20, voice.frequency);
   const periodSeconds = 1.0 / targetFreq;
@@ -55,7 +55,7 @@ export function createPhysicalPluckVoice(
 
   // Output tap
   const pluckGain = ctx.createGain();
-  const targetGain = voice.volumeDb ? Math.pow(10, voice.volumeDb / 20) : 0.6;
+  const targetGain = voice.volumeDb ? Math.pow(10, voice.volumeDb / 20) : 0.75;
   pluckGain.gain.setValueAtTime(targetGain, startTime);
 
   dampingFilter.connect(pluckGain);

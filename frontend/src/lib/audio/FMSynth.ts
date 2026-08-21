@@ -12,7 +12,7 @@ export function createFMVoice(
   duration: number
 ): GainNode {
   const voiceOutput = ctx.createGain();
-  voiceOutput.gain.value = 0;
+  voiceOutput.gain.setValueAtTime(1.0, startTime);
 
   const carrier = ctx.createOscillator();
   carrier.type = voice.carrierType;
@@ -33,10 +33,10 @@ export function createFMVoice(
   const attackEnd = startTime + Math.max(0.005, modEnv.attack);
   const decayEnd = attackEnd + Math.max(0.01, modEnv.decay);
 
-  modGain.gain.setValueAtTime(0, startTime);
+  modGain.gain.setValueAtTime(0.0001, startTime);
   modGain.gain.linearRampToValueAtTime(baseIndex, attackEnd);
-  modGain.gain.exponentialRampToValueAtTime(Math.max(1, baseIndex * modEnv.sustain), decayEnd);
-  modGain.gain.linearRampToValueAtTime(0, startTime + duration);
+  modGain.gain.exponentialRampToValueAtTime(Math.max(0.1, baseIndex * modEnv.sustain), decayEnd);
+  modGain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
 
   // FM Connection: Modulator -> ModGain -> Carrier.frequency
   modulator.connect(modGain);
@@ -44,19 +44,19 @@ export function createFMVoice(
 
   // Carrier Voice Gain
   const carrierGain = ctx.createGain();
+  const targetGain = voice.volumeDb ? Math.pow(10, voice.volumeDb / 20) : 0.6;
+  carrierGain.gain.setValueAtTime(targetGain, startTime);
+
   carrier.connect(carrierGain);
   carrierGain.connect(voiceOutput);
-
-  // Voice level
-  const targetGain = voice.volumeDb ? Math.pow(10, voice.volumeDb / 20) : 0.4;
-  carrierGain.gain.setValueAtTime(targetGain, startTime);
 
   // Start & Stop
   modulator.start(startTime);
   carrier.start(startTime);
 
-  modulator.stop(startTime + duration + 0.1);
-  carrier.stop(startTime + duration + 0.1);
+  const releasePad = Math.max(0.1, overallEnvelope.release || 0.1);
+  modulator.stop(startTime + duration + releasePad + 0.1);
+  carrier.stop(startTime + duration + releasePad + 0.1);
 
   return voiceOutput;
 }
