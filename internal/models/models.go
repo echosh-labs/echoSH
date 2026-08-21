@@ -117,3 +117,26 @@ type DashaTransition struct {
 	JupiterianSynthesis []string `json:"jupiterian_synthesis"`
 	MercurialReadiness  []string `json:"mercurial_readiness"`
 }
+
+type FoundationsStage struct {
+	ID                  string    `json:"id"`
+	StageNumber         int       `json:"stage_number"`
+	Title               string    `json:"title"`
+	Subtitle            string    `json:"subtitle"`
+	Narrative           string    `json:"narrative"`
+	AestheticTheme      string    `json:"aesthetic_theme"`
+	ChakraColor         string    `json:"chakra_color"`
+	FrequencyHz         float64   `json:"frequency_hz"`
+	HarmonicBlueprintID string    `json:"harmonic_blueprint_id"`
+	CreatedAt           time.Time `json:"created_at"`
+}
+
+type ManifestoSection struct {
+	ID            string    `json:"id"`
+	SectionNumber int       `json:"section_number"`
+	SectionTitle  string    `json:"section_title"`
+	LatinMaxim    string    `json:"latin_maxim"`
+	BodyContent   string    `json:"body_content"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+

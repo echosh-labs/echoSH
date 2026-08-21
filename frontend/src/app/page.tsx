@@ -5,6 +5,8 @@ import { Navbar, Workspace } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
 // Feature Components
+import { UnifiedManifesto } from "@/features/portal/UnifiedManifesto";
+import { FoundationsJourney } from "@/features/portal/FoundationsJourney";
 import { ThresholdPortalView } from "@/features/portal/ThresholdPortal";
 import { FoundationalHero } from "@/features/portal/FoundationalHero";
 import { AlchemicalCrucible } from "@/features/portal/AlchemicalCrucible";
@@ -27,6 +29,8 @@ import {
   fetchAuthorOpus,
   fetchDailyOracle,
   fetchTransitionPortal,
+  fetchFoundationsNarrative,
+  fetchManifesto,
 } from "@/lib/api";
 import {
   HealthStatus,
@@ -38,11 +42,13 @@ import {
   AuthorOpus,
   OracleContemplation,
   DashaTransition,
+  FoundationsStage,
+  ManifestoSection,
 } from "@/types";
 
 export default function HomePage() {
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace>("portal");
-  const [portalSection, setPortalSection] = useState<"threshold" | "axiom" | "crucible" | "opus">("threshold");
+  const [portalSection, setPortalSection] = useState<"manifesto" | "foundations" | "threshold" | "axiom" | "crucible" | "opus">("manifesto");
   const [astroSection, setAstroSection] = useState<"dasha" | "oracle" | "graph">("dasha");
 
   const [health, setHealth] = useState<HealthStatus | null>(null);
@@ -54,6 +60,8 @@ export default function HomePage() {
   const [principles, setPrinciples] = useState<AlchemicalPrinciple[]>([]);
   const [authorOpus, setAuthorOpus] = useState<AuthorOpus | null>(null);
   const [oracle, setOracle] = useState<OracleContemplation | null>(null);
+  const [stages, setStages] = useState<FoundationsStage[]>([]);
+  const [manifestoSections, setManifestoSections] = useState<ManifestoSection[]>([]);
 
   // Real-time Server-Sent Events stream hook
   const { isConnected: isSSEConnected, lastEvent } = useSSE("/api/stream/events");
@@ -69,6 +77,8 @@ export default function HomePage() {
     fetchAlchemicalPrinciples().then(setPrinciples);
     fetchAuthorOpus().then(setAuthorOpus);
     fetchDailyOracle().then(setOracle);
+    fetchFoundationsNarrative().then(setStages);
+    fetchManifesto().then(setManifestoSections);
   }, []);
 
   // Reactive updates from live SSE stream
@@ -94,6 +104,26 @@ export default function HomePage() {
           <div className="space-y-8 animate-fadeIn">
             {/* Sub-Navigation Pills */}
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <button
+                onClick={() => setPortalSection("manifesto")}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
+                  portalSection === "manifesto"
+                    ? "bg-slate-800 text-hermetic-gold border border-hermetic-gold/40 font-semibold shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
+                }`}
+              >
+                Fundamental Manifesto
+              </button>
+              <button
+                onClick={() => setPortalSection("foundations")}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
+                  portalSection === "foundations"
+                    ? "bg-slate-800 text-violet-300 border border-violet-500/40 font-semibold shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
+                }`}
+              >
+                Foundations Staircase
+              </button>
               <button
                 onClick={() => setPortalSection("threshold")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
@@ -137,6 +167,12 @@ export default function HomePage() {
             </div>
 
             {/* Sub-Section Content */}
+            {portalSection === "manifesto" && (
+              <UnifiedManifesto sections={manifestoSections} />
+            )}
+            {portalSection === "foundations" && (
+              <FoundationsJourney stages={stages} />
+            )}
             {portalSection === "threshold" && transition && (
               <ThresholdPortalView transition={transition} />
             )}

@@ -18,6 +18,42 @@ export const mercuryFundamentalBell: SoundBlueprint = {
   duration: 2.2,
 };
 
+export const intuitionVioletDrone: SoundBlueprint = {
+  id: "intuition-violet-drone",
+  name: "Intuition (432 Hz Violet Drone)",
+  sources: [
+    { type: "oscillator", oscillatorType: "sine", frequency: 432 },
+    { type: "oscillator", oscillatorType: "triangle", frequency: 216, detune: -5 },
+    { type: "oscillator", oscillatorType: "sine", frequency: 864, detune: 7 },
+  ],
+  envelope: { attack: 0.5, decay: 1.0, sustain: 0.6, release: 1.8 },
+  filter: { type: "lowpass", frequency: 850, Q: 2.5 },
+  lfo: { type: "sine", frequency: 0.2, depth: 80, target: "filterCutoff" },
+  effects: {
+    reverb: { decay: 3.5, mix: 0.5 },
+    delay: { delayTime: 0.3, feedback: 0.3, mix: 0.25 },
+  },
+  duration: 3.8,
+};
+
+export const idealismCyanArpeggio: SoundBlueprint = {
+  id: "idealism-cyan-arpeggio",
+  name: "Idealism (528 Hz Solfeggio Ascent)",
+  sources: [
+    { type: "oscillator", oscillatorType: "sawtooth", frequency: 528 },
+    { type: "oscillator", oscillatorType: "triangle", frequency: 660, detune: 10 },
+    { type: "oscillator", oscillatorType: "sine", frequency: 792, detune: -10 },
+  ],
+  envelope: { attack: 0.1, decay: 0.8, sustain: 0.4, release: 1.5 },
+  filter: { type: "bandpass", frequency: 1200, Q: 4 },
+  effects: {
+    delay: { delayTime: 0.22, feedback: 0.45, mix: 0.35 },
+    reverb: { decay: 2.8, mix: 0.4 },
+  },
+  duration: 2.8,
+};
+
+
 export const alchemicalTransmutationDrone: SoundBlueprint = {
   id: "alchemical-drone",
   name: "Tria Prima Quicksilver Drone",
@@ -89,6 +125,18 @@ export const audioPresets: AudioPreset[] = [
     category: "Planetary & Esoteric",
     description: "Tuned to the cosmic frequency of Mercury's planetary rotation and Buddhi discernment.",
     blueprint: mercuryFundamentalBell,
+  },
+  {
+    name: "Intuition (432 Hz Violet Drone)",
+    category: "Planetary & Esoteric",
+    description: "Foundations Stage 1: The inner staircase of subtle guidance and psychic awakening.",
+    blueprint: intuitionVioletDrone,
+  },
+  {
+    name: "Idealism (528 Hz Solfeggio Ascent)",
+    category: "Planetary & Esoteric",
+    description: "Foundations Stage 2: The ascent of architectural will and philosophical aspiration.",
+    blueprint: idealismCyanArpeggio,
   },
   {
     name: "Tria Prima Quicksilver Drone",

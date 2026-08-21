@@ -7,7 +7,9 @@ import {
   AuthorOpus,
   OracleContemplation,
   DashaTransition,
-  HealthStatus
+  HealthStatus,
+  FoundationsStage,
+  ManifestoSection,
 } from "@/types";
 
 const API_BASE = typeof window !== "undefined" 
@@ -134,4 +136,25 @@ export async function fetchAudioPresets(): Promise<any> {
     return null;
   }
 }
+
+export async function fetchFoundationsNarrative(): Promise<FoundationsStage[]> {
+  try {
+    const res = await fetch(`${API_BASE}/foundations/narrative`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchManifesto(): Promise<ManifestoSection[]> {
+  try {
+    const res = await fetch(`${API_BASE}/manifesto`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 

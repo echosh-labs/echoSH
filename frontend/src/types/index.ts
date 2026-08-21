@@ -135,3 +135,26 @@ export interface HealthStatus {
   version: string;
   service: string;
 }
+
+export interface FoundationsStage {
+  id: string;
+  stage_number: number;
+  title: string;
+  subtitle: string;
+  narrative: string;
+  aesthetic_theme: string;
+  chakra_color: string;
+  frequency_hz: number;
+  harmonic_blueprint_id: string;
+  created_at: string;
+}
+
+export interface ManifestoSection {
+  id: string;
+  section_number: number;
+  section_title: string;
+  latin_maxim: string;
+  body_content: string;
+  created_at: string;
+}
+

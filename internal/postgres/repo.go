@@ -320,3 +320,78 @@ func (r *Repository) GetTransitionPortal(ctx context.Context) (*models.DashaTran
 
 	return &t, nil
 }
+
+// GetFoundationsNarrative fetches the 3-stage Foundations story arc
+func (r *Repository) GetFoundationsNarrative(ctx context.Context) ([]models.FoundationsStage, error) {
+	if r.db == nil || !r.db.IsAlive() {
+		return nil, fmt.Errorf("postgres unavailable")
+	}
+
+	query := `
+	SELECT id, stage_number, title, subtitle, narrative, aesthetic_theme, chakra_color, frequency_hz, harmonic_blueprint_id, created_at
+	FROM foundations_narrative
+	ORDER BY stage_number ASC;`
+
+	rows, err := r.db.Pool().QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stages []models.FoundationsStage
+	for rows.Next() {
+		var s models.FoundationsStage
+		if err := rows.Scan(
+			&s.ID,
+			&s.StageNumber,
+			&s.Title,
+			&s.Subtitle,
+			&s.Narrative,
+			&s.AestheticTheme,
+			&s.ChakraColor,
+			&s.FrequencyHz,
+			&s.HarmonicBlueprintID,
+			&s.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		stages = append(stages, s)
+	}
+	return stages, nil
+}
+
+// GetManifestoSections fetches the fundamental manifesto doctrine
+func (r *Repository) GetManifestoSections(ctx context.Context) ([]models.ManifestoSection, error) {
+	if r.db == nil || !r.db.IsAlive() {
+		return nil, fmt.Errorf("postgres unavailable")
+	}
+
+	query := `
+	SELECT id, section_number, section_title, latin_maxim, body_content, created_at
+	FROM fundamental_manifesto
+	ORDER BY section_number ASC;`
+
+	rows, err := r.db.Pool().QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sections []models.ManifestoSection
+	for rows.Next() {
+		var s models.ManifestoSection
+		if err := rows.Scan(
+			&s.ID,
+			&s.SectionNumber,
+			&s.SectionTitle,
+			&s.LatinMaxim,
+			&s.BodyContent,
+			&s.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		sections = append(sections, s)
+	}
+	return sections, nil
+}
+
