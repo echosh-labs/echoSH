@@ -54,6 +54,7 @@ func NewRouter(store *boltdb.Store, pg *postgres.DB, hub *sse.Hub, axisEngine *a
 			ax.Post("/ingest", axisHandlers.IngestNote)
 			ax.Post("/keep/webhook", axisHandlers.KeepWebhook)
 			ax.Post("/directives/{id}/status", axisHandlers.UpdateStatus)
+			ax.Delete("/directives/{id}", axisHandlers.DeleteDirective)
 		})
 	}
 

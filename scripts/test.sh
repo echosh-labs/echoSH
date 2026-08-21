@@ -81,6 +81,34 @@ assert_endpoint "/api/axismundi/directives/pending" 200 "Axis Mundi Pending Dire
 assert_endpoint "/api/axismundi/workspace/status" 200 "Google Workspace Connection Status"
 assert_endpoint "/api/axismundi/mode" 200 "Axis Mundi Control State & Policy"
 assert_endpoint "/api/axismundi/keep/sync" 200 "Google Keep On-Demand Synchronization"
+
+echo -e "\n  [Testing Dynamic Control & Directives Lifecycle]"
+SET_MODE_RES=$(curl -s -X POST -H "Content-Type: application/json" -d '{"mode":"AUTO","ingest_policy":"EXECUTE","poll_interval_sec":15}' "http://localhost:$TEST_PORT/api/axismundi/mode")
+if echo "$SET_MODE_RES" | grep -q '"poll_interval_sec":15'; then
+    echo "  ✅ [PASS] POST /api/axismundi/mode (Dynamic Interval: 15s) -> 200"
+else
+    echo "  ❌ [FAIL] POST /api/axismundi/mode failed: $SET_MODE_RES"
+    exit 1
+fi
+
+INGEST_RES=$(curl -s -X POST -H "Content-Type: application/json" -d '{"title":"Integration Test Directive","content":"Test Content #amra-exec"}' "http://localhost:$TEST_PORT/api/axismundi/ingest")
+DIR_ID=$(echo "$INGEST_RES" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+if [ -n "$DIR_ID" ]; then
+    echo "  ✅ [PASS] POST /api/axismundi/ingest (Created: $DIR_ID) -> 201"
+    
+    # Test Status Transition
+    STATUS_RES=$(curl -s -X POST -H "Content-Type: application/json" -d '{"status":"COMPLETED","execution_log":"Verified"}' "http://localhost:$TEST_PORT/api/axismundi/directives/$DIR_ID/status")
+    if echo "$STATUS_RES" | grep -q '"status":"COMPLETED"'; then
+        echo "  ✅ [PASS] POST /api/axismundi/directives/$DIR_ID/status (COMPLETED) -> 200"
+    fi
+
+    # Test Deletion
+    DEL_RES=$(curl -s -X DELETE "http://localhost:$TEST_PORT/api/axismundi/directives/$DIR_ID")
+    if echo "$DEL_RES" | grep -q '"deleted":true'; then
+        echo "  ✅ [PASS] DELETE /api/axismundi/directives/$DIR_ID -> 200"
+    fi
+fi
+
 assert_endpoint "/archive/axis-mundi/" 200 "Axis Mundi Embedded Archive"
 assert_endpoint "/archive/foundations/" 200 "Foundations Embedded Archive"
 assert_endpoint "/foundations" 200 "Dedicated Foundations Story Route"

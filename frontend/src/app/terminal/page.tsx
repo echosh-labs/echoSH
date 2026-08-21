@@ -1,8 +1,26 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Terminal as TerminalIcon, Radio, RefreshCw, Send, Layers, Cloud, CloudOff, ArrowDownCircle, Cpu, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  Terminal as TerminalIcon,
+  Radio,
+  RefreshCw,
+  Send,
+  Layers,
+  Cloud,
+  CloudOff,
+  ArrowDownCircle,
+  Cpu,
+  Zap,
+  HelpCircle,
+  Clock,
+  Trash2,
+  AlertCircle,
+  FileCode,
+  FileText
+} from "lucide-react";
 import { BuckyballCanvas } from "./BuckyballCanvas";
 import { useSSE } from "@/hooks/useSSE";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
@@ -49,12 +67,17 @@ interface TelemetryLog {
 export default function TerminalPage() {
   const [mode, setMode] = useState<"AUTO" | "MANUAL">("AUTO");
   const [policy, setPolicy] = useState<"EXECUTE" | "PENDING">("EXECUTE");
+  const [pollInterval, setPollInterval] = useState<number>(30);
+  const [remainingTick, setRemainingTick] = useState<number>(30);
   const [directives, setDirectives] = useState<AxisDirective[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [workspaceStatus, setWorkspaceStatus] = useState<WorkspaceStatus | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [filter, setFilter] = useState<string>("ALL");
   const [commandInput, setCommandInput] = useState<string>("");
   const [selectedDirective, setSelectedDirective] = useState<AxisDirective | null>(null);
+  const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
+  const [activeInspectorTab, setActiveInspectorTab] = useState<"instruction" | "raw" | "logs" | "json">("instruction");
   const [logs, setLogs] = useState<TelemetryLog[]>([
     {
       id: "init-1",
@@ -102,7 +125,7 @@ export default function TerminalPage() {
     }
   }, []);
 
-  // Fetch control state (mode & policy)
+  // Fetch control state
   const fetchControlState = useCallback(async () => {
     try {
       const res = await fetch("/api/axismundi/mode");
@@ -110,6 +133,9 @@ export default function TerminalPage() {
         const data: ControlState = await res.json();
         setMode(data.mode);
         setPolicy(data.ingest_policy);
+        if (data.poll_interval_sec > 0) {
+          setPollInterval(data.poll_interval_sec);
+        }
       }
     } catch (err) {
       console.warn("Failed to fetch control state:", err);
@@ -122,34 +148,44 @@ export default function TerminalPage() {
     fetchControlState();
   }, [fetchDirectives, fetchWorkspaceStatus, fetchControlState]);
 
-  // Update control state (Mode or Policy)
-  const updateControlState = useCallback(async (newMode: "AUTO" | "MANUAL", newPolicy: "EXECUTE" | "PENDING") => {
+  // Update control state (Mode, Policy, or Interval)
+  const updateControlState = useCallback(async (
+    newMode: "AUTO" | "MANUAL",
+    newPolicy: "EXECUTE" | "PENDING",
+    newInterval?: number
+  ) => {
     playUIClick();
+    const intervalToSend = newInterval || pollInterval;
     try {
       const res = await fetch("/api/axismundi/mode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: newMode, ingest_policy: newPolicy }),
+        body: JSON.stringify({
+          mode: newMode,
+          ingest_policy: newPolicy,
+          poll_interval_sec: intervalToSend,
+        }),
       });
       if (res.ok) {
         const updated: ControlState = await res.json();
         setMode(updated.mode);
         setPolicy(updated.ingest_policy);
+        setPollInterval(updated.poll_interval_sec);
         setLogs((prev) => [
           ...prev,
           {
             id: `log-${Date.now()}`,
             timestamp: new Date().toLocaleTimeString(),
-            source: "SYSTEM",
+            source: "CONTROL",
             level: "INFO",
-            message: `Control state updated: Mode [${updated.mode}] | Policy [${updated.ingest_policy}]`,
+            message: `Engine updated: Mode [${updated.mode}] | Policy [${updated.ingest_policy}] | Poll [${updated.poll_interval_sec}s]`,
           },
         ]);
       }
     } catch (err) {
       console.warn("Failed to update control state:", err);
     }
-  }, [playUIClick]);
+  }, [playUIClick, pollInterval]);
 
   // Trigger Google Keep Sync
   const handleTriggerKeepSync = useCallback(async () => {
@@ -180,12 +216,70 @@ export default function TerminalPage() {
     }
   }, [fetchDirectives, fetchWorkspaceStatus, playUIClick, playUIChime]);
 
+  // Update directive status
+  const handleUpdateStatus = useCallback(async (id: string, newStatus: string, logMsg?: string) => {
+    playUIClick();
+    try {
+      const res = await fetch(`/api/axismundi/directives/${id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: newStatus,
+          execution_log: logMsg || `Status modified from TUI to ${newStatus}`,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setDirectives((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+        if (selectedDirective?.id === updated.id) {
+          setSelectedDirective(updated);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to update status:", err);
+    }
+  }, [playUIClick, selectedDirective]);
+
+  // Delete directive
+  const handleDeleteDirective = useCallback(async (id: string) => {
+    playUIClick();
+    try {
+      const res = await fetch(`/api/axismundi/directives/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        playUIChime(440);
+        setDirectives((prev) => prev.filter((d) => d.id !== id));
+        if (selectedDirective?.id === id) {
+          setSelectedDirective(null);
+        }
+        setLogs((prev) => [
+          ...prev,
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString(),
+            source: "REGISTRY",
+            level: "WARN",
+            message: `Purged directive ${id.slice(0, 16)}`,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn("Failed to delete directive:", err);
+    }
+  }, [playUIClick, playUIChime, selectedDirective]);
+
   // Reactive SSE event listener
   useEffect(() => {
     if (!lastEvent) return;
 
     const timeStr = new Date().toLocaleTimeString();
-    if (lastEvent.type === "axismundi_ingested" && lastEvent.payload) {
+
+    if (lastEvent.type === "axismundi_tick" && lastEvent.payload) {
+      const payload = lastEvent.payload as { remaining_seconds: number; current_interval_sec: number };
+      setRemainingTick(payload.remaining_seconds);
+      if (payload.current_interval_sec > 0 && payload.current_interval_sec !== pollInterval) {
+        setPollInterval(payload.current_interval_sec);
+      }
+    } else if (lastEvent.type === "axismundi_ingested" && lastEvent.payload) {
       const d = lastEvent.payload as AxisDirective;
       setDirectives((prev) => [d, ...prev.filter((item) => item.id !== d.id)]);
       setLogs((prev) => [
@@ -216,6 +310,7 @@ export default function TerminalPage() {
       const ctrl = lastEvent.payload as ControlState;
       setMode(ctrl.mode);
       setPolicy(ctrl.ingest_policy);
+      if (ctrl.poll_interval_sec > 0) setPollInterval(ctrl.poll_interval_sec);
     } else if (lastEvent.type === "axismundi_status_changed" && lastEvent.payload) {
       const d = lastEvent.payload as AxisDirective;
       setDirectives((prev) => prev.map((item) => (item.id === d.id ? d : item)));
@@ -226,9 +321,12 @@ export default function TerminalPage() {
           timestamp: timeStr,
           source: "ORCHESTRATOR",
           level: "INFO",
-          message: `Directive ${d.id.slice(0, 12)} status -> ${d.status}`,
+          message: `Directive ${d.id.slice(0, 16)} -> ${d.status}`,
         },
       ]);
+    } else if (lastEvent.type === "axismundi_directive_deleted" && lastEvent.payload) {
+      const payload = lastEvent.payload as { id: string };
+      setDirectives((prev) => prev.filter((d) => d.id !== payload.id));
     } else if (lastEvent.type === "axismundi_execution_completed" && lastEvent.payload) {
       const d = lastEvent.payload as AxisDirective;
       setDirectives((prev) => prev.map((item) => (item.id === d.id ? d : item)));
@@ -244,12 +342,142 @@ export default function TerminalPage() {
         },
       ]);
     }
-  }, [lastEvent, playUIChime]);
+  }, [lastEvent, playUIChime, pollInterval]);
 
   // Auto-scroll logs
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
+
+  // Filtered directives
+  const filteredDirectives = directives.filter((d) => {
+    if (filter === "ALL") return true;
+    if (filter === "PENDING") return d.status === "PENDING" || d.status === "PASSIVE_CONTEXT";
+    if (filter === "EXECUTE") return d.status === "QUEUED_FOR_AGENT";
+    if (filter === "EXECUTING") return d.status === "EXECUTING";
+    if (filter === "COMPLETED") return d.status === "COMPLETED";
+    if (filter === "ARCHIVED") return d.status === "ARCHIVED";
+    return true;
+  });
+
+  // Global Keyboard Shortcuts Matrix
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // If typing in an input or textarea, ignore single-letter global navigation
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const key = e.key.toUpperCase();
+
+      if (e.key === "Escape") {
+        if (isHelpOpen) {
+          setIsHelpOpen(false);
+        } else if (selectedDirective) {
+          setSelectedDirective(null);
+        }
+        return;
+      }
+
+      if (key === "H") {
+        playUIClick();
+        setIsHelpOpen((prev) => !prev);
+        return;
+      }
+
+      if (key === "A") {
+        updateControlState("AUTO", policy, pollInterval);
+        return;
+      }
+
+      if (key === "M") {
+        updateControlState("MANUAL", policy, pollInterval);
+        return;
+      }
+
+      if (key === "E") {
+        updateControlState(mode, "EXECUTE", pollInterval);
+        return;
+      }
+
+      if (key === "P") {
+        updateControlState(mode, "PENDING", pollInterval);
+        return;
+      }
+
+      if (key === "S") {
+        handleTriggerKeepSync();
+        return;
+      }
+
+      if (key === "R") {
+        playUIClick();
+        fetchDirectives();
+        fetchWorkspaceStatus();
+        fetchControlState();
+        return;
+      }
+
+      // Arrow Key Navigation
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev + 1 < filteredDirectives.length ? prev + 1 : 0));
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev - 1 >= 0 ? prev - 1 : filteredDirectives.length - 1));
+        return;
+      }
+
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        if (filteredDirectives[selectedIndex]) {
+          playUIClick();
+          setSelectedDirective(filteredDirectives[selectedIndex]);
+        }
+        return;
+      }
+
+      // Quick Numeric Status Shortcuts on Selected Item
+      const activeItem = selectedDirective || filteredDirectives[selectedIndex];
+      if (activeItem) {
+        if (e.key === "1") {
+          handleUpdateStatus(activeItem.id, "PENDING");
+        } else if (e.key === "2") {
+          handleUpdateStatus(activeItem.id, "QUEUED_FOR_AGENT");
+        } else if (e.key === "3") {
+          handleUpdateStatus(activeItem.id, "EXECUTING");
+        } else if (e.key === "4") {
+          handleUpdateStatus(activeItem.id, "COMPLETED");
+        } else if (e.key === "5") {
+          handleUpdateStatus(activeItem.id, "ARCHIVED");
+        } else if (e.key === "Delete" || e.key === "Backspace") {
+          handleDeleteDirective(activeItem.id);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    isHelpOpen,
+    selectedDirective,
+    selectedIndex,
+    filteredDirectives,
+    mode,
+    policy,
+    pollInterval,
+    updateControlState,
+    handleTriggerKeepSync,
+    fetchDirectives,
+    fetchWorkspaceStatus,
+    fetchControlState,
+    handleUpdateStatus,
+    handleDeleteDirective,
+    playUIClick,
+  ]);
 
   const handleCommandSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -278,45 +506,13 @@ export default function TerminalPage() {
     }
   };
 
-  const handleUpdateStatus = async (id: string, newStatus: string, logMsg?: string) => {
-    playUIClick();
-    try {
-      const res = await fetch(`/api/axismundi/directives/${id}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: newStatus,
-          execution_log: logMsg || `Manual status update from TUI to ${newStatus}`,
-        }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setDirectives((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
-        if (selectedDirective?.id === updated.id) {
-          setSelectedDirective(updated);
-        }
-      }
-    } catch (err) {
-      console.warn("Failed to update status:", err);
-    }
-  };
-
-  const filteredDirectives = directives.filter((d) => {
-    if (filter === "ALL") return true;
-    if (filter === "QUEUED") return d.status === "QUEUED_FOR_AGENT";
-    if (filter === "EXECUTING") return d.status === "EXECUTING";
-    if (filter === "COMPLETED") return d.status === "COMPLETED";
-    if (filter === "PASSIVE") return d.status === "PASSIVE_CONTEXT";
-    return true;
-  });
-
   return (
     <div className="min-h-screen bg-charcoal-900 text-slate-100 flex flex-col justify-between selection:bg-emerald-500/20 font-mono relative overflow-hidden">
-      {/* 3D C60 Buckyball Background Canvas */}
+      {/* 3D C60 Buckyball Background Wireframe */}
       <BuckyballCanvas />
 
-      {/* Top TUI Navigation Header */}
-      <header className="w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 z-20">
+      {/* Top TUI Header Bar */}
+      <header className="w-full border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 z-20">
         <div className="flex items-center gap-3">
           <Link
             href="/"
@@ -338,8 +534,8 @@ export default function TerminalPage() {
           </div>
         </div>
 
-        {/* Status Indicators & Dual-Mode Controls */}
-        <div className="flex items-center gap-2.5 text-xs flex-wrap">
+        {/* HUD Controls & Dynamic Polling Interval */}
+        <div className="flex items-center gap-2 text-xs flex-wrap">
           {/* Google Workspace Connection Status Badge */}
           <div
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono ${
@@ -361,6 +557,29 @@ export default function TerminalPage() {
             </span>
           </div>
 
+          {/* Dynamic Polling Interval Selector Dropdown */}
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs">
+            <Clock className="w-3 h-3 text-slate-400" />
+            <span className="text-[10px] text-slate-500">POLL:</span>
+            <select
+              value={pollInterval}
+              onChange={(e) => updateControlState(mode, policy, Number(e.target.value))}
+              className="bg-transparent text-emerald-300 text-xs font-mono focus:outline-none cursor-pointer"
+              title="Set automatic background polling frequency"
+            >
+              <option value={10} className="bg-slate-950 text-slate-200">10s</option>
+              <option value={30} className="bg-slate-950 text-slate-200">30s</option>
+              <option value={60} className="bg-slate-950 text-slate-200">60s</option>
+              <option value={120} className="bg-slate-950 text-slate-200">120s</option>
+              <option value={300} className="bg-slate-950 text-slate-200">300s</option>
+            </select>
+            {mode === "AUTO" && (
+              <span className="text-[10px] text-emerald-400 font-bold ml-1">
+                ({remainingTick}s)
+              </span>
+            )}
+          </div>
+
           {/* Trigger Google Keep Sync */}
           <button
             onClick={handleTriggerKeepSync}
@@ -370,38 +589,51 @@ export default function TerminalPage() {
                 ? "bg-sky-950 border-sky-500 text-sky-300 animate-pulse"
                 : "bg-slate-900 border-slate-800 text-slate-300 hover:text-emerald-300 hover:border-emerald-500/40"
             }`}
-            title="Poll Google Keep API on-demand for newly captured notes"
+            title="Poll Google Keep API on-demand [S]"
           >
             <ArrowDownCircle className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : "text-emerald-400"}`} />
-            <span>{isSyncing ? "SYNCING..." : "SYNC KEEP"}</span>
+            <span>{isSyncing ? "SYNCING..." : "SYNC [S]"}</span>
           </button>
 
-          {/* System Mode Toggle Button (AUTO vs MANUAL) */}
+          {/* Mode Switcher: AUTO vs MANUAL */}
           <button
-            onClick={() => updateControlState(mode === "AUTO" ? "MANUAL" : "AUTO", policy)}
+            onClick={() => updateControlState(mode === "AUTO" ? "MANUAL" : "AUTO", policy, pollInterval)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-all ${
               mode === "AUTO"
                 ? "bg-emerald-950/70 border-emerald-500/50 text-emerald-300 shadow-sm"
                 : "bg-amber-950/70 border-amber-500/50 text-amber-300"
             }`}
-            title="Toggle between AUTO (Zero-Token Background Polling) and MANUAL (On-Demand Ingestion Only)"
+            title="Toggle AUTO [A] / MANUAL [M] mode"
           >
             <Cpu className="w-3.5 h-3.5 text-emerald-400" />
             <span>MODE: [{mode}]</span>
           </button>
 
-          {/* Auto-Ingestion Policy Toggle Button (EXECUTE vs PENDING) */}
+          {/* Auto-Ingestion Policy Switcher: EXECUTE vs PENDING */}
           <button
-            onClick={() => updateControlState(mode, policy === "EXECUTE" ? "PENDING" : "EXECUTE")}
+            onClick={() => updateControlState(mode, policy === "EXECUTE" ? "PENDING" : "EXECUTE", pollInterval)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-all ${
               policy === "EXECUTE"
                 ? "bg-amber-950/80 border-amber-500/60 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
                 : "bg-sky-950/80 border-sky-500/60 text-sky-300"
             }`}
-            title="Auto-Ingestion Policy: In EXECUTE policy, all incoming Keep notes are automatically flagged for agent coding execution."
+            title="Toggle Ingest Policy: EXECUTE [E] vs PENDING [P]"
           >
             <Zap className="w-3.5 h-3.5 text-amber-400" />
             <span>INGEST: [{policy}]</span>
+          </button>
+
+          {/* Help Overlay Toggle Button */}
+          <button
+            onClick={() => {
+              playUIClick();
+              setIsHelpOpen(true);
+            }}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 text-xs font-mono transition-all"
+            title="Open Keyboard Shortcuts & API Help [H]"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>HELP [H]</span>
           </button>
 
           {/* SSE Live Indicator */}
@@ -414,12 +646,13 @@ export default function TerminalPage() {
 
           <button
             onClick={() => {
+              playUIClick();
               fetchDirectives();
               fetchWorkspaceStatus();
               fetchControlState();
             }}
             className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-emerald-300 hover:bg-slate-800 transition-all"
-            title="Refresh Directives"
+            title="Refresh [R]"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
@@ -427,9 +660,9 @@ export default function TerminalPage() {
       </header>
 
       {/* Main Terminal Grid Stage */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 z-10">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5 z-10">
         {/* Left Column: Live Streaming Telemetry Terminal */}
-        <div className="lg:col-span-6 flex flex-col space-y-4">
+        <div className="lg:col-span-6 flex flex-col space-y-3.5">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2 text-xs text-slate-400">
             <div className="flex items-center gap-2">
               <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
@@ -439,7 +672,7 @@ export default function TerminalPage() {
           </div>
 
           {/* Terminal Output Window */}
-          <div className="flex-1 min-h-[340px] max-h-[480px] bg-slate-950/90 border border-slate-800 rounded-xl p-4 overflow-y-auto font-mono text-xs space-y-2 shadow-inner">
+          <div className="flex-1 min-h-[360px] max-h-[490px] bg-slate-950/90 border border-slate-800 rounded-xl p-4 overflow-y-auto font-mono text-xs space-y-2 shadow-inner">
             {logs.map((log) => (
               <div key={log.id} className="flex items-start gap-2 leading-relaxed">
                 <span className="text-slate-500 text-[10px] select-none">[{log.timestamp}]</span>
@@ -449,6 +682,8 @@ export default function TerminalPage() {
                       ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                       : log.level === "SUCCESS"
                       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                      : log.level === "WARN"
+                      ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
                       : "bg-slate-800 text-slate-400"
                   }`}
                 >
@@ -460,6 +695,8 @@ export default function TerminalPage() {
                       ? "text-amber-200 font-semibold"
                       : log.level === "SUCCESS"
                       ? "text-emerald-200 font-semibold"
+                      : log.level === "WARN"
+                      ? "text-rose-200 font-semibold"
                       : "text-slate-300"
                   }`}
                 >
@@ -496,21 +733,22 @@ export default function TerminalPage() {
         </div>
 
         {/* Right Column: Directive Matrix & Status Inspector */}
-        <div className="lg:col-span-6 flex flex-col space-y-4">
+        <div className="lg:col-span-6 flex flex-col space-y-3.5">
           <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 text-xs gap-2">
             <div className="flex items-center gap-2 text-slate-400">
               <Layers className="w-3.5 h-3.5 text-emerald-400" />
-              <span>WORKSPACE REGISTRY & QUEUE</span>
+              <span>WORKSPACE REGISTRY ({filteredDirectives.length})</span>
             </div>
 
             {/* Filter Chips */}
-            <div className="flex items-center gap-1">
-              {["ALL", "QUEUED", "EXECUTING", "COMPLETED", "PASSIVE"].map((f) => (
+            <div className="flex items-center gap-1 flex-wrap">
+              {["ALL", "PENDING", "EXECUTE", "EXECUTING", "COMPLETED", "ARCHIVED"].map((f) => (
                 <button
                   key={f}
                   onClick={() => {
                     playUIClick();
                     setFilter(f);
+                    setSelectedIndex(0);
                   }}
                   className={`px-2 py-0.5 rounded text-[10px] transition-all ${
                     filter === f
@@ -524,82 +762,115 @@ export default function TerminalPage() {
             </div>
           </div>
 
-          {/* Directives List Grid */}
-          <div className="flex-1 min-h-[340px] max-h-[480px] overflow-y-auto space-y-2.5 pr-1">
+          {/* Directives List Grid with Keyboard Selection Highlight */}
+          <div className="flex-1 min-h-[360px] max-h-[490px] overflow-y-auto space-y-2.5 pr-1">
             {filteredDirectives.length === 0 ? (
-              <div className="text-center py-16 text-slate-600 text-xs">
-                No workspace items in registry. Speak to Google Keep or enter a directive in the prompt.
+              <div className="text-center py-20 text-slate-600 text-xs">
+                No workspace items in registry for filter [{filter}]. Speak to Google Keep or enter a directive in the prompt.
               </div>
             ) : (
-              filteredDirectives.map((d) => (
-                <div
-                  key={d.id}
-                  onClick={() => {
-                    playUIClick();
-                    setSelectedDirective(d);
-                  }}
-                  className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                    selectedDirective?.id === d.id
-                      ? "bg-slate-900 border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
-                      : "bg-slate-950/70 border-slate-800 hover:border-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-500">{d.id.slice(0, 16)}</span>
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-800">
-                        {d.source}
+              filteredDirectives.map((d, index) => {
+                const isSelected = selectedIndex === index;
+                return (
+                  <div
+                    key={d.id}
+                    onClick={() => {
+                      playUIClick();
+                      setSelectedIndex(index);
+                      setSelectedDirective(d);
+                    }}
+                    className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
+                      isSelected
+                        ? "bg-slate-900 border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.18)]"
+                        : "bg-slate-950/70 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500 font-bold">
+                          #{index + 1} &bull; {d.id.slice(0, 14)}
+                        </span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                          {d.source}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                          d.status === "QUEUED_FOR_AGENT" || d.status === "EXECUTE"
+                            ? "bg-amber-500/15 text-amber-300 border border-amber-500/30 animate-pulse"
+                            : d.status === "EXECUTING"
+                            ? "bg-sky-500/15 text-sky-300 border border-sky-500/30"
+                            : d.status === "COMPLETED"
+                            ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                            : d.status === "ARCHIVED"
+                            ? "bg-slate-900 text-slate-500 border border-slate-800"
+                            : "bg-amber-950/40 text-amber-400 border border-amber-700/30"
+                        }`}
+                      >
+                        {d.status === "QUEUED_FOR_AGENT" ? "EXECUTE" : d.status}
                       </span>
                     </div>
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                        d.status === "QUEUED_FOR_AGENT"
-                          ? "bg-amber-500/15 text-amber-300 border border-amber-500/30 animate-pulse"
-                          : d.status === "EXECUTING"
-                          ? "bg-sky-500/15 text-sky-300 border border-sky-500/30"
-                          : d.status === "COMPLETED"
-                          ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                          : "bg-slate-800 text-slate-400"
-                      }`}
-                    >
-                      {d.status}
-                    </span>
-                  </div>
 
-                  <h3 className="font-bold text-slate-200 line-clamp-1">{d.title}</h3>
-                  <p className="text-slate-400 text-[11px] font-light mt-1 line-clamp-2">
-                    {d.triaged_instruction || d.raw_note}
-                  </p>
+                    <h3 className="font-bold text-slate-200 line-clamp-1">{d.title}</h3>
+                    <p className="text-slate-400 text-[11px] font-light mt-1 line-clamp-2">
+                      {d.triaged_instruction || d.raw_note}
+                    </p>
 
-                  <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-900 text-[10px] text-slate-500">
-                    <span>Type: {d.type}</span>
-                    <div className="flex items-center gap-2">
-                      {d.status === "QUEUED_FOR_AGENT" && (
+                    <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-900 text-[10px] text-slate-500">
+                      <span>Type: {d.type}</span>
+                      <div className="flex items-center gap-1.5">
+                        {/* Quick Status Action Buttons */}
+                        {d.status !== "QUEUED_FOR_AGENT" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateStatus(d.id, "QUEUED_FOR_AGENT");
+                            }}
+                            className="px-2 py-0.5 rounded bg-amber-950/70 text-amber-300 border border-amber-800 hover:bg-amber-900 transition-all"
+                            title="Queue for Agent Execution [2]"
+                          >
+                            Execute [2]
+                          </button>
+                        )}
+                        {d.status === "QUEUED_FOR_AGENT" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateStatus(d.id, "EXECUTING");
+                            }}
+                            className="px-2 py-0.5 rounded bg-sky-950/70 text-sky-300 border border-sky-800 hover:bg-sky-900 transition-all"
+                            title="Mark Executing [3]"
+                          >
+                            Run [3]
+                          </button>
+                        )}
+                        {d.status !== "COMPLETED" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateStatus(d.id, "COMPLETED");
+                            }}
+                            className="px-2 py-0.5 rounded bg-emerald-950/70 text-emerald-300 border border-emerald-800 hover:bg-emerald-900 transition-all"
+                            title="Mark Completed [4]"
+                          >
+                            Done [4]
+                          </button>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleUpdateStatus(d.id, "EXECUTING", "Agent acknowledged from TUI.");
+                            handleDeleteDirective(d.id);
                           }}
-                          className="px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800 hover:bg-sky-900 transition-all"
+                          className="p-1 rounded text-slate-500 hover:text-rose-400 transition-colors"
+                          title="Purge [Del]"
                         >
-                          Execute [E]
+                          <Trash2 className="w-3 h-3" />
                         </button>
-                      )}
-                      {d.status === "EXECUTING" && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUpdateStatus(d.id, "COMPLETED", "Execution marked completed via TUI.");
-                          }}
-                          className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 hover:bg-emerald-900 transition-all"
-                        >
-                          Complete [C]
-                        </button>
-                      )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -607,8 +878,8 @@ export default function TerminalPage() {
 
       {/* Selected Directive Detail Drawer / Modal */}
       {selectedDirective && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl relative">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
                 <span className="text-[10px] text-slate-500 font-mono uppercase">
@@ -622,45 +893,161 @@ export default function TerminalPage() {
                 onClick={() => setSelectedDirective(null)}
                 className="text-slate-500 hover:text-slate-300 font-mono text-sm px-2 py-1"
               >
-                ✕
+                ✕ [ESC]
               </button>
             </div>
 
-            <div className="space-y-3 text-xs font-mono">
-              <div>
-                <span className="text-slate-500 uppercase text-[10px]">Triaged Instruction:</span>
-                <pre className="mt-1 p-3 rounded-lg bg-slate-900/80 border border-slate-800 text-emerald-300 whitespace-pre-wrap">
+            {/* Status Modification Button Bar */}
+            <div className="flex items-center justify-between bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-xs">
+              <span className="text-[10px] text-slate-400 uppercase font-bold">Set Status:</span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  onClick={() => handleUpdateStatus(selectedDirective.id, "PENDING")}
+                  className={`px-2 py-1 rounded text-[11px] border ${
+                    selectedDirective.status === "PENDING"
+                      ? "bg-amber-950 border-amber-500 text-amber-300 font-bold"
+                      : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  [1] Pending
+                </button>
+                <button
+                  onClick={() => handleUpdateStatus(selectedDirective.id, "QUEUED_FOR_AGENT")}
+                  className={`px-2 py-1 rounded text-[11px] border ${
+                    selectedDirective.status === "QUEUED_FOR_AGENT"
+                      ? "bg-amber-950 border-amber-500 text-amber-300 font-bold"
+                      : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  [2] Execute
+                </button>
+                <button
+                  onClick={() => handleUpdateStatus(selectedDirective.id, "EXECUTING")}
+                  className={`px-2 py-1 rounded text-[11px] border ${
+                    selectedDirective.status === "EXECUTING"
+                      ? "bg-sky-950 border-sky-500 text-sky-300 font-bold"
+                      : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  [3] Executing
+                </button>
+                <button
+                  onClick={() => handleUpdateStatus(selectedDirective.id, "COMPLETED")}
+                  className={`px-2 py-1 rounded text-[11px] border ${
+                    selectedDirective.status === "COMPLETED"
+                      ? "bg-emerald-950 border-emerald-500 text-emerald-300 font-bold"
+                      : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  [4] Completed
+                </button>
+                <button
+                  onClick={() => handleUpdateStatus(selectedDirective.id, "ARCHIVED")}
+                  className={`px-2 py-1 rounded text-[11px] border ${
+                    selectedDirective.status === "ARCHIVED"
+                      ? "bg-slate-800 border-slate-600 text-slate-200 font-bold"
+                      : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  [5] Archive
+                </button>
+              </div>
+            </div>
+
+            {/* Inspector Tab Switcher */}
+            <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-xs">
+              <button
+                onClick={() => setActiveInspectorTab("instruction")}
+                className={`flex items-center gap-1 px-3 py-1 rounded-lg ${
+                  activeInspectorTab === "instruction"
+                    ? "bg-slate-800 text-emerald-300 font-bold"
+                    : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Triaged Instruction</span>
+              </button>
+              <button
+                onClick={() => setActiveInspectorTab("raw")}
+                className={`flex items-center gap-1 px-3 py-1 rounded-lg ${
+                  activeInspectorTab === "raw"
+                    ? "bg-slate-800 text-emerald-300 font-bold"
+                    : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                <FileCode className="w-3.5 h-3.5" />
+                <span>Raw Keep Content</span>
+              </button>
+              {selectedDirective.execution_log && (
+                <button
+                  onClick={() => setActiveInspectorTab("logs")}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-lg ${
+                    activeInspectorTab === "logs"
+                      ? "bg-slate-800 text-emerald-300 font-bold"
+                      : "text-slate-500 hover:text-slate-300"
+                  }`}
+                >
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>Execution Logs</span>
+                </button>
+              )}
+              <button
+                onClick={() => setActiveInspectorTab("json")}
+                className={`flex items-center gap-1 px-3 py-1 rounded-lg ${
+                  activeInspectorTab === "json"
+                    ? "bg-slate-800 text-emerald-300 font-bold"
+                    : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                <FileCode className="w-3.5 h-3.5" />
+                <span>JSON Payload</span>
+              </button>
+            </div>
+
+            {/* Inspector Tab Content Area */}
+            <div className="space-y-3 text-xs font-mono max-h-[300px] overflow-y-auto">
+              {activeInspectorTab === "instruction" && (
+                <pre className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 whitespace-pre-wrap leading-relaxed">
                   {selectedDirective.triaged_instruction}
                 </pre>
-              </div>
+              )}
 
-              <div>
-                <span className="text-slate-500 uppercase text-[10px]">Raw Note Content:</span>
-                <p className="mt-1 text-slate-400 p-2.5 rounded bg-slate-900/40 border border-slate-800/80">
+              {activeInspectorTab === "raw" && (
+                <p className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 whitespace-pre-wrap leading-relaxed">
                   {selectedDirective.raw_note}
                 </p>
-              </div>
+              )}
 
-              {selectedDirective.execution_log && (
-                <div>
-                  <span className="text-slate-500 uppercase text-[10px]">Execution Telemetry:</span>
-                  <pre className="mt-1 p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-[11px] max-h-36 overflow-y-auto whitespace-pre-wrap">
-                    {selectedDirective.execution_log}
-                  </pre>
-                </div>
+              {activeInspectorTab === "logs" && (
+                <pre className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 whitespace-pre-wrap">
+                  {selectedDirective.execution_log}
+                </pre>
+              )}
+
+              {activeInspectorTab === "json" && (
+                <pre className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-blue-300 text-[11px] whitespace-pre-wrap">
+                  {JSON.stringify(selectedDirective, null, 2)}
+                </pre>
               )}
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-slate-800">
               <span className="text-[10px] text-slate-500">
-                Created: {new Date(selectedDirective.created_at).toLocaleString()}
+                Created: {new Date(selectedDirective.created_at).toLocaleString()} &bull; Source: {selectedDirective.source}
               </span>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDeleteDirective(selectedDirective.id)}
+                  className="px-3 py-1.5 rounded-lg border border-rose-900/60 bg-rose-950/40 text-rose-300 hover:bg-rose-900 text-xs flex items-center gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Purge [Del]</span>
+                </button>
                 <button
                   onClick={() => setSelectedDirective(null)}
                   className="px-3 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-slate-200 text-xs"
                 >
-                  Close
+                  Close [Esc]
                 </button>
               </div>
             </div>
@@ -668,9 +1055,105 @@ export default function TerminalPage() {
         </div>
       )}
 
+      {/* Help & API Reference Overlay Modal */}
+      {isHelpOpen && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-slate-950 border border-cyan-900/80 rounded-2xl max-w-3xl w-full p-6 space-y-5 shadow-[0_0_25px_rgba(6,182,212,0.15)] relative font-mono">
+            <div className="flex justify-between items-center border-b border-cyan-900/60 pb-3">
+              <h2 className="text-cyan-400 font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-cyan-400" />
+                <span>Axis Mundi // Operations & Keyboard Shortcuts</span>
+              </h2>
+              <button
+                onClick={() => setIsHelpOpen(false)}
+                className="text-cyan-500 hover:text-cyan-300 text-xs px-2.5 py-1 border border-cyan-800 rounded-lg"
+              >
+                ESC to Close
+              </button>
+            </div>
+
+            <div className="p-1 overflow-y-auto max-h-[65vh] text-xs text-slate-300 flex flex-col gap-6">
+              {/* Keyboard Command Grid */}
+              <section>
+                <h3 className="text-cyan-400 border-b border-cyan-900/50 pb-1 mb-3 uppercase font-semibold text-xs">
+                  Keyboard Command Shortcuts
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[A]</span>
+                    <span className="text-slate-300">AUTO mode (periodic polling)</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[M]</span>
+                    <span className="text-slate-300">MANUAL mode (on-demand)</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[E] / [P]</span>
+                    <span className="text-slate-300">Toggle Ingest Policy (EXECUTE / PENDING)</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[S]</span>
+                    <span className="text-slate-300">Trigger on-demand Keep API sync</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[R]</span>
+                    <span className="text-slate-300">Refresh registry state</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[H]</span>
+                    <span className="text-slate-300">Toggle this Help overlay</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[↑] / [↓]</span>
+                    <span className="text-slate-300">Navigate directive list</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[Enter / Space]</span>
+                    <span className="text-slate-300">Inspect highlighted item</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[1] - [5]</span>
+                    <span className="text-slate-300">Set status (Pending, Exec, Run, Done, Arch)</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-yellow-400 font-bold">[Del / Bksp]</span>
+                    <span className="text-slate-300">Purge selected directive</span>
+                  </div>
+                </div>
+              </section>
+
+              {/* API Endpoints */}
+              <section>
+                <h3 className="text-cyan-400 border-b border-cyan-900/50 pb-1 mb-3 uppercase font-semibold text-xs">
+                  Axis Mundi REST & MCP API Endpoints
+                </h3>
+                <table className="w-full text-left border-collapse text-[11px]">
+                  <thead>
+                    <tr className="text-slate-500 border-b border-slate-800">
+                      <th className="pb-2">Endpoint</th>
+                      <th className="pb-2 w-16">Method</th>
+                      <th className="pb-2">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-900">
+                    <tr><td className="py-1.5 text-emerald-400">/api/axismundi/directives</td><td>GET</td><td>List all stored directives</td></tr>
+                    <tr><td className="py-1.5 text-emerald-400">/api/axismundi/directives/pending</td><td>GET</td><td>List queued [EXECUTE] directives</td></tr>
+                    <tr><td className="py-1.5 text-cyan-400">/api/axismundi/workspace/status</td><td>GET</td><td>Google Workspace auth & DWD status</td></tr>
+                    <tr><td className="py-1.5 text-amber-400">/api/axismundi/mode</td><td>GET/POST</td><td>Get/Set AUTO/MANUAL, Policy & Interval</td></tr>
+                    <tr><td className="py-1.5 text-purple-400">/api/axismundi/keep/sync</td><td>GET/POST</td><td>Trigger immediate Google Keep sync</td></tr>
+                    <tr><td className="py-1.5 text-sky-400">/api/stream/events</td><td>SSE</td><td>Live telemetry & tick stream</td></tr>
+                    <tr><td className="py-1.5 text-blue-400">/api/mcp</td><td>POST</td><td>Model Context Protocol JSON-RPC 2.0</td></tr>
+                  </tbody>
+                </table>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Subtle Terminal Footer */}
-      <footer className="w-full border-t border-slate-900/80 px-6 py-3 text-center text-slate-600 text-[10px] font-mono z-10">
-        Axis Mundi v2.0 • Dual-Mode System Engine (AUTO/MANUAL) • Auto-Ingest Policy (EXECUTE/PENDING)
+      <footer className="w-full border-t border-slate-900/80 px-6 py-2.5 text-center text-slate-600 text-[10px] font-mono z-10">
+        Axis Mundi v2.0 • Dual-Mode System Engine (AUTO/MANUAL) • Auto-Ingest Policy (EXECUTE/PENDING) • Press [H] for Help
       </footer>
     </div>
   );

@@ -36,11 +36,14 @@ const (
 type DirectiveStatus string
 
 const (
+	StatusPending        DirectiveStatus = "PENDING"
 	StatusPassiveContext DirectiveStatus = "PASSIVE_CONTEXT"
 	StatusQueuedForAgent DirectiveStatus = "QUEUED_FOR_AGENT"
 	StatusExecuting      DirectiveStatus = "EXECUTING"
 	StatusBuilt          DirectiveStatus = "BUILT"
 	StatusCompleted      DirectiveStatus = "COMPLETED"
+	StatusArchived       DirectiveStatus = "ARCHIVED"
+	StatusDismissed      DirectiveStatus = "DISMISSED"
 	StatusFailed         DirectiveStatus = "FAILED"
 )
 
@@ -49,7 +52,7 @@ type KeepNotePayload struct {
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	Tags      []string  `json:"tags,omitempty"`
-	Source    string    `json:"source,omitempty"` // "google_keep", "voice", "cli", "mcp"
+	Source    string    `json:"source,omitempty"` // "google_keep_api", "voice", "cli", "mcp"
 	Timestamp time.Time `json:"timestamp,omitempty"`
 }
 

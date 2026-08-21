@@ -97,13 +97,25 @@ func (h *MCPHandler) handleRequest(req JSONRPCRequest) JSONRPCResponse {
 					},
 					{
 						"name":        "axismundi_set_mode",
-						"description": "Set Axis Mundi operational mode (AUTO/MANUAL) and Ingest Policy (EXECUTE/PENDING).",
+						"description": "Set Axis Mundi operational mode (AUTO/MANUAL), Ingest Policy (EXECUTE/PENDING), and Polling Interval.",
 						"inputSchema": map[string]interface{}{
 							"type": "object",
 							"properties": map[string]interface{}{
-								"mode":          map[string]string{"type": "string", "enum": "AUTO, MANUAL"},
-								"ingest_policy": map[string]string{"type": "string", "enum": "EXECUTE, PENDING"},
+								"mode":              map[string]string{"type": "string", "enum": "AUTO, MANUAL"},
+								"ingest_policy":     map[string]string{"type": "string", "enum": "EXECUTE, PENDING"},
+								"poll_interval_sec": map[string]string{"type": "integer", "description": "Polling frequency in seconds (e.g. 10, 30, 60)"},
 							},
+						},
+					},
+					{
+						"name":        "axismundi_delete_directive",
+						"description": "Permanently delete an Axis Mundi directive by ID.",
+						"inputSchema": map[string]interface{}{
+							"type": "object",
+							"properties": map[string]interface{}{
+								"id": map[string]string{"type": "string", "description": "Directive ID"},
+							},
+							"required": []string{"id"},
 						},
 					},
 				},
@@ -220,11 +232,40 @@ func (h *MCPHandler) handleRequest(req JSONRPCRequest) JSONRPCResponse {
 		case "axismundi_set_mode":
 			modeStr, _ := args["mode"].(string)
 			policyStr, _ := args["ingest_policy"].(string)
-			updated := h.engine.SetControlState(EngineMode(modeStr), IngestPolicy(policyStr))
+			intervalSec := 0
+			if rawInt, ok := args["poll_interval_sec"].(float64); ok {
+				intervalSec = int(rawInt)
+			}
+			updated := h.engine.SetControlState(EngineMode(modeStr), IngestPolicy(policyStr), intervalSec)
 			return JSONRPCResponse{
 				JSONRPC: "2.0",
 				ID:      req.ID,
 				Result:  updated,
+			}
+
+		case "axismundi_delete_directive":
+			id, _ := args["id"].(string)
+			if id == "" {
+				return JSONRPCResponse{
+					JSONRPC: "2.0",
+					ID:      req.ID,
+					Error:   &RPCError{Code: -32602, Message: "Missing id argument"},
+				}
+			}
+			if err := h.engine.DeleteDirective(id); err != nil {
+				return JSONRPCResponse{
+					JSONRPC: "2.0",
+					ID:      req.ID,
+					Error:   &RPCError{Code: -32603, Message: err.Error()},
+				}
+			}
+			return JSONRPCResponse{
+				JSONRPC: "2.0",
+				ID:      req.ID,
+				Result: map[string]interface{}{
+					"deleted": true,
+					"id":      id,
+				},
 			}
 
 		default:

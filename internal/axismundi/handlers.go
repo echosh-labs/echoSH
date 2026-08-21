@@ -117,6 +117,26 @@ func (h *Handlers) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(updated)
 }
 
+func (h *Handlers) DeleteDirective(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "Missing directive id", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.engine.DeleteDirective(id); err != nil {
+		http.Error(w, "Failed to delete directive: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "deleted",
+		"id":      id,
+		"deleted": true,
+	})
+}
+
 func (h *Handlers) GetWorkspaceStatus(w http.ResponseWriter, r *http.Request) {
 	status := h.engine.GetWorkspaceStatus()
 	w.Header().Set("Content-Type", "application/json")
@@ -149,15 +169,16 @@ func (h *Handlers) GetMode(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) SetMode(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Mode         EngineMode   `json:"mode"`
-		IngestPolicy IngestPolicy `json:"ingest_policy"`
+		Mode            EngineMode   `json:"mode"`
+		IngestPolicy    IngestPolicy `json:"ingest_policy"`
+		PollIntervalSec int          `json:"poll_interval_sec"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "Invalid JSON body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	updated := h.engine.SetControlState(body.Mode, body.IngestPolicy)
+	updated := h.engine.SetControlState(body.Mode, body.IngestPolicy, body.PollIntervalSec)
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(updated)
 }

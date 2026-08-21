@@ -1,5 +1,6 @@
 # Binaries
 mercury-dasha-server
+bin/
 *.exe
 *.dll
 *.so

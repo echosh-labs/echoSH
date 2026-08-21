@@ -74,13 +74,16 @@ func (e *Engine) GetControlState() SystemControlState {
 	return e.controlState
 }
 
-func (e *Engine) SetControlState(mode EngineMode, policy IngestPolicy) SystemControlState {
+func (e *Engine) SetControlState(mode EngineMode, policy IngestPolicy, intervalSec int) SystemControlState {
 	e.mu.Lock()
 	if mode != "" {
 		e.controlState.Mode = mode
 	}
 	if policy != "" {
 		e.controlState.IngestPolicy = policy
+	}
+	if intervalSec > 0 {
+		e.controlState.PollIntervalSec = intervalSec
 	}
 	e.controlState.UpdatedAt = time.Now().UTC()
 	updated := e.controlState
@@ -90,13 +93,27 @@ func (e *Engine) SetControlState(mode EngineMode, policy IngestPolicy) SystemCon
 		_ = e.store.SetControlState(updated)
 	}
 
-	log.Printf("[AxisMundi] System Control updated: Mode=%s, IngestPolicy=%s", updated.Mode, updated.IngestPolicy)
+	if e.syncer != nil && intervalSec > 0 {
+		e.syncer.UpdateInterval(time.Duration(intervalSec) * time.Second)
+	}
+
+	log.Printf("[AxisMundi] System Control updated: Mode=%s, IngestPolicy=%s, PollInterval=%ds", updated.Mode, updated.IngestPolicy, updated.PollIntervalSec)
 
 	if e.hub != nil {
 		e.hub.Broadcast("axismundi_control_changed", updated)
 	}
 
 	return updated
+}
+
+func (e *Engine) DeleteDirective(id string) error {
+	if err := e.store.DeleteDirective(id); err != nil {
+		return err
+	}
+	if e.hub != nil {
+		e.hub.Broadcast("axismundi_directive_deleted", map[string]string{"id": id})
+	}
+	return nil
 }
 
 func (e *Engine) TriggerKeepSync(ctx context.Context) (int, error) {

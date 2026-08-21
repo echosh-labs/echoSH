@@ -1,4 +1,4 @@
-﻿package axismundi
+package axismundi
 
 import (
 	"encoding/json"
@@ -148,6 +148,16 @@ func (s *Store) UpdateStatus(id string, status DirectiveStatus, executionLog str
 		return nil, err
 	}
 	return &updated, nil
+}
+
+func (s *Store) DeleteDirective(id string) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(DirectivesBucket))
+		if b == nil {
+			return fmt.Errorf("bucket %s not found", DirectivesBucket)
+		}
+		return b.Delete([]byte(id))
+	})
 }
 
 func (s *Store) GetControlState() SystemControlState {
