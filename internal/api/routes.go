@@ -1,4 +1,4 @@
-﻿package api
+package api
 
 import (
 	"time"
@@ -46,6 +46,9 @@ func NewRouter(store *boltdb.Store, pg *postgres.DB, hub *sse.Hub, axisEngine *a
 		r.Route("/api/axismundi", func(ax chi.Router) {
 			ax.Get("/directives", axisHandlers.ListDirectives)
 			ax.Get("/directives/pending", axisHandlers.GetPendingDirectives)
+			ax.Get("/workspace/status", axisHandlers.GetWorkspaceStatus)
+			ax.Get("/keep/sync", axisHandlers.TriggerKeepSync)
+			ax.Post("/keep/sync", axisHandlers.TriggerKeepSync)
 			ax.Post("/ingest", axisHandlers.IngestNote)
 			ax.Post("/keep/webhook", axisHandlers.KeepWebhook)
 			ax.Post("/directives/{id}/status", axisHandlers.UpdateStatus)

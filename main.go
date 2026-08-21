@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 import (
 	"context"
@@ -56,13 +56,14 @@ func main() {
 	go sseHub.Run()
 	log.Println("[SSE Hub] Real-time event streaming engine active on /api/stream/events")
 
-	// 5. Initialize Axis Mundi Zero-Token Amra Core Engine & MCP Server
+	// 5. Initialize Axis Mundi Zero-Token Amra Core Engine, Google Workspace Bridge & MCP Server
 	axisStore, err := axismundi.NewStore(store.DB())
 	if err != nil {
 		log.Fatalf("[FATAL] Could not initialize Axis Mundi store: %v", err)
 	}
-	axisEngine := axismundi.NewEngine(axisStore, sseHub)
-	log.Println("[Axis Mundi] Zero-token Amra Core ingestion engine and MCP endpoint (/api/mcp) active.")
+	ws := axismundi.NewWorkspaceService(context.Background())
+	axisEngine := axismundi.NewEngine(axisStore, sseHub, ws)
+	log.Println("[Axis Mundi] Zero-token Amra Core Google Workspace engine and MCP endpoint (/api/mcp) active.")
 
 	// 6. Setup Router and Routes
 	router := api.NewRouter(store, pgDB, sseHub, axisEngine, EmbeddedFoundationalStatement, cfg.StatementFilePath)

@@ -1,8 +1,10 @@
-package axismundi
+﻿package axismundi
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -113,4 +115,28 @@ func (h *Handlers) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(updated)
+}
+
+func (h *Handlers) GetWorkspaceStatus(w http.ResponseWriter, r *http.Request) {
+	status := h.engine.GetWorkspaceStatus()
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(status)
+}
+
+func (h *Handlers) TriggerKeepSync(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+
+	count, err := h.engine.TriggerKeepSync(ctx)
+	if err != nil {
+		http.Error(w, "Keep sync error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":         "synced",
+		"notes_ingested": count,
+		"timestamp":      time.Now().UTC(),
+	})
 }

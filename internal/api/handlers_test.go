@@ -1,4 +1,4 @@
-﻿package api
+package api
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ func setupTestRouter(t *testing.T) (*Handler, *chi.Mux) {
 	if err != nil {
 		t.Fatalf("failed to create axis store: %v", err)
 	}
-	axisEngine := axismundi.NewEngine(axisStore, hub)
+	axisEngine := axismundi.NewEngine(axisStore, hub, nil)
 
 	h := NewHandler(store, nil, hub, "Embedded Axiom Test", "")
 	r := NewRouter(store, nil, hub, axisEngine, "Embedded Axiom Test", "")
@@ -62,6 +62,8 @@ func TestAPIHandlers(t *testing.T) {
 		{"Context Node Detail", "/api/context/node:mercury-core", "GET", "", http.StatusOK},
 		{"Axis Mundi Directives", "/api/axismundi/directives", "GET", "", http.StatusOK},
 		{"Axis Mundi Pending", "/api/axismundi/directives/pending", "GET", "", http.StatusOK},
+		{"Axis Mundi Workspace Status", "/api/axismundi/workspace/status", "GET", "", http.StatusOK},
+		{"Axis Mundi Keep Sync", "/api/axismundi/keep/sync", "POST", "", http.StatusOK},
 		{"Axis Mundi Ingest", "/api/axismundi/ingest", "POST", `{"title":"[EXECUTE] Test Directive","content":"Rebuild pipeline"}`, http.StatusCreated},
 		{"MCP Protocol Tools List", "/api/mcp", "POST", `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`, http.StatusOK},
 	}

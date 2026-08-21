@@ -1,4 +1,4 @@
-﻿package axismundi
+package axismundi
 
 import (
 	"bytes"
@@ -25,7 +25,7 @@ func TestMCPServerToolsAndExecution(t *testing.T) {
 		t.Fatalf("failed to create store: %v", err)
 	}
 
-	engine := NewEngine(store, nil)
+	engine := NewEngine(store, nil, nil)
 	handler := NewMCPHandler(engine)
 
 	// 1. Test tools/list

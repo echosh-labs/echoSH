@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Terminal as TerminalIcon, Radio, Play, CheckCircle2, AlertCircle, RefreshCw, Send, Sparkles, Database, Layers } from "lucide-react";
+import { ArrowLeft, Terminal as TerminalIcon, Radio, RefreshCw, Send, Layers, Cloud, ShieldCheck, CloudOff, ArrowDownCircle } from "lucide-react";
 import { BuckyballCanvas } from "./BuckyballCanvas";
 import { useSSE } from "@/hooks/useSSE";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
@@ -21,6 +21,16 @@ interface AxisDirective {
   updated_at: string;
 }
 
+interface WorkspaceStatus {
+  connected: boolean;
+  mode: string;
+  service_account?: string;
+  user_email?: string;
+  scopes: string[];
+  last_sync: string;
+  items_indexed: number;
+}
+
 interface TelemetryLog {
   id: string;
   timestamp: string;
@@ -32,6 +42,8 @@ interface TelemetryLog {
 export default function TerminalPage() {
   const [mode, setMode] = useState<"AUTO" | "MANUAL">("AUTO");
   const [directives, setDirectives] = useState<AxisDirective[]>([]);
+  const [workspaceStatus, setWorkspaceStatus] = useState<WorkspaceStatus | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [filter, setFilter] = useState<string>("ALL");
   const [commandInput, setCommandInput] = useState<string>("");
   const [selectedDirective, setSelectedDirective] = useState<AxisDirective | null>(null);
@@ -46,9 +58,9 @@ export default function TerminalPage() {
     {
       id: "init-2",
       timestamp: new Date().toLocaleTimeString(),
-      source: "GATEKEEPER",
+      source: "WORKSPACE",
       level: "INFO",
-      message: "Deterministic string and tag filters initialized for [EXECUTE] directives.",
+      message: "Google Workspace API bridge active (Keep, Docs, Sheets, Drive).",
     },
   ]);
 
@@ -69,9 +81,52 @@ export default function TerminalPage() {
     }
   }, []);
 
+  // Fetch workspace status
+  const fetchWorkspaceStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/axismundi/workspace/status");
+      if (res.ok) {
+        const data = await res.json();
+        setWorkspaceStatus(data);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch workspace status:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDirectives();
-  }, [fetchDirectives]);
+    fetchWorkspaceStatus();
+  }, [fetchDirectives, fetchWorkspaceStatus]);
+
+  // Trigger Google Keep Sync
+  const handleTriggerKeepSync = useCallback(async () => {
+    playUIClick();
+    setIsSyncing(true);
+    try {
+      const res = await fetch("/api/axismundi/keep/sync", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        playUIChime(660);
+        setLogs((prev) => [
+          ...prev,
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString(),
+            source: "KEEP_SYNC",
+            level: "SUCCESS",
+            message: `Google Keep API sync completed. ${data.notes_ingested || 0} notes processed.`,
+          },
+        ]);
+        fetchDirectives();
+        fetchWorkspaceStatus();
+      }
+    } catch (err) {
+      console.warn("Failed to sync keep:", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [fetchDirectives, fetchWorkspaceStatus, playUIClick, playUIChime]);
 
   // Reactive SSE event listener
   useEffect(() => {
@@ -86,9 +141,9 @@ export default function TerminalPage() {
         {
           id: `log-${Date.now()}`,
           timestamp: timeStr,
-          source: "INGESTION",
+          source: d.source === "google_keep_api" ? "KEEP_API" : "INGESTION",
           level: "INFO",
-          message: `Ingested note: "${d.title}" (Status: ${d.status})`,
+          message: `Ingested note: "${d.title}" (Source: ${d.source})`,
         },
       ]);
     } else if (lastEvent.type === "axismundi_execute_alert" && lastEvent.payload) {
@@ -227,8 +282,44 @@ export default function TerminalPage() {
           </div>
         </div>
 
-        {/* Status Indicators & Mode Switcher */}
-        <div className="flex items-center gap-3 text-xs">
+        {/* Status Indicators & Controls */}
+        <div className="flex items-center gap-3 text-xs flex-wrap">
+          {/* Google Workspace Connection Status Badge */}
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono ${
+              workspaceStatus?.connected
+                ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300"
+                : "bg-slate-900 border-slate-800 text-slate-400"
+            }`}
+            title={`Workspace Mode: ${workspaceStatus?.mode || "STANDBY_LOCAL"} (${workspaceStatus?.scopes?.length || 5} Scopes)`}
+          >
+            {workspaceStatus?.connected ? (
+              <Cloud className="w-3 h-3 text-emerald-400" />
+            ) : (
+              <CloudOff className="w-3 h-3 text-slate-500" />
+            )}
+            <span>
+              {workspaceStatus?.connected
+                ? `GCP: ${workspaceStatus.user_email || "CONNECTED"}`
+                : "WORKSPACE: LOCAL/STANDBY"}
+            </span>
+          </div>
+
+          {/* Trigger Google Keep Sync */}
+          <button
+            onClick={handleTriggerKeepSync}
+            disabled={isSyncing}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-all ${
+              isSyncing
+                ? "bg-sky-950 border-sky-500 text-sky-300 animate-pulse"
+                : "bg-slate-900 border-slate-800 text-slate-300 hover:text-emerald-300 hover:border-emerald-500/40"
+            }`}
+            title="Poll Google Keep API on-demand for newly captured notes"
+          >
+            <ArrowDownCircle className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : "text-emerald-400"}`} />
+            <span>{isSyncing ? "SYNCING..." : "SYNC KEEP"}</span>
+          </button>
+
           {/* Mode Toggle Button */}
           <button
             onClick={() => {
@@ -254,7 +345,10 @@ export default function TerminalPage() {
           </div>
 
           <button
-            onClick={fetchDirectives}
+            onClick={() => {
+              fetchDirectives();
+              fetchWorkspaceStatus();
+            }}
             className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-emerald-300 hover:bg-slate-800 transition-all"
             title="Refresh Directives"
           >
@@ -337,7 +431,7 @@ export default function TerminalPage() {
           <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 text-xs gap-2">
             <div className="flex items-center gap-2 text-slate-400">
               <Layers className="w-3.5 h-3.5 text-emerald-400" />
-              <span>DIRECTIVE QUEUE & REGISTRY</span>
+              <span>WORKSPACE REGISTRY & QUEUE</span>
             </div>
 
             {/* Filter Chips */}
@@ -365,7 +459,7 @@ export default function TerminalPage() {
           <div className="flex-1 min-h-[340px] max-h-[480px] overflow-y-auto space-y-2.5 pr-1">
             {filteredDirectives.length === 0 ? (
               <div className="text-center py-16 text-slate-600 text-xs">
-                No directives found in registry. Send one using the terminal prompt or Google Keep.
+                No workspace items in registry. Speak to Google Keep or enter a directive in the prompt.
               </div>
             ) : (
               filteredDirectives.map((d) => (
@@ -382,7 +476,12 @@ export default function TerminalPage() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] text-slate-500">{d.id.slice(0, 16)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500">{d.id.slice(0, 16)}</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                        {d.source}
+                      </span>
+                    </div>
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                         d.status === "QUEUED_FOR_AGENT"
@@ -404,7 +503,7 @@ export default function TerminalPage() {
                   </p>
 
                   <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-900 text-[10px] text-slate-500">
-                    <span>Source: {d.source}</span>
+                    <span>Type: {d.type}</span>
                     <div className="flex items-center gap-2">
                       {d.status === "QUEUED_FOR_AGENT" && (
                         <button
@@ -444,7 +543,7 @@ export default function TerminalPage() {
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
                 <span className="text-[10px] text-slate-500 font-mono uppercase">
-                  Directive Inspector // {selectedDirective.id}
+                  Workspace Item Inspector // {selectedDirective.id}
                 </span>
                 <h3 className="text-base font-bold text-slate-100 font-mono mt-0.5">
                   {selectedDirective.title}
@@ -467,7 +566,7 @@ export default function TerminalPage() {
               </div>
 
               <div>
-                <span className="text-slate-500 uppercase text-[10px]">Raw Source Note:</span>
+                <span className="text-slate-500 uppercase text-[10px]">Raw Note Content:</span>
                 <p className="mt-1 text-slate-400 p-2.5 rounded bg-slate-900/40 border border-slate-800/80">
                   {selectedDirective.raw_note}
                 </p>
@@ -502,7 +601,7 @@ export default function TerminalPage() {
 
       {/* Subtle Terminal Footer */}
       <footer className="w-full border-t border-slate-900/80 px-6 py-3 text-center text-slate-600 text-[10px] font-mono z-10">
-        Axis Mundi v2.0 • Amra Core Architecture • Google Workspace Bridge
+        Axis Mundi v2.0 • Google Workspace Keep, Docs, Sheets & Drive Synchronizer
       </footer>
     </div>
   );
