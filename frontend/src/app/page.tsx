@@ -19,6 +19,7 @@ import { ContextGraphExplorer } from "@/features/astrology/ContextGraphExplorer"
 import { SynestheticAudioConsole } from "@/features/audio/SynestheticAudioConsole";
 
 import { useSSE } from "@/hooks/useSSE";
+import { useAudioEngine } from "@/hooks/useAudioEngine";
 import {
   fetchHealth,
   fetchFoundationalStatement,
@@ -63,6 +64,9 @@ export default function HomePage() {
   const [stages, setStages] = useState<FoundationsStage[]>([]);
   const [manifestoSections, setManifestoSections] = useState<ManifestoSection[]>([]);
 
+  // Audio Engine Hook for Pervasive Acoustic Modulation
+  const { playUIClick, playUIChime, setAmbientFrequency } = useAudioEngine();
+
   // Real-time Server-Sent Events stream hook
   const { isConnected: isSSEConnected, lastEvent } = useSSE("/api/stream/events");
 
@@ -81,13 +85,35 @@ export default function HomePage() {
     fetchManifesto().then(setManifestoSections);
   }, []);
 
-  // Reactive updates from live SSE stream
+  // Update ambient frequency when workspace shifts
+  useEffect(() => {
+    if (activeWorkspace === "portal") {
+      setAmbientFrequency(432); // Violet Intuitive Bed
+    } else if (activeWorkspace === "astrology") {
+      setAmbientFrequency(141.27); // Mercury Planetary Frequency
+    } else if (activeWorkspace === "audio") {
+      setAmbientFrequency(528); // Solfeggio Ascent
+    }
+  }, [activeWorkspace, setAmbientFrequency]);
+
+  // Reactive updates from live SSE stream + Audio Alerts
   useEffect(() => {
     if (!lastEvent) return;
     if (lastEvent.type === "oracle_pulse" && lastEvent.payload) {
       setOracle(lastEvent.payload);
+      playUIChime(741); // Epistemic chime on live oracle pulse
     }
-  }, [lastEvent]);
+  }, [lastEvent, playUIChime]);
+
+  const handlePortalSectionChange = (sec: "manifesto" | "foundations" | "threshold" | "axiom" | "crucible" | "opus") => {
+    playUIClick();
+    setPortalSection(sec);
+  };
+
+  const handleAstroSectionChange = (sec: "dasha" | "oracle" | "graph") => {
+    playUIClick();
+    setAstroSection(sec);
+  };
 
   return (
     <div className="min-h-screen flex flex-col justify-between">
@@ -105,7 +131,7 @@ export default function HomePage() {
             {/* Sub-Navigation Pills */}
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <button
-                onClick={() => setPortalSection("manifesto")}
+                onClick={() => handlePortalSectionChange("manifesto")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                   portalSection === "manifesto"
                     ? "bg-slate-800 text-hermetic-gold border border-hermetic-gold/40 font-semibold shadow-sm"
@@ -115,7 +141,7 @@ export default function HomePage() {
                 Fundamental Manifesto
               </button>
               <button
-                onClick={() => setPortalSection("foundations")}
+                onClick={() => handlePortalSectionChange("foundations")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                   portalSection === "foundations"
                     ? "bg-slate-800 text-violet-300 border border-violet-500/40 font-semibold shadow-sm"
@@ -125,7 +151,7 @@ export default function HomePage() {
                 Foundations Staircase
               </button>
               <button
-                onClick={() => setPortalSection("threshold")}
+                onClick={() => handlePortalSectionChange("threshold")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                   portalSection === "threshold"
                     ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
@@ -135,7 +161,7 @@ export default function HomePage() {
                 2028 Threshold Portal
               </button>
               <button
-                onClick={() => setPortalSection("axiom")}
+                onClick={() => handlePortalSectionChange("axiom")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                   portalSection === "axiom"
                     ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
@@ -145,7 +171,7 @@ export default function HomePage() {
                 Foundational Axiom
               </button>
               <button
-                onClick={() => setPortalSection("crucible")}
+                onClick={() => handlePortalSectionChange("crucible")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                   portalSection === "crucible"
                     ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
@@ -155,7 +181,7 @@ export default function HomePage() {
                 Alchemical Crucible
               </button>
               <button
-                onClick={() => setPortalSection("opus")}
+                onClick={() => handlePortalSectionChange("opus")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                   portalSection === "opus"
                     ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
@@ -194,7 +220,7 @@ export default function HomePage() {
             {/* Sub-Navigation Pills */}
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <button
-                onClick={() => setAstroSection("dasha")}
+                onClick={() => handleAstroSectionChange("dasha")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                   astroSection === "dasha"
                     ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
@@ -204,7 +230,7 @@ export default function HomePage() {
                 17-Year Dasha Chronology
               </button>
               <button
-                onClick={() => setAstroSection("oracle")}
+                onClick={() => handleAstroSectionChange("oracle")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                   astroSection === "oracle"
                     ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
@@ -214,7 +240,7 @@ export default function HomePage() {
                 Mercurial Oracle
               </button>
               <button
-                onClick={() => setAstroSection("graph")}
+                onClick={() => handleAstroSectionChange("graph")}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
                   astroSection === "graph"
                     ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"

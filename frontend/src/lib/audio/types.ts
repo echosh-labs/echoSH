@@ -1,4 +1,4 @@
-export type OscillatorType = "sine" | "square" | "sawtooth" | "triangle";
+﻿export type OscillatorType = "sine" | "square" | "sawtooth" | "triangle";
 export type NoiseType = "white" | "pink" | "brown";
 
 export interface OscillatorVoice {
@@ -15,7 +15,31 @@ export interface NoiseVoice {
   volumeDb?: number;
 }
 
-export type SoundSource = OscillatorVoice | NoiseVoice;
+export interface FMVoice {
+  type: "fm";
+  carrierType: OscillatorType;
+  carrierFrequency: number; // Hz
+  modulatorType: OscillatorType;
+  modRatio: number; // Harmonic multiplier (e.g. 1.0, 2.0, 3.5)
+  modIndex: number; // Modulation depth in Hz
+  modEnvelope?: {
+    attack: number;
+    decay: number;
+    sustain: number;
+    release: number;
+  };
+  volumeDb?: number;
+}
+
+export interface PhysicalPluckVoice {
+  type: "pluck";
+  frequency: number; // Hz
+  damping: number; // 0.0 (metallic ring) to 0.99 (fast mute)
+  brightness: number; // Filter cutoff multiplier (1.0 to 10.0)
+  volumeDb?: number;
+}
+
+export type SoundSource = OscillatorVoice | NoiseVoice | FMVoice | PhysicalPluckVoice;
 
 export interface EnvelopeConfig {
   attack: number; // seconds
@@ -67,9 +91,21 @@ export interface SoundBlueprint {
   duration: number; // seconds
 }
 
+export type PresetCategory =
+  | "Planetary & Cosmic"
+  | "Foundations & Hermetic"
+  | "FM Synthesis Lab"
+  | "Physical Plucks & Harps"
+  | "Percussion & FX"
+  | "Planetary & Esoteric"
+  | "Percussion"
+  | "Sound Effects"
+  | "Instruments"
+  | "Pads & Drones";
+
 export interface AudioPreset {
   name: string;
-  category: "Planetary & Esoteric" | "Percussion" | "Sound Effects" | "Instruments" | "Pads & Drones";
+  category: PresetCategory;
   description: string;
   blueprint: SoundBlueprint;
   rawCommand?: string;

@@ -2,15 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { audioEngine } from "@/lib/audio/AudioEngine";
-import { audioPresets } from "@/lib/audio/presets";
 import { AudioPreset, SoundBlueprint } from "@/lib/audio/types";
 
 export function useAudioEngine() {
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [masterVolume, setMasterVolumeState] = useState<number>(0.65);
+  const [isAmbientActive, setIsAmbientActive] = useState<boolean>(false);
   const [lastPlayed, setLastPlayed] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMuted(audioEngine.getIsMuted());
+    setMasterVolumeState(audioEngine.getMasterVolume());
+    setIsAmbientActive(audioEngine.getIsAmbientActive());
 
     const handleFirstGesture = () => {
       audioEngine.ensureContext();
@@ -33,6 +36,21 @@ export function useAudioEngine() {
     return muted;
   }, []);
 
+  const setMasterVolume = useCallback((vol: number) => {
+    audioEngine.setMasterVolume(vol);
+    setMasterVolumeState(vol);
+  }, []);
+
+  const toggleAmbient = useCallback((targetFreq: number = 432) => {
+    const active = audioEngine.toggleAmbientDrone(targetFreq);
+    setIsAmbientActive(active);
+    return active;
+  }, []);
+
+  const setAmbientFrequency = useCallback((freq: number) => {
+    audioEngine.setAmbientFrequency(freq);
+  }, []);
+
   const playBlueprint = useCallback((bp: SoundBlueprint, name?: string) => {
     audioEngine.playBlueprint(bp);
     if (name || bp.name) {
@@ -46,7 +64,7 @@ export function useAudioEngine() {
   }, []);
 
   const playKeystroke = useCallback((char: string) => {
-    audioEngine.playKeystroke(char);
+    audioEngine.playKeystrokePitch(char);
   }, []);
 
   const playBackspace = useCallback(() => {
@@ -57,15 +75,34 @@ export function useAudioEngine() {
     audioEngine.playError();
   }, []);
 
+  const playUIClick = useCallback(() => {
+    audioEngine.playUIClick();
+  }, []);
+
+  const playUIHover = useCallback(() => {
+    audioEngine.playUIHover();
+  }, []);
+
+  const playUIChime = useCallback((freq: number = 880) => {
+    audioEngine.playUIChime(freq);
+  }, []);
+
   return {
     isMuted,
+    masterVolume,
+    isAmbientActive,
     lastPlayed,
     toggleMute,
+    setMasterVolume,
+    toggleAmbient,
+    setAmbientFrequency,
     playBlueprint,
     playPreset,
     playKeystroke,
     playBackspace,
     playError,
-    getAnalyserData: () => audioEngine.getAnalyserData(),
+    playUIClick,
+    playUIHover,
+    playUIChime,
   };
 }

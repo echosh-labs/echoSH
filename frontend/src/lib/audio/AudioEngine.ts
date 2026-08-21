@@ -1,4 +1,7 @@
-import { SoundBlueprint, SoundSource } from "./types";
+import { SoundBlueprint, SoundSource, FMVoice, PhysicalPluckVoice } from "./types";
+import { createFMVoice } from "./FMSynth";
+import { createPhysicalPluckVoice } from "./KarplusStrong";
+import { createProceduralImpulseResponse, createStereoPingPongDelay } from "./ReverbDelay";
 import { backspaceSwoosh, errorTritone } from "./presets";
 
 class AudioEngine {
@@ -8,6 +11,17 @@ class AudioEngine {
   private masterLimiter: DynamicsCompressorNode | null = null;
   private analyser: AnalyserNode | null = null;
   private isMuted: boolean = false;
+  private masterVolume: number = 0.65;
+
+  // Ambient Drone Layer
+  private ambientGain: GainNode | null = null;
+  private ambientOscs: OscillatorNode[] = [];
+  private ambientLFO: OscillatorNode | null = null;
+  private isAmbientActive: boolean = false;
+  private currentAmbientFreq: number = 432;
+
+  // Cached Convolution Reverb
+  private convolverNode: ConvolverNode | null = null;
 
   private constructor() {}
 
@@ -30,7 +44,7 @@ class AudioEngine {
 
       this.ctx = new AudioContextClass({ latencyHint: "interactive" });
 
-      // Master Limiter
+      // 1. Master Limiter (Prevents any clipping or distortion)
       this.masterLimiter = this.ctx.createDynamicsCompressor();
       this.masterLimiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
       this.masterLimiter.knee.setValueAtTime(4, this.ctx.currentTime);
@@ -38,21 +52,25 @@ class AudioEngine {
       this.masterLimiter.attack.setValueAtTime(0.002, this.ctx.currentTime);
       this.masterLimiter.release.setValueAtTime(0.08, this.ctx.currentTime);
 
-      // Master Gain
+      // 2. Master Gain
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.65, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(this.masterVolume, this.ctx.currentTime);
 
-      // Visualizer Analyser
+      // 3. Visualizer Analyser (256 FFT Bins)
       this.analyser = this.ctx.createAnalyser();
       this.analyser.fftSize = 256;
       this.analyser.smoothingTimeConstant = 0.8;
+
+      // 4. Procedural Convolution Reverb Cache
+      this.convolverNode = this.ctx.createConvolver();
+      this.convolverNode.buffer = createProceduralImpulseResponse(this.ctx, 2.8, 1.8);
 
       // Graph: MasterGain -> Analyser -> Limiter -> Destination
       this.masterGain.connect(this.analyser);
       this.analyser.connect(this.masterLimiter);
       this.masterLimiter.connect(this.ctx.destination);
 
-      console.log("[AudioEngine] Native Web Audio DSP engine active.");
+      console.log("[AudioEngine] Advanced Multi-Paradigm Web Audio 2.0 DSP Engine initialized.");
     } catch (err) {
       console.warn("[AudioEngine] Initialization error:", err);
     }
@@ -67,10 +85,24 @@ class AudioEngine {
     }
   }
 
+  public setMasterVolume(vol: number): void {
+    this.masterVolume = Math.max(0, Math.min(1, vol));
+    if (this.masterGain && this.ctx && !this.isMuted) {
+      this.masterGain.gain.setValueAtTime(this.masterVolume, this.ctx.currentTime);
+    }
+  }
+
+  public getMasterVolume(): number {
+    return this.masterVolume;
+  }
+
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.65, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(
+        this.isMuted ? 0 : this.masterVolume,
+        this.ctx.currentTime
+      );
     }
     return this.isMuted;
   }
@@ -79,39 +111,293 @@ class AudioEngine {
     return this.isMuted;
   }
 
-  public getAnalyserData(): Uint8Array | null {
-    if (!this.analyser) return null;
-    const buffer = new Uint8Array(this.analyser.frequencyBinCount);
-    this.analyser.getByteFrequencyData(buffer);
-    return buffer;
+  public getAnalyserNode(): AnalyserNode | null {
+    return this.analyser;
   }
 
-  // --- High-Performance Keystroke Synthesis ---
-  public playKeystroke(char: string): void {
-    if (this.isMuted) return;
+  public getAnalyserData(): Uint8Array | null {
+    if (!this.analyser) return null;
+    const bufferLength = this.analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    this.analyser.getByteFrequencyData(dataArray);
+    return dataArray;
+  }
+
+  // --- CONTINUOUS AMBIENT GENERATIVE DRONE ---
+  public toggleAmbientDrone(targetFreq: number = 432): boolean {
+    this.ensureContext();
+    if (this.isAmbientActive) {
+      this.stopAmbientDrone();
+      return false;
+    } else {
+      this.startAmbientDrone(targetFreq);
+      return true;
+    }
+  }
+
+  public getIsAmbientActive(): boolean {
+    return this.isAmbientActive;
+  }
+
+  public startAmbientDrone(targetFreq: number = 432): void {
     this.ensureContext();
     if (!this.ctx || !this.masterGain) return;
 
+    this.stopAmbientDrone(); // Clean previous if any
+    this.currentAmbientFreq = targetFreq;
+    this.isAmbientActive = true;
+
     const now = this.ctx.currentTime;
-    const isSpecial = /[^\w\s]/.test(char);
-    const freq = isSpecial ? 1200 : 250 + ((char.charCodeAt(0) * 5) % 800);
+    this.ambientGain = this.ctx.createGain();
+    this.ambientGain.gain.setValueAtTime(0.0001, now);
+    this.ambientGain.gain.linearRampToValueAtTime(0.12, now + 3.0); // Gentle 3-second fade in
 
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    // Multi-Layer Harmonic Drone (Fundamental + Sub-Octave + Fifth)
+    const freqs = [targetFreq * 0.5, targetFreq, targetFreq * 1.5];
+    const oscTypes: OscillatorType[] = ["sine", "triangle", "sine"];
 
-    osc.type = isSpecial ? "sine" : "triangle";
-    osc.frequency.setValueAtTime(freq, now);
+    this.ambientOscs = freqs.map((f, i) => {
+      const osc = this.ctx!.createOscillator();
+      osc.type = oscTypes[i % oscTypes.length];
+      osc.frequency.setValueAtTime(f, now);
+      if (i > 0) osc.detune.setValueAtTime((i % 2 === 0 ? 5 : -5), now);
 
-    // Ultra-snappy envelope
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.25, now + 0.004);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.065);
+      const filter = this.ctx!.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(800, now);
 
-    osc.connect(gain);
-    gain.connect(this.masterGain);
+      osc.connect(filter);
+      filter.connect(this.ambientGain!);
+      osc.start(now);
+      return osc;
+    });
 
-    osc.start(now);
-    osc.stop(now + 0.07);
+    // Slow Celestial LFO Breathing Filter
+    const lfo = this.ctx.createOscillator();
+    lfo.type = "sine";
+    lfo.frequency.setValueAtTime(0.08, now); // 12-second cycle
+    const lfoGain = this.ctx.createGain();
+    lfoGain.gain.setValueAtTime(200, now);
+    lfo.connect(lfoGain);
+
+    this.ambientGain.connect(this.masterGain);
+  }
+
+  public setAmbientFrequency(newFreq: number): void {
+    if (!this.ctx || !this.isAmbientActive) return;
+    const now = this.ctx.currentTime;
+    this.currentAmbientFreq = newFreq;
+
+    const ratios = [0.5, 1.0, 1.5];
+    this.ambientOscs.forEach((osc, i) => {
+      const target = newFreq * (ratios[i] || 1.0);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, target), now + 2.0);
+    });
+  }
+
+  public stopAmbientDrone(): void {
+    if (!this.ctx || !this.ambientGain) {
+      this.isAmbientActive = false;
+      return;
+    }
+    const now = this.ctx.currentTime;
+    this.ambientGain.gain.linearRampToValueAtTime(0.0001, now + 1.5);
+
+    setTimeout(() => {
+      this.ambientOscs.forEach((o) => {
+        try { o.stop(); o.disconnect(); } catch {}
+      });
+      this.ambientOscs = [];
+      try { this.ambientGain?.disconnect(); } catch {}
+      this.ambientGain = null;
+      this.isAmbientActive = false;
+    }, 1600);
+  }
+
+  // --- PLAY PROCEDURAL BLUEPRINTS & VOICES ---
+  public playBlueprint(blueprint: SoundBlueprint, customPitchHz?: number): void {
+    this.ensureContext();
+    if (!this.ctx || !this.masterGain || this.isMuted) return;
+
+    const now = this.ctx.currentTime;
+    const duration = Math.max(0.05, blueprint.duration || 1.0);
+
+    const bpOutput = this.ctx.createGain();
+    bpOutput.gain.value = 0;
+
+    // 1. Synthesize All Sound Sources
+    blueprint.sources.forEach((src: SoundSource) => {
+      if (src.type === "fm") {
+        const fmNode = createFMVoice(
+          this.ctx!,
+          {
+            ...src,
+            carrierFrequency: customPitchHz || src.carrierFrequency,
+          },
+          blueprint.envelope,
+          now,
+          duration
+        );
+        fmNode.connect(bpOutput);
+      } else if (src.type === "pluck") {
+        const pluckNode = createPhysicalPluckVoice(
+          this.ctx!,
+          {
+            ...src,
+            frequency: customPitchHz || src.frequency,
+          },
+          blueprint.envelope,
+          now,
+          duration
+        );
+        pluckNode.connect(bpOutput);
+      } else if (src.type === "noise") {
+        const noiseNode = this.createNoiseSource(src.noiseType, now, duration);
+        noiseNode.connect(bpOutput);
+      } else {
+        const osc = this.ctx!.createOscillator();
+        osc.type = src.oscillatorType;
+        const baseFreq = customPitchHz || src.frequency;
+        osc.frequency.setValueAtTime(baseFreq, now);
+        if (src.detune) osc.detune.setValueAtTime(src.detune, now);
+
+        const oscGain = this.ctx!.createGain();
+        const vol = src.volumeDb ? Math.pow(10, src.volumeDb / 20) : 0.5;
+        oscGain.gain.setValueAtTime(vol, now);
+
+        osc.connect(oscGain);
+        oscGain.connect(bpOutput);
+
+        osc.start(now);
+        osc.stop(now + duration + 0.1);
+      }
+    });
+
+    // 2. Main ADSR Envelope Node
+    const envNode = this.ctx.createGain();
+    const env = blueprint.envelope;
+    const attackEnd = now + Math.max(0.002, env.attack);
+    const decayEnd = attackEnd + Math.max(0.01, env.decay);
+
+    envNode.gain.setValueAtTime(0.0001, now);
+    envNode.gain.linearRampToValueAtTime(1.0, attackEnd);
+    envNode.gain.exponentialRampToValueAtTime(Math.max(0.0001, env.sustain), decayEnd);
+    envNode.gain.linearRampToValueAtTime(0.0001, now + duration);
+
+    bpOutput.connect(envNode);
+
+    // 3. Filter Processing
+    let lastNode: AudioNode = envNode;
+    if (blueprint.filter) {
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = blueprint.filter.type;
+      filter.frequency.setValueAtTime(blueprint.filter.frequency, now);
+      filter.Q.setValueAtTime(blueprint.filter.Q, now);
+      lastNode.connect(filter);
+      lastNode = filter;
+    }
+
+    // 4. FX Routing (Stereo Delay & Algorithmic Reverb)
+    if (blueprint.effects?.delay) {
+      const delay = createStereoPingPongDelay(
+        this.ctx,
+        blueprint.effects.delay.delayTime,
+        blueprint.effects.delay.feedback
+      );
+      lastNode.connect(delay.input);
+      delay.output.connect(this.masterGain);
+    }
+
+    if (blueprint.effects?.reverb && this.convolverNode) {
+      const reverbSend = this.ctx.createGain();
+      reverbSend.gain.setValueAtTime(blueprint.effects.reverb.mix || 0.3, now);
+      lastNode.connect(reverbSend);
+      reverbSend.connect(this.convolverNode);
+      this.convolverNode.connect(this.masterGain);
+    }
+
+    lastNode.connect(this.masterGain);
+  }
+
+  // --- NOISE GENERATOR BUFFER ---
+  private createNoiseSource(type: "white" | "pink" | "brown", startTime: number, duration: number): AudioNode {
+    const sampleRate = this.ctx!.sampleRate;
+    const bufferSize = Math.floor(sampleRate * Math.min(duration, 5.0));
+    const buffer = this.ctx!.createBuffer(1, bufferSize, sampleRate);
+    const data = buffer.getChannelData(0);
+
+    let lastOut = 0.0;
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      if (type === "white") {
+        data[i] = white * 0.3;
+      } else if (type === "brown") {
+        lastOut = (lastOut + 0.02 * white) / 1.02;
+        data[i] = lastOut * 1.5;
+      } else {
+        // Pink noise filter
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+        b6 = white * 0.115926;
+      }
+    }
+
+    const source = this.ctx!.createBufferSource();
+    source.buffer = buffer;
+    source.start(startTime);
+    source.stop(startTime + duration);
+    return source;
+  }
+
+  // --- HAPTIC UI FEEDBACK SOUNDS ---
+  public playUIClick(): void {
+    this.playBlueprint({
+      sources: [{ type: "oscillator", oscillatorType: "sine", frequency: 1800 }],
+      envelope: { attack: 0.001, decay: 0.03, sustain: 0.0, release: 0.01 },
+      duration: 0.04,
+    });
+  }
+
+  public playUIHover(): void {
+    this.playBlueprint({
+      sources: [{ type: "oscillator", oscillatorType: "triangle", frequency: 1200 }],
+      envelope: { attack: 0.005, decay: 0.04, sustain: 0.0, release: 0.01 },
+      duration: 0.05,
+    });
+  }
+
+  public playUIChime(freq: number = 880): void {
+    this.playBlueprint({
+      sources: [
+        { type: "oscillator", oscillatorType: "sine", frequency: freq },
+        { type: "oscillator", oscillatorType: "sine", frequency: freq * 2.01, detune: 4 },
+      ],
+      envelope: { attack: 0.005, decay: 0.4, sustain: 0.1, release: 0.6 },
+      filter: { type: "lowpass", frequency: 3500, Q: 2 },
+      effects: { reverb: { decay: 1.5, mix: 0.3 } },
+      duration: 0.8,
+    });
+  }
+
+  public playKeystrokePitch(char: string): void {
+    const code = char.charCodeAt(0) || 65;
+    const baseFreq = 260 + (code % 32) * 28; // 260 Hz to ~1130 Hz
+
+    this.playBlueprint({
+      sources: [
+        { type: "oscillator", oscillatorType: "sine", frequency: baseFreq },
+        { type: "oscillator", oscillatorType: "triangle", frequency: baseFreq * 2, detune: 6 },
+      ],
+      envelope: { attack: 0.003, decay: 0.08, sustain: 0.0, release: 0.05 },
+      duration: 0.14,
+    });
   }
 
   public playBackspace(): void {
@@ -120,156 +406,6 @@ class AudioEngine {
 
   public playError(): void {
     this.playBlueprint(errorTritone);
-  }
-
-  // --- Declarative Sound Blueprint Player ---
-  public playBlueprint(bp: SoundBlueprint): void {
-    if (this.isMuted) return;
-    this.ensureContext();
-    if (!this.ctx || !this.masterGain) return;
-
-    const ctx = this.ctx;
-    const now = ctx.currentTime;
-    const dur = bp.duration || 0.5;
-
-    // 1. Envelope Gain
-    const ampGain = ctx.createGain();
-    const env = bp.envelope;
-    const attack = Math.max(0.002, env.attack);
-    const decay = Math.max(0.01, env.decay);
-    const sustain = Math.max(0.0001, Math.min(1.0, env.sustain));
-    const release = Math.max(0.01, env.release);
-
-    ampGain.gain.setValueAtTime(0.0001, now);
-    ampGain.gain.exponentialRampToValueAtTime(0.8, now + attack);
-    ampGain.gain.exponentialRampToValueAtTime(sustain * 0.8, now + attack + decay);
-    ampGain.gain.setValueAtTime(sustain * 0.8, now + dur);
-    ampGain.gain.exponentialRampToValueAtTime(0.0001, now + dur + release);
-
-    // 2. Filter (if defined)
-    let outputNode: AudioNode = ampGain;
-    let filterNode: BiquadFilterNode | null = null;
-    if (bp.filter) {
-      filterNode = ctx.createBiquadFilter();
-      filterNode.type = bp.filter.type;
-      filterNode.frequency.setValueAtTime(bp.filter.frequency, now);
-      filterNode.Q.setValueAtTime(bp.filter.Q, now);
-      if (bp.filter.gain !== undefined) {
-        filterNode.gain.setValueAtTime(bp.filter.gain, now);
-      }
-      ampGain.connect(filterNode);
-      outputNode = filterNode;
-    }
-
-    // 3. Effects Chain (Delay, Reverb, Panner)
-    if (bp.effects?.delay) {
-      const delay = ctx.createDelay();
-      const delayFeedback = ctx.createGain();
-      const delayGain = ctx.createGain();
-
-      delay.delayTime.setValueAtTime(bp.effects.delay.delayTime, now);
-      delayFeedback.gain.setValueAtTime(bp.effects.delay.feedback, now);
-      delayGain.gain.setValueAtTime(bp.effects.delay.mix, now);
-
-      outputNode.connect(delay);
-      delay.connect(delayFeedback);
-      delayFeedback.connect(delay);
-      delay.connect(delayGain);
-      delayGain.connect(this.masterGain);
-    }
-
-    if (bp.effects?.panner && "createStereoPanner" in ctx) {
-      const panner = ctx.createStereoPanner();
-      panner.pan.setValueAtTime(bp.effects.panner.pan, now);
-      outputNode.connect(panner);
-      outputNode = panner;
-    }
-
-    outputNode.connect(this.masterGain);
-
-    // 4. Oscillators & Noise Sources
-    const createdOscs: OscillatorNode[] = [];
-    bp.sources.forEach((source: SoundSource) => {
-      if (source.type === "oscillator") {
-        const osc = ctx.createOscillator();
-        osc.type = source.oscillatorType;
-        osc.frequency.setValueAtTime(source.frequency, now);
-        if (source.detune) {
-          osc.detune.setValueAtTime(source.detune, now);
-        }
-        osc.connect(ampGain);
-        osc.start(now);
-        osc.stop(now + dur + release + 0.1);
-        createdOscs.push(osc);
-      } else if (source.type === "noise") {
-        const noiseNode = this.createNoiseBuffer(source.noiseType, dur + release + 0.1);
-        if (noiseNode) {
-          noiseNode.connect(ampGain);
-          noiseNode.start(now);
-          noiseNode.stop(now + dur + release + 0.1);
-        }
-      }
-    });
-
-    // 5. LFO Modulation
-    if (bp.lfo) {
-      const lfo = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
-      lfo.type = bp.lfo.type;
-      lfo.frequency.setValueAtTime(bp.lfo.frequency, now);
-      lfoGain.gain.setValueAtTime(bp.lfo.depth, now);
-
-      lfo.connect(lfoGain);
-
-      if (bp.lfo.target === "frequency") {
-        createdOscs.forEach((o) => lfoGain.connect(o.frequency));
-      } else if (bp.lfo.target === "filterCutoff" && filterNode) {
-        lfoGain.connect(filterNode.frequency);
-      }
-
-      lfo.start(now);
-      lfo.stop(now + dur + release + 0.1);
-    }
-  }
-
-  // --- Procedural Noise Generator ---
-  private createNoiseBuffer(type: "white" | "pink" | "brown", durationSec: number): AudioBufferSourceNode | null {
-    if (!this.ctx) return null;
-    const sampleRate = this.ctx.sampleRate;
-    const bufferSize = Math.floor(sampleRate * durationSec);
-    const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
-    const output = buffer.getChannelData(0);
-
-    if (type === "white") {
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
-      }
-    } else if (type === "pink") {
-      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        b0 = 0.99886 * b0 + white * 0.0555179;
-        b1 = 0.99332 * b1 + white * 0.0750759;
-        b2 = 0.96900 * b2 + white * 0.1538520;
-        b3 = 0.86650 * b3 + white * 0.3104856;
-        b4 = 0.55000 * b4 + white * 0.5329522;
-        b5 = -0.7616 * b5 - white * 0.0168980;
-        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
-        b6 = white * 0.115926;
-      }
-    } else if (type === "brown") {
-      let lastOut = 0.0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        output[i] = (lastOut + 0.02 * white) / 1.02;
-        lastOut = output[i];
-        output[i] *= 3.5; // Gain compensation
-      }
-    }
-
-    const noiseSource = this.ctx.createBufferSource();
-    noiseSource.buffer = buffer;
-    return noiseSource;
   }
 }
 
