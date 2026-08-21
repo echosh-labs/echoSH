@@ -16,6 +16,7 @@ type Engine struct {
 	workspace    *WorkspaceService
 	syncer       *KeepSyncer
 	notifier     *NotificationEngine
+	telemetry    *TelemetryLogger
 	controlState SystemControlState
 }
 
@@ -31,11 +32,14 @@ func NewEngine(store *Store, hub *sse.Hub, ws *WorkspaceService) *Engine {
 		initialState = store.GetControlState()
 	}
 
+	telemetry := NewTelemetryLogger(hub)
+
 	e := &Engine{
 		store:        store,
 		hub:          hub,
 		workspace:    ws,
 		notifier:     NewNotificationEngine(ws, store, hub),
+		telemetry:    telemetry,
 		controlState: initialState,
 	}
 
@@ -165,6 +169,30 @@ func (e *Engine) UpdateDirectiveStatus(id string, status DirectiveStatus, execut
 	}
 
 	return updated, nil
+}
+
+func (e *Engine) MarkAllDirectivesCompleted() (int, error) {
+	count, err := e.store.MarkAllDirectivesCompleted()
+	if err != nil {
+		return 0, err
+	}
+
+	if e.telemetry != nil {
+		e.telemetry.Log("ORCHESTRATOR", "SUCCESS", "Batch marked %d directive(s) as COMPLETED.", count)
+	}
+
+	if e.hub != nil {
+		e.hub.Broadcast("axismundi_completed_all", map[string]interface{}{
+			"count":     count,
+			"timestamp": time.Now().UTC(),
+		})
+	}
+
+	return count, nil
+}
+
+func (e *Engine) GetTelemetryLogger() *TelemetryLogger {
+	return e.telemetry
 }
 
 func (e *Engine) GetNotifier() *NotificationEngine {

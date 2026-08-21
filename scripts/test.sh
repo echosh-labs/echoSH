@@ -82,6 +82,7 @@ assert_endpoint "/api/axismundi/workspace/status" 200 "Google Workspace Connecti
 assert_endpoint "/api/axismundi/mode" 200 "Axis Mundi Control State & Policy"
 assert_endpoint "/api/axismundi/keep/sync" 200 "Google Keep On-Demand Synchronization"
 assert_endpoint "/api/axismundi/notifications" 200 "Axis Mundi Notification Return Loop History"
+assert_endpoint "/api/axismundi/telemetry/logs" 200 "Axis Mundi Telemetry Stream Backlog"
 
 echo -e "\n  [Testing Dynamic Control & Directives Lifecycle]"
 SET_MODE_RES=$(curl -s -X POST -H "Content-Type: application/json" -d '{"mode":"AUTO","ingest_policy":"EXECUTE","poll_interval_sec":15}' "http://localhost:$TEST_PORT/api/axismundi/mode")
@@ -90,6 +91,15 @@ if echo "$SET_MODE_RES" | grep -q '"poll_interval_sec":15'; then
 else
     echo "  ❌ [FAIL] POST /api/axismundi/mode failed: $SET_MODE_RES"
     exit 1
+fi
+
+# Test Complete All Directives Batch Endpoint
+COMPLETE_ALL_RES=$(curl -s -X POST "http://localhost:$TEST_PORT/api/axismundi/directives/complete-all")
+if echo "$COMPLETE_ALL_RES" | grep -q '"status":"success"'; then
+    echo "  ✅ [PASS] POST /api/axismundi/directives/complete-all -> 200"
+else
+    echo "  ❌ [FAIL] POST /api/axismundi/directives/complete-all failed: $COMPLETE_ALL_RES"
+	exit 1
 fi
 
 # Test Return Loop Ping Dispatch

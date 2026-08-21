@@ -171,6 +171,35 @@ func (h *Handlers) SendTestNotification(w http.ResponseWriter, r *http.Request) 
 	_ = json.NewEncoder(w).Encode(record)
 }
 
+func (h *Handlers) CompleteAllDirectives(w http.ResponseWriter, r *http.Request) {
+	count, err := h.engine.MarkAllDirectivesCompleted()
+	if err != nil {
+		http.Error(w, "Failed to mark directives completed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":    "success",
+		"completed": count,
+		"timestamp": time.Now().UTC(),
+	})
+}
+
+func (h *Handlers) GetTelemetryLogs(w http.ResponseWriter, r *http.Request) {
+	limit := 100
+	var logs []TelemetryRecord
+	if h.engine.telemetry != nil {
+		logs = h.engine.telemetry.GetRecentLogs(limit)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"logs":  logs,
+		"count": len(logs),
+	})
+}
+
 func (h *Handlers) GetWorkspaceStatus(w http.ResponseWriter, r *http.Request) {
 	status := h.engine.GetWorkspaceStatus()
 	w.Header().Set("Content-Type", "application/json")

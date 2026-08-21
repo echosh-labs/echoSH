@@ -88,4 +88,47 @@ func TestStoreFullLifecycleAndControl(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error on deleted directive, got nil")
 	}
+
+	// 3. Test MarkAllDirectivesCompleted
+	d1 := AxisDirective{ID: "d1", Title: "Note 1", Status: StatusPending, CreatedAt: time.Now().UTC()}
+	d2 := AxisDirective{ID: "d2", Title: "Note 2", Status: StatusQueuedForAgent, CreatedAt: time.Now().UTC()}
+	d3 := AxisDirective{ID: "d3", Title: "Note 3", Status: StatusCompleted, CreatedAt: time.Now().UTC()}
+
+	_ = store.SaveDirective(d1)
+	_ = store.SaveDirective(d2)
+	_ = store.SaveDirective(d3)
+
+	completedCount, err := store.MarkAllDirectivesCompleted()
+	if err != nil {
+		t.Fatalf("MarkAllDirectivesCompleted failed: %v", err)
+	}
+	if completedCount != 2 {
+		t.Errorf("expected 2 newly completed directives, got %d", completedCount)
+	}
+
+	list, _ := store.ListDirectives()
+	for _, item := range list {
+		if item.Status != StatusCompleted {
+			t.Errorf("expected all directives to be COMPLETED, found %s with status %s", item.ID, item.Status)
+		}
+	}
+}
+
+func TestTelemetryLoggerRingBuffer(t *testing.T) {
+	tl := NewTelemetryLogger(nil)
+	tl.Clear()
+
+	for i := 0; i < 150; i++ {
+		tl.Log("TEST", "INFO", "Log message %d", i)
+	}
+
+	recent := tl.GetRecentLogs(50)
+	if len(recent) != 50 {
+		t.Errorf("expected 50 recent logs, got %d", len(recent))
+	}
+
+	all := tl.GetRecentLogs(200)
+	if len(all) != 100 {
+		t.Errorf("expected capped ring buffer size of 100, got %d", len(all))
+	}
 }

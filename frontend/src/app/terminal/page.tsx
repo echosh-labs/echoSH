@@ -73,7 +73,7 @@ interface TelemetryLog {
   id: string;
   timestamp: string;
   source: string;
-  level: "INFO" | "EXECUTE" | "SUCCESS" | "WARN";
+  level: "INFO" | "EXECUTE" | "SUCCESS" | "WARN" | "ERROR" | string;
   message: string;
 }
 
@@ -91,23 +91,10 @@ export default function TerminalPage() {
   const [selectedDirective, setSelectedDirective] = useState<AxisDirective | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
   const [isSendingTestPing, setIsSendingTestPing] = useState<boolean>(false);
+  const [isCompletingAll, setIsCompletingAll] = useState<boolean>(false);
+  const [autoScroll, setAutoScroll] = useState<boolean>(true);
   const [activeInspectorTab, setActiveInspectorTab] = useState<"instruction" | "raw" | "logs" | "json">("instruction");
-  const [logs, setLogs] = useState<TelemetryLog[]>([
-    {
-      id: "init-1",
-      timestamp: new Date().toLocaleTimeString(),
-      source: "SYSTEM",
-      level: "INFO",
-      message: "Amra Core Axis Mundi Daemon active. Mode: AUTO (0 AI Tokens Consumed).",
-    },
-    {
-      id: "init-2",
-      timestamp: new Date().toLocaleTimeString(),
-      source: "WORKSPACE",
-      level: "INFO",
-      message: "Google Workspace API bridge active (Keep, Docs, Sheets, Drive).",
-    },
-  ]);
+  const [logs, setLogs] = useState<TelemetryLog[]>([]);
 
   const { isConnected: isSSEConnected, lastEvent } = useSSE("/api/stream/events");
   const { playKeystroke, playUIClick, playUIChime } = useAudioEngine();
@@ -123,6 +110,21 @@ export default function TerminalPage() {
       }
     } catch (err) {
       console.warn("Failed to fetch directives:", err);
+    }
+  }, []);
+
+  // Fetch telemetry logs
+  const fetchTelemetryLogs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/axismundi/telemetry/logs");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.logs && data.logs.length > 0) {
+          setLogs(data.logs);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch telemetry logs:", err);
     }
   }, []);
 
@@ -156,11 +158,40 @@ export default function TerminalPage() {
     }
   }, []);
 
+  // Mark all directives completed
+  const handleCompleteAllDirectives = useCallback(async () => {
+    playUIClick();
+    setIsCompletingAll(true);
+    try {
+      const res = await fetch("/api/axismundi/directives/complete-all", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        playUIChime(880);
+        fetchDirectives();
+        setLogs((prev) => [
+          ...prev,
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString(),
+            source: "ORCHESTRATOR",
+            level: "SUCCESS",
+            message: `Batch marked ${data.completed || 0} directive(s) as COMPLETED.`,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn("Failed to complete all directives:", err);
+    } finally {
+      setIsCompletingAll(false);
+    }
+  }, [fetchDirectives, playUIClick, playUIChime]);
+
   useEffect(() => {
     fetchDirectives();
     fetchWorkspaceStatus();
     fetchControlState();
-  }, [fetchDirectives, fetchWorkspaceStatus, fetchControlState]);
+    fetchTelemetryLogs();
+  }, [fetchDirectives, fetchWorkspaceStatus, fetchControlState, fetchTelemetryLogs]);
 
   // Update control state (Mode, Policy, or Interval)
   const updateControlState = useCallback(async (
@@ -399,13 +430,35 @@ export default function TerminalPage() {
           message: `[NOTIF SENT] ${notif.title} -> ${notif.recipient} (${notif.channel})`,
         },
       ]);
+    } else if (lastEvent.type === "axismundi_telemetry" && lastEvent.payload) {
+      const record = lastEvent.payload as TelemetryLog;
+      setLogs((prev) => {
+        const exists = prev.some((l) => l.id === record.id);
+        if (exists) return prev;
+        const updated = [...prev, record];
+        return updated.length > 150 ? updated.slice(updated.length - 150) : updated;
+      });
+    } else if (lastEvent.type === "axismundi_completed_all") {
+      fetchDirectives();
     }
-  }, [lastEvent, playUIChime, pollInterval]);
+  }, [lastEvent, playUIChime, pollInterval, fetchDirectives]);
 
   // Auto-scroll logs
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs]);
+    if (autoScroll) {
+      logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [logs, autoScroll]);
+
+  // Dynamic filter counts
+  const counts = {
+    all: directives.length,
+    pending: directives.filter((d) => d.status === "PENDING" || d.status === "PASSIVE_CONTEXT").length,
+    execute: directives.filter((d) => d.status === "QUEUED_FOR_AGENT").length,
+    executing: directives.filter((d) => d.status === "EXECUTING").length,
+    completed: directives.filter((d) => d.status === "COMPLETED").length,
+    archived: directives.filter((d) => d.status === "ARCHIVED").length,
+  };
 
   // Filtered directives
   const filteredDirectives = directives.filter((d) => {
@@ -470,6 +523,11 @@ export default function TerminalPage() {
 
       if (key === "T") {
         handleSendTestPing();
+        return;
+      }
+
+      if (key === "C") {
+        handleCompleteAllDirectives();
         return;
       }
 
@@ -540,6 +598,7 @@ export default function TerminalPage() {
     handleUpdateStatus,
     handleDeleteDirective,
     handleSendTestPing,
+    handleCompleteAllDirectives,
     playUIClick,
   ]);
 
@@ -575,8 +634,8 @@ export default function TerminalPage() {
       {/* 3D C60 Buckyball Background Wireframe */}
       <BuckyballCanvas />
 
-      {/* Top TUI Header Bar */}
-      <header className="w-full border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 z-20">
+      {/* Top TUI Header Bar (Sticky) */}
+      <header className="w-full border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 z-30 sticky top-0">
         <div className="flex items-center gap-3">
           <Link
             href="/"
@@ -738,6 +797,7 @@ export default function TerminalPage() {
               fetchDirectives();
               fetchWorkspaceStatus();
               fetchControlState();
+              fetchTelemetryLogs();
             }}
             className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-emerald-300 hover:bg-slate-800 transition-all"
             title="Refresh [R]"
@@ -754,44 +814,73 @@ export default function TerminalPage() {
           <div className="flex items-center justify-between border-b border-slate-800 pb-2 text-xs text-slate-400">
             <div className="flex items-center gap-2">
               <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
-              <span>LIVE TELEMETRY STREAM</span>
+              <span className="font-bold tracking-wide">LIVE TELEMETRY STREAM</span>
             </div>
-            <span className="text-[10px] text-slate-500">0 AI TOKENS / PASSIVE GO DAEMON</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setAutoScroll((prev) => !prev)}
+                className={`px-2 py-0.5 rounded text-[10px] border transition-all ${
+                  autoScroll
+                    ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300"
+                    : "bg-slate-900 border-slate-800 text-slate-500"
+                }`}
+                title="Toggle auto-scroll on new logs"
+              >
+                SCROLL: {autoScroll ? "ON" : "OFF"}
+              </button>
+              <button
+                onClick={() => setLogs([])}
+                className="px-2 py-0.5 rounded text-[10px] border border-slate-800 bg-slate-900 text-slate-400 hover:text-rose-300 hover:border-rose-500/40 transition-all"
+                title="Clear log window"
+              >
+                CLEAR
+              </button>
+            </div>
           </div>
 
           {/* Terminal Output Window */}
           <div className="flex-1 min-h-[360px] max-h-[490px] bg-slate-950/90 border border-slate-800 rounded-xl p-4 overflow-y-auto font-mono text-xs space-y-2 shadow-inner">
-            {logs.map((log) => (
-              <div key={log.id} className="flex items-start gap-2 leading-relaxed">
-                <span className="text-slate-500 text-[10px] select-none">[{log.timestamp}]</span>
-                <span
-                  className={`text-[10px] px-1 rounded uppercase font-bold select-none ${
-                    log.level === "EXECUTE"
-                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                      : log.level === "SUCCESS"
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                      : log.level === "WARN"
-                      ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                      : "bg-slate-800 text-slate-400"
-                  }`}
-                >
-                  {log.source}
-                </span>
-                <span
-                  className={`flex-1 ${
-                    log.level === "EXECUTE"
-                      ? "text-amber-200 font-semibold"
-                      : log.level === "SUCCESS"
-                      ? "text-emerald-200 font-semibold"
-                      : log.level === "WARN"
-                      ? "text-rose-200 font-semibold"
-                      : "text-slate-300"
-                  }`}
-                >
-                  {log.message}
-                </span>
+            {logs.length === 0 ? (
+              <div className="text-slate-600 text-center py-20 text-xs">
+                Awaiting telemetry events from Axis Mundi engine...
               </div>
-            ))}
+            ) : (
+              logs.map((log) => (
+                <div key={log.id} className="flex items-start gap-2 leading-relaxed">
+                  <span className="text-slate-500 text-[10px] select-none shrink-0">[{log.timestamp}]</span>
+                  <span
+                    className={`text-[10px] px-1 rounded uppercase font-bold select-none shrink-0 ${
+                      log.level === "EXECUTE"
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        : log.level === "SUCCESS"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                        : log.level === "WARN" || log.level === "ERROR"
+                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                        : log.source === "WORKSPACE"
+                        ? "bg-sky-500/20 text-sky-300 border border-sky-500/40"
+                        : log.source === "RETURN_LOOP"
+                        ? "bg-violet-500/20 text-violet-300 border border-violet-500/40"
+                        : "bg-slate-800 text-slate-400"
+                    }`}
+                  >
+                    {log.source}
+                  </span>
+                  <span
+                    className={`flex-1 break-words ${
+                      log.level === "EXECUTE"
+                        ? "text-amber-200 font-semibold"
+                        : log.level === "SUCCESS"
+                        ? "text-emerald-200 font-semibold"
+                        : log.level === "WARN" || log.level === "ERROR"
+                        ? "text-rose-200 font-semibold"
+                        : "text-slate-300"
+                    }`}
+                  >
+                    {log.message}
+                  </span>
+                </div>
+              ))
+            )}
             <div ref={logEndRef} />
           </div>
 
@@ -825,32 +914,55 @@ export default function TerminalPage() {
           <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-2 text-xs gap-2">
             <div className="flex items-center gap-2 text-slate-400">
               <Layers className="w-3.5 h-3.5 text-emerald-400" />
-              <span>WORKSPACE REGISTRY ({filteredDirectives.length})</span>
+              <span className="font-bold tracking-wide">WORKSPACE DIRECTIVES</span>
             </div>
 
-            {/* Filter Chips */}
-            <div className="flex items-center gap-1 flex-wrap">
-              {["ALL", "PENDING", "EXECUTE", "EXECUTING", "COMPLETED", "ARCHIVED"].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => {
-                    playUIClick();
-                    setFilter(f);
-                    setSelectedIndex(0);
-                  }}
-                  className={`px-2 py-0.5 rounded text-[10px] transition-all ${
-                    filter === f
-                      ? "bg-slate-800 text-emerald-300 border border-emerald-500/30 font-bold"
-                      : "text-slate-500 hover:text-slate-300"
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              {/* Batch Complete All Button */}
+              <button
+                onClick={handleCompleteAllDirectives}
+                disabled={isCompletingAll}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono border transition-all ${
+                  isCompletingAll
+                    ? "bg-emerald-950 border-emerald-500 text-emerald-300 animate-pulse"
+                    : "bg-emerald-950/40 border-emerald-600/40 text-emerald-400 hover:bg-emerald-900/60 hover:border-emerald-500"
+                }`}
+                title="Mark all current directives as COMPLETED [C]"
+              >
+                <span>{isCompletingAll ? "COMPLETING..." : "COMPLETE ALL [C]"}</span>
+              </button>
+
+              {/* Filter Chips with Live Dynamic Counts */}
+              <div className="flex items-center gap-1 flex-wrap">
+                {[
+                  { key: "ALL", label: `ALL (${counts.all})` },
+                  { key: "PENDING", label: `PENDING (${counts.pending})` },
+                  { key: "EXECUTE", label: `EXECUTE (${counts.execute})` },
+                  { key: "EXECUTING", label: `RUNNING (${counts.executing})` },
+                  { key: "COMPLETED", label: `DONE (${counts.completed})` },
+                  { key: "ARCHIVED", label: `ARCHIVED (${counts.archived})` },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => {
+                      playUIClick();
+                      setFilter(f.key);
+                      setSelectedIndex(0);
+                    }}
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono transition-all ${
+                      filter === f.key
+                        ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-bold shadow-sm"
+                        : "text-slate-500 hover:text-slate-300 border border-transparent"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Directives List Grid with Keyboard Selection Highlight */}
+          {/* Directives List Grid with Direct Card Status Actions */}
           <div className="flex-1 min-h-[360px] max-h-[490px] overflow-y-auto space-y-2.5 pr-1">
             {filteredDirectives.length === 0 ? (
               <div className="text-center py-20 text-slate-600 text-xs">
@@ -904,57 +1016,74 @@ export default function TerminalPage() {
                       {d.triaged_instruction || d.raw_note}
                     </p>
 
-                    <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-900 text-[10px] text-slate-500">
-                      <span>Type: {d.type}</span>
-                      <div className="flex items-center gap-1.5">
-                        {/* Quick Status Action Buttons */}
-                        {d.status !== "QUEUED_FOR_AGENT" && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUpdateStatus(d.id, "QUEUED_FOR_AGENT");
-                            }}
-                            className="px-2 py-0.5 rounded bg-amber-950/70 text-amber-300 border border-amber-800 hover:bg-amber-900 transition-all"
-                            title="Queue for Agent Execution [2]"
-                          >
-                            Execute [2]
-                          </button>
-                        )}
-                        {d.status === "QUEUED_FOR_AGENT" && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUpdateStatus(d.id, "EXECUTING");
-                            }}
-                            className="px-2 py-0.5 rounded bg-sky-950/70 text-sky-300 border border-sky-800 hover:bg-sky-900 transition-all"
-                            title="Mark Executing [3]"
-                          >
-                            Run [3]
-                          </button>
-                        )}
-                        {d.status !== "COMPLETED" && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUpdateStatus(d.id, "COMPLETED");
-                            }}
-                            className="px-2 py-0.5 rounded bg-emerald-950/70 text-emerald-300 border border-emerald-800 hover:bg-emerald-900 transition-all"
-                            title="Mark Completed [4]"
-                          >
-                            Done [4]
-                          </button>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteDirective(d.id);
-                          }}
-                          className="p-1 rounded text-slate-500 hover:text-rose-400 transition-colors"
-                          title="Purge [Del]"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
+                    {/* Dynamic Direct Status Action Strip on Every Card */}
+                    <div
+                      className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center gap-1.5 flex-wrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span className="text-[9px] text-slate-500 font-mono mr-0.5">SET:</span>
+                      <button
+                        onClick={() => handleUpdateStatus(d.id, "PENDING")}
+                        className={`px-2 py-0.5 rounded text-[9px] font-mono border transition-all ${
+                          d.status === "PENDING" || d.status === "PASSIVE_CONTEXT"
+                            ? "bg-slate-800 border-slate-500 text-slate-200 font-bold shadow-sm"
+                            : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                        }`}
+                        title="Mark as PENDING [1]"
+                      >
+                        PENDING
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(d.id, "QUEUED_FOR_AGENT")}
+                        className={`px-2 py-0.5 rounded text-[9px] font-mono border transition-all ${
+                          d.status === "QUEUED_FOR_AGENT"
+                            ? "bg-amber-950/90 border-amber-400 text-amber-300 font-bold shadow-[0_0_8px_rgba(245,158,11,0.3)]"
+                            : "bg-slate-950/60 border-slate-800 text-amber-500/70 hover:text-amber-300 hover:border-amber-500/40"
+                        }`}
+                        title="Mark as EXECUTE [2]"
+                      >
+                        EXECUTE
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(d.id, "EXECUTING")}
+                        className={`px-2 py-0.5 rounded text-[9px] font-mono border transition-all ${
+                          d.status === "EXECUTING"
+                            ? "bg-sky-950/90 border-sky-400 text-sky-300 font-bold shadow-[0_0_8px_rgba(56,189,248,0.3)]"
+                            : "bg-slate-950/60 border-slate-800 text-sky-500/70 hover:text-sky-300 hover:border-sky-500/40"
+                        }`}
+                        title="Mark as RUNNING [3]"
+                      >
+                        RUNNING
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(d.id, "COMPLETED")}
+                        className={`px-2 py-0.5 rounded text-[9px] font-mono border transition-all ${
+                          d.status === "COMPLETED"
+                            ? "bg-emerald-950/90 border-emerald-400 text-emerald-300 font-bold shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                            : "bg-slate-950/60 border-slate-800 text-emerald-500/70 hover:text-emerald-300 hover:border-emerald-500/40"
+                        }`}
+                        title="Mark as COMPLETE [4]"
+                      >
+                        COMPLETE
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(d.id, "ARCHIVED")}
+                        className={`px-2 py-0.5 rounded text-[9px] font-mono border transition-all ${
+                          d.status === "ARCHIVED"
+                            ? "bg-purple-950/90 border-purple-400 text-purple-300 font-bold shadow-sm"
+                            : "bg-slate-950/60 border-slate-800 text-purple-500/70 hover:text-purple-300 hover:border-purple-500/40"
+                        }`}
+                        title="Mark as ARCHIVE [5]"
+                      >
+                        ARCHIVE
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDirective(d.id)}
+                        className="ml-auto p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+                        title="Delete directive [Del]"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 );

@@ -250,3 +250,45 @@ func (s *Store) ListNotifications(limit int) ([]NotificationRecord, error) {
 
 	return list, nil
 }
+
+// MarkAllDirectivesCompleted updates all existing stored directives to COMPLETED status.
+func (s *Store) MarkAllDirectivesCompleted() (int, error) {
+	count := 0
+	err := s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(DirectivesBucket))
+		if b == nil {
+			return nil
+		}
+
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var d AxisDirective
+			if err := json.Unmarshal(v, &d); err != nil {
+				continue
+			}
+
+			if d.Status != StatusCompleted {
+				d.Status = StatusCompleted
+				d.UpdatedAt = time.Now().UTC()
+				if d.ExecutionLog == "" {
+					d.ExecutionLog = "Marked completed during batch system initialization."
+				}
+
+				encoded, err := json.Marshal(d)
+				if err != nil {
+					continue
+				}
+
+				if err := b.Put(k, encoded); err == nil {
+					count++
+				}
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
