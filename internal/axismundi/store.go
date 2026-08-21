@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	DirectivesBucket = "axis_mundi_directives"
-	ControlBucket    = "axis_mundi_control"
-	ControlStateKey  = "system_control_state"
+	DirectivesBucket    = "axis_mundi_directives"
+	ControlBucket       = "axis_mundi_control"
+	NotificationsBucket = "axis_mundi_notifications"
+	ControlStateKey     = "system_control_state"
 )
 
 type Store struct {
@@ -25,6 +26,9 @@ func NewStore(db *bolt.DB) (*Store, error) {
 			return err
 		}
 		if _, err := tx.CreateBucketIfNotExists([]byte(ControlBucket)); err != nil {
+			return err
+		}
+		if _, err := tx.CreateBucketIfNotExists([]byte(NotificationsBucket)); err != nil {
 			return err
 		}
 		return nil
@@ -200,4 +204,49 @@ func (s *Store) SetControlState(state SystemControlState) error {
 		}
 		return b.Put([]byte(ControlStateKey), data)
 	})
+}
+
+func (s *Store) SaveNotification(n NotificationRecord) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(NotificationsBucket))
+		if b == nil {
+			return fmt.Errorf("bucket %s not found", NotificationsBucket)
+		}
+
+		data, err := json.Marshal(n)
+		if err != nil {
+			return err
+		}
+		return b.Put([]byte(n.ID), data)
+	})
+}
+
+func (s *Store) ListNotifications(limit int) ([]NotificationRecord, error) {
+	var list []NotificationRecord
+	err := s.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(NotificationsBucket))
+		if b == nil {
+			return nil
+		}
+		return b.ForEach(func(k, v []byte) error {
+			var n NotificationRecord
+			if err := json.Unmarshal(v, &n); err == nil {
+				list = append(list, n)
+			}
+			return nil
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].CreatedAt.After(list[j].CreatedAt)
+	})
+
+	if limit > 0 && len(list) > limit {
+		list = list[:limit]
+	}
+
+	return list, nil
 }

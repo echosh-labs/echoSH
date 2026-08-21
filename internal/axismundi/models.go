@@ -1,4 +1,4 @@
-﻿package axismundi
+package axismundi
 
 import "time"
 
@@ -69,6 +69,30 @@ type AxisDirective struct {
 	ExecutionLog       string          `json:"execution_log,omitempty"`
 	CreatedAt          time.Time       `json:"created_at"`
 	UpdatedAt          time.Time       `json:"updated_at"`
+}
+
+// Notification System Models
+type NotificationEvent string
+
+const (
+	EventExecuteQueued      NotificationEvent = "EXECUTE_QUEUED"
+	EventExecutionCompleted NotificationEvent = "EXECUTION_COMPLETED"
+	EventCriticalAlert      NotificationEvent = "CRITICAL_ALERT"
+	EventSyncMilestone      NotificationEvent = "SYNC_MILESTONE"
+	EventTestPing           NotificationEvent = "TEST_PING"
+)
+
+type NotificationRecord struct {
+	ID        string            `json:"id"`
+	Event     NotificationEvent `json:"event"`
+	Recipient string            `json:"recipient"` // e.g. "justin@echosh-labs.com"
+	Channel   string            `json:"channel"`   // "GOOGLE_CHAT_SPACE", "GOOGLE_CHAT_WEBHOOK", "LOCAL_STANDBY"
+	Title     string            `json:"title"`
+	Summary   string            `json:"summary"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
+	Delivered bool              `json:"delivered"`
+	Error     string            `json:"error,omitempty"`
+	CreatedAt time.Time         `json:"created_at"`
 }
 
 // MCP JSON-RPC 2.0 Structures

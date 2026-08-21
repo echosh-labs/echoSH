@@ -1,4 +1,4 @@
-﻿package axismundi
+package axismundi
 
 import (
 	"context"
@@ -103,14 +103,10 @@ func (h *Handlers) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updated, err := h.engine.store.UpdateStatus(id, body.Status, body.ExecutionLog)
+	updated, err := h.engine.UpdateDirectiveStatus(id, body.Status, body.ExecutionLog)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	if h.engine.hub != nil {
-		h.engine.hub.Broadcast("axismundi_status_changed", updated)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -137,6 +133,44 @@ func (h *Handlers) DeleteDirective(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handlers) ListNotifications(w http.ResponseWriter, r *http.Request) {
+	limit := 50
+	notifications, err := h.engine.store.ListNotifications(limit)
+	if err != nil {
+		http.Error(w, "Failed to fetch notifications: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"notifications": notifications,
+		"total":         len(notifications),
+		"recipient":     "justin@echosh-labs.com",
+	})
+}
+
+func (h *Handlers) SendTestNotification(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Message string `json:"message"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+
+	if h.engine.notifier == nil {
+		http.Error(w, "Notification engine not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	record, err := h.engine.notifier.SendTestPing(r.Context(), body.Message)
+	if err != nil {
+		http.Error(w, "Failed to dispatch test notification: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(record)
+}
+
 func (h *Handlers) GetWorkspaceStatus(w http.ResponseWriter, r *http.Request) {
 	status := h.engine.GetWorkspaceStatus()
 	w.Header().Set("Content-Type", "application/json")
@@ -148,14 +182,14 @@ func (h *Handlers) TriggerKeepSync(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	count, err := h.engine.TriggerKeepSync(ctx)
+	statusMsg := "synced"
 	if err != nil {
-		http.Error(w, "Keep sync error: "+err.Error(), http.StatusInternalServerError)
-		return
+		statusMsg = "standby"
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":         "synced",
+		"status":         statusMsg,
 		"notes_ingested": count,
 		"timestamp":      time.Now().UTC(),
 	})

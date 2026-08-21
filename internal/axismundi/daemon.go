@@ -1,4 +1,4 @@
-﻿package axismundi
+package axismundi
 
 import (
 	"context"
@@ -15,6 +15,7 @@ type Engine struct {
 	hub          *sse.Hub
 	workspace    *WorkspaceService
 	syncer       *KeepSyncer
+	notifier     *NotificationEngine
 	controlState SystemControlState
 }
 
@@ -34,6 +35,7 @@ func NewEngine(store *Store, hub *sse.Hub, ws *WorkspaceService) *Engine {
 		store:        store,
 		hub:          hub,
 		workspace:    ws,
+		notifier:     NewNotificationEngine(ws, store, hub),
 		controlState: initialState,
 	}
 
@@ -63,6 +65,13 @@ func (e *Engine) IngestNote(payload KeepNotePayload) (*AxisDirective, error) {
 			eventName = "axismundi_execute_alert"
 		}
 		e.hub.Broadcast(eventName, directive)
+	}
+
+	// Dispatch key notification via return loop if EXECUTE queued
+	if directive.IsExecute && e.notifier != nil {
+		go func(d AxisDirective) {
+			_ = e.notifier.NotifyDirectiveQueued(context.Background(), &d)
+		}(directive)
 	}
 
 	return &directive, nil
@@ -132,6 +141,34 @@ func (e *Engine) GetWorkspaceStatus() WorkspaceStatus {
 		Mode:      "STANDBY_LOCAL",
 		LastSync:  time.Now().UTC(),
 	}
+}
+
+func (e *Engine) UpdateDirectiveStatus(id string, status DirectiveStatus, executionLog string) (*AxisDirective, error) {
+	updated, err := e.store.UpdateStatus(id, status, executionLog)
+	if err != nil {
+		return nil, err
+	}
+
+	if e.hub != nil {
+		if status == StatusCompleted {
+			e.hub.Broadcast("axismundi_execution_completed", updated)
+		} else {
+			e.hub.Broadcast("axismundi_status_changed", updated)
+		}
+	}
+
+	// Dispatch key notification upon completion
+	if status == StatusCompleted && e.notifier != nil {
+		go func(d AxisDirective) {
+			_ = e.notifier.NotifyDirectiveCompleted(context.Background(), &d)
+		}(*updated)
+	}
+
+	return updated, nil
+}
+
+func (e *Engine) GetNotifier() *NotificationEngine {
+	return e.notifier
 }
 
 func (e *Engine) GetStore() *Store {

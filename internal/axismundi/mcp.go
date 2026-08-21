@@ -1,6 +1,7 @@
 package axismundi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -118,6 +119,19 @@ func (h *MCPHandler) handleRequest(req JSONRPCRequest) JSONRPCResponse {
 							"required": []string{"id"},
 						},
 					},
+					{
+						"name":        "axismundi_send_notification",
+						"description": "Dispatch a curated system notification to Justin at echosh-labs.com via Google Chat return loop.",
+						"inputSchema": map[string]interface{}{
+							"type": "object",
+							"properties": map[string]interface{}{
+								"title":   map[string]string{"type": "string", "description": "Notification title"},
+								"message": map[string]string{"type": "string", "description": "Notification body / summary"},
+								"event":   map[string]string{"type": "string", "description": "Event type: EXECUTION_COMPLETED, CRITICAL_ALERT, or TEST_PING"},
+							},
+							"required": []string{"title", "message"},
+						},
+					},
 				},
 			},
 		}
@@ -181,16 +195,13 @@ func (h *MCPHandler) handleRequest(req JSONRPCRequest) JSONRPCResponse {
 					Error:   &RPCError{Code: -32602, Message: "Missing id argument"},
 				}
 			}
-			d, err := h.engine.store.UpdateStatus(id, StatusCompleted, logText)
+			d, err := h.engine.UpdateDirectiveStatus(id, StatusCompleted, logText)
 			if err != nil {
 				return JSONRPCResponse{
 					JSONRPC: "2.0",
 					ID:      req.ID,
 					Error:   &RPCError{Code: -32603, Message: err.Error()},
 				}
-			}
-			if h.engine.hub != nil {
-				h.engine.hub.Broadcast("axismundi_execution_completed", d)
 			}
 			return JSONRPCResponse{
 				JSONRPC: "2.0",
@@ -266,6 +277,41 @@ func (h *MCPHandler) handleRequest(req JSONRPCRequest) JSONRPCResponse {
 					"deleted": true,
 					"id":      id,
 				},
+			}
+
+		case "axismundi_send_notification":
+			title, _ := args["title"].(string)
+			msg, _ := args["message"].(string)
+			eventStr, _ := args["event"].(string)
+			if title == "" || msg == "" {
+				return JSONRPCResponse{
+					JSONRPC: "2.0",
+					ID:      req.ID,
+					Error:   &RPCError{Code: -32602, Message: "Missing title or message argument"},
+				}
+			}
+			if eventStr == "" {
+				eventStr = "EXECUTION_COMPLETED"
+			}
+			if h.engine.notifier == nil {
+				return JSONRPCResponse{
+					JSONRPC: "2.0",
+					ID:      req.ID,
+					Error:   &RPCError{Code: -32603, Message: "Notification engine not initialized"},
+				}
+			}
+			rec, err := h.engine.notifier.Dispatch(context.Background(), NotificationEvent(eventStr), title, msg, map[string]string{"source": "mcp_tool"})
+			if err != nil {
+				return JSONRPCResponse{
+					JSONRPC: "2.0",
+					ID:      req.ID,
+					Error:   &RPCError{Code: -32603, Message: err.Error()},
+				}
+			}
+			return JSONRPCResponse{
+				JSONRPC: "2.0",
+				ID:      req.ID,
+				Result:  rec,
 			}
 
 		default:

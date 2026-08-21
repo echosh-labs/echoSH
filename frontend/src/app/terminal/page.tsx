@@ -19,11 +19,24 @@ import {
   Trash2,
   AlertCircle,
   FileCode,
-  FileText
+  FileText,
+  Bell
 } from "lucide-react";
 import { BuckyballCanvas } from "./BuckyballCanvas";
 import { useSSE } from "@/hooks/useSSE";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
+
+interface NotificationRecord {
+  id: string;
+  event: string;
+  recipient: string;
+  channel: string;
+  title: string;
+  summary: string;
+  delivered: boolean;
+  error?: string;
+  created_at: string;
+}
 
 interface AxisDirective {
   id: string;
@@ -77,6 +90,7 @@ export default function TerminalPage() {
   const [commandInput, setCommandInput] = useState<string>("");
   const [selectedDirective, setSelectedDirective] = useState<AxisDirective | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
+  const [isSendingTestPing, setIsSendingTestPing] = useState<boolean>(false);
   const [activeInspectorTab, setActiveInspectorTab] = useState<"instruction" | "raw" | "logs" | "json">("instruction");
   const [logs, setLogs] = useState<TelemetryLog[]>([
     {
@@ -267,6 +281,37 @@ export default function TerminalPage() {
     }
   }, [playUIClick, playUIChime, selectedDirective]);
 
+  // Send Test Return Loop Notification
+  const handleSendTestPing = useCallback(async () => {
+    playUIClick();
+    setIsSendingTestPing(true);
+    try {
+      const res = await fetch("/api/axismundi/notifications/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "On-demand Google Chat return loop operational ping." }),
+      });
+      if (res.ok) {
+        const notif: NotificationRecord = await res.json();
+        playUIChime(784);
+        setLogs((prev) => [
+          ...prev,
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString(),
+            source: "RETURN_LOOP",
+            level: "SUCCESS",
+            message: `[CHAT PING] Dispatched to ${notif.recipient} via ${notif.channel}`,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn("Failed to dispatch test notification:", err);
+    } finally {
+      setIsSendingTestPing(false);
+    }
+  }, [playUIClick, playUIChime]);
+
   // Reactive SSE event listener
   useEffect(() => {
     if (!lastEvent) return;
@@ -341,6 +386,19 @@ export default function TerminalPage() {
           message: `[COMPLETED] Directive "${d.title}" verified and closed.`,
         },
       ]);
+    } else if (lastEvent.type === "axismundi_notification" && lastEvent.payload) {
+      const notif = lastEvent.payload as NotificationRecord;
+      playUIChime(784);
+      setLogs((prev) => [
+        ...prev,
+        {
+          id: `log-${Date.now()}`,
+          timestamp: timeStr,
+          source: "RETURN_LOOP",
+          level: "SUCCESS",
+          message: `[NOTIF SENT] ${notif.title} -> ${notif.recipient} (${notif.channel})`,
+        },
+      ]);
     }
   }, [lastEvent, playUIChime, pollInterval]);
 
@@ -410,6 +468,11 @@ export default function TerminalPage() {
         return;
       }
 
+      if (key === "T") {
+        handleSendTestPing();
+        return;
+      }
+
       if (key === "R") {
         playUIClick();
         fetchDirectives();
@@ -476,6 +539,7 @@ export default function TerminalPage() {
     fetchControlState,
     handleUpdateStatus,
     handleDeleteDirective,
+    handleSendTestPing,
     playUIClick,
   ]);
 
@@ -556,6 +620,30 @@ export default function TerminalPage() {
                 : "WORKSPACE: LOCAL/STANDBY"}
             </span>
           </div>
+
+          {/* Google Chat Return Loop Notification Badge */}
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono bg-violet-950/60 border-violet-500/40 text-violet-300"
+            title="Google Chat return loop active for user Justin at Echo SH Labs"
+          >
+            <Bell className="w-3 h-3 text-violet-400" />
+            <span>CHAT: {workspaceStatus?.user_email || "justin@echosh-labs.com"}</span>
+          </div>
+
+          {/* Test Chat Notification Ping Button */}
+          <button
+            onClick={handleSendTestPing}
+            disabled={isSendingTestPing}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-all ${
+              isSendingTestPing
+                ? "bg-violet-950 border-violet-500 text-violet-300 animate-pulse"
+                : "bg-slate-900 border-slate-800 text-slate-300 hover:text-violet-300 hover:border-violet-500/40"
+            }`}
+            title="Dispatch on-demand Google Chat test ping to Justin [T]"
+          >
+            <Bell className={`w-3.5 h-3.5 ${isSendingTestPing ? "animate-bounce" : "text-violet-400"}`} />
+            <span>{isSendingTestPing ? "PINGING..." : "PING [T]"}</span>
+          </button>
 
           {/* Dynamic Polling Interval Selector Dropdown */}
           <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs">
@@ -1096,6 +1184,10 @@ export default function TerminalPage() {
                     <span className="text-slate-300">Trigger on-demand Keep API sync</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
+                    <span className="text-violet-400 font-bold">[T]</span>
+                    <span className="text-slate-300">Dispatch test return loop chat notification</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900/70 border border-slate-800">
                     <span className="text-yellow-400 font-bold">[R]</span>
                     <span className="text-slate-300">Refresh registry state</span>
                   </div>
@@ -1141,6 +1233,8 @@ export default function TerminalPage() {
                     <tr><td className="py-1.5 text-cyan-400">/api/axismundi/workspace/status</td><td>GET</td><td>Google Workspace auth & DWD status</td></tr>
                     <tr><td className="py-1.5 text-amber-400">/api/axismundi/mode</td><td>GET/POST</td><td>Get/Set AUTO/MANUAL, Policy & Interval</td></tr>
                     <tr><td className="py-1.5 text-purple-400">/api/axismundi/keep/sync</td><td>GET/POST</td><td>Trigger immediate Google Keep sync</td></tr>
+                    <tr><td className="py-1.5 text-violet-400">/api/axismundi/notifications</td><td>GET</td><td>List notification return loop history</td></tr>
+                    <tr><td className="py-1.5 text-violet-400">/api/axismundi/notifications/test</td><td>POST</td><td>Dispatch on-demand test ping to Justin</td></tr>
                     <tr><td className="py-1.5 text-sky-400">/api/stream/events</td><td>SSE</td><td>Live telemetry & tick stream</td></tr>
                     <tr><td className="py-1.5 text-blue-400">/api/mcp</td><td>POST</td><td>Model Context Protocol JSON-RPC 2.0</td></tr>
                   </tbody>

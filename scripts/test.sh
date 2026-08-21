@@ -81,6 +81,7 @@ assert_endpoint "/api/axismundi/directives/pending" 200 "Axis Mundi Pending Dire
 assert_endpoint "/api/axismundi/workspace/status" 200 "Google Workspace Connection Status"
 assert_endpoint "/api/axismundi/mode" 200 "Axis Mundi Control State & Policy"
 assert_endpoint "/api/axismundi/keep/sync" 200 "Google Keep On-Demand Synchronization"
+assert_endpoint "/api/axismundi/notifications" 200 "Axis Mundi Notification Return Loop History"
 
 echo -e "\n  [Testing Dynamic Control & Directives Lifecycle]"
 SET_MODE_RES=$(curl -s -X POST -H "Content-Type: application/json" -d '{"mode":"AUTO","ingest_policy":"EXECUTE","poll_interval_sec":15}' "http://localhost:$TEST_PORT/api/axismundi/mode")
@@ -88,6 +89,15 @@ if echo "$SET_MODE_RES" | grep -q '"poll_interval_sec":15'; then
     echo "  ✅ [PASS] POST /api/axismundi/mode (Dynamic Interval: 15s) -> 200"
 else
     echo "  ❌ [FAIL] POST /api/axismundi/mode failed: $SET_MODE_RES"
+    exit 1
+fi
+
+# Test Return Loop Ping Dispatch
+PING_RES=$(curl -s -X POST -H "Content-Type: application/json" -d '{"message":"Ephemeral test return loop ping"}' "http://localhost:$TEST_PORT/api/axismundi/notifications/test")
+if echo "$PING_RES" | grep -q '"recipient":"justin@echosh-labs.com"'; then
+    echo "  ✅ [PASS] POST /api/axismundi/notifications/test (Ping to Justin) -> 200"
+else
+    echo "  ❌ [FAIL] POST /api/axismundi/notifications/test failed: $PING_RES"
     exit 1
 fi
 
