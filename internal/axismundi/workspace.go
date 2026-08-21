@@ -15,16 +15,20 @@ import (
 	keep "google.golang.org/api/keep/v1"
 	"google.golang.org/api/option"
 	sheets "google.golang.org/api/sheets/v4"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 type WorkspaceStatus struct {
 	Connected      bool      `json:"connected"`
 	Mode           string    `json:"mode"` // "LIVE_GCP" or "STANDBY_LOCAL"
+	AuthMethod     string    `json:"auth_method,omitempty"` // "SERVICE_ACCOUNT_KEY_DWD" or "IAM_IMPERSONATION"
 	ServiceAccount string    `json:"service_account,omitempty"`
 	UserEmail      string    `json:"user_email,omitempty"`
 	Scopes         []string  `json:"scopes"`
 	LastSync       time.Time `json:"last_sync"`
 	ItemsIndexed   int       `json:"items_indexed"`
+	LastError      string    `json:"last_error,omitempty"`
 }
 
 type WorkspaceService struct {
@@ -38,20 +42,22 @@ type WorkspaceService struct {
 	status WorkspaceStatus
 }
 
-// NewWorkspaceService initializes Google Workspace APIs using Service Account Impersonation or local fallback.
+// NewWorkspaceService initializes Google Workspace APIs using Service Account Key with DWD or IAM Impersonation.
 func NewWorkspaceService(ctx context.Context) *WorkspaceService {
+	scopes := []string{
+		keep.KeepScope,
+		docs.DocumentsScope,
+		sheets.SpreadsheetsScope,
+		drive.DriveReadonlyScope,
+		admin.AdminDirectoryUserReadonlyScope,
+	}
+
 	ws := &WorkspaceService{
 		status: WorkspaceStatus{
 			Connected: false,
 			Mode:      "STANDBY_LOCAL",
-			Scopes: []string{
-				keep.KeepScope,
-				docs.DocumentsScope,
-				sheets.SpreadsheetsScope,
-				drive.DriveReadonlyScope,
-				admin.AdminDirectoryUserReadonlyScope,
-			},
-			LastSync: time.Now().UTC(),
+			Scopes:    scopes,
+			LastSync:  time.Now().UTC(),
 		},
 	}
 
@@ -61,21 +67,46 @@ func NewWorkspaceService(ctx context.Context) *WorkspaceService {
 	if userEmail == "" {
 		userEmail = adminEmail
 	}
+	credsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if credsPath == "" {
+		if _, err := os.Stat(".service-account.json"); err == nil {
+			credsPath = ".service-account.json"
+		}
+	}
 
-	if saEmail != "" && userEmail != "" {
-		log.Printf("[Workspace] Initializing GCP Service Account Impersonation (%s -> %s)...", saEmail, userEmail)
+	var ts oauth2.TokenSource
+	var authMethod string
+	var err error
 
-		ts, err := impersonate.CredentialsTokenSource(ctx, impersonate.CredentialsConfig{
+	// Strategy A: Service Account JSON Key File with Domain-Wide Delegation (DWD)
+	if credsPath != "" {
+		if saData, readErr := os.ReadFile(credsPath); readErr == nil {
+			jwtConfig, jwtErr := google.JWTConfigFromJSON(saData, scopes...)
+			if jwtErr == nil {
+				if userEmail != "" {
+					jwtConfig.Subject = userEmail
+				}
+				ts = jwtConfig.TokenSource(ctx)
+				authMethod = "SERVICE_ACCOUNT_KEY_DWD"
+				log.Printf("[Workspace] Authenticated via Service Account Key file %s with Subject: %s", credsPath, userEmail)
+			}
+		}
+	}
+
+	// Strategy B: IAM Service Account Impersonation (fallback)
+	if ts == nil && saEmail != "" && userEmail != "" {
+		ts, err = impersonate.CredentialsTokenSource(ctx, impersonate.CredentialsConfig{
 			TargetPrincipal: saEmail,
 			Subject:         userEmail,
-			Scopes:          ws.status.Scopes,
+			Scopes:          scopes,
 		})
-
-		if err != nil {
-			log.Printf("[Workspace] Impersonation notice (falling back to standby): %v", err)
-			return ws
+		if err == nil {
+			authMethod = "IAM_IMPERSONATION"
+			log.Printf("[Workspace] Authenticated via IAM Impersonation (%s -> %s)", saEmail, userEmail)
 		}
+	}
 
+	if ts != nil {
 		keepSvc, err := keep.NewService(ctx, option.WithTokenSource(ts))
 		if err == nil {
 			ws.keepService = keepSvc
@@ -98,11 +129,12 @@ func NewWorkspaceService(ctx context.Context) *WorkspaceService {
 
 		ws.status.Connected = true
 		ws.status.Mode = "LIVE_GCP"
+		ws.status.AuthMethod = authMethod
 		ws.status.ServiceAccount = saEmail
 		ws.status.UserEmail = userEmail
 		log.Printf("[Workspace] Successfully connected to live Google Workspace APIs for %s", userEmail)
 	} else {
-		log.Printf("[Workspace] Google Workspace credentials not supplied in env. Running in STANDBY_LOCAL mode.")
+		log.Printf("[Workspace] Google Workspace credentials not active. Running in STANDBY_LOCAL mode.")
 	}
 
 	return ws
@@ -127,6 +159,9 @@ func (w *WorkspaceService) ListGoogleKeepNotes(ctx context.Context) ([]KeepNoteP
 
 	resp, err := svc.Notes.List().PageSize(50).Context(ctx).Do()
 	if err != nil {
+		w.mu.Lock()
+		w.status.LastError = err.Error()
+		w.mu.Unlock()
 		return nil, fmt.Errorf("failed to query google keep API: %w", err)
 	}
 
@@ -161,6 +196,7 @@ func (w *WorkspaceService) ListGoogleKeepNotes(ctx context.Context) ([]KeepNoteP
 	w.mu.Lock()
 	w.status.LastSync = time.Now().UTC()
 	w.status.ItemsIndexed = len(payloads)
+	w.status.LastError = ""
 	w.mu.Unlock()
 
 	return payloads, nil

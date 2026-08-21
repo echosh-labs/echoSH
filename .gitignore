@@ -15,10 +15,13 @@ frontend/node_modules/
 frontend/.next/
 archive/**/node_modules/
 
-# Environment variables
+# Environment variables and Credentials
 .env
 .env.local
 .env.*.local
+.service-account.json
+*.service-account.json
+*.key.json
 
 # IDE & OS
 .vscode/
