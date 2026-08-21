@@ -124,3 +124,14 @@ export async function fetchTransitionPortal(): Promise<DashaTransition | null> {
     return null;
   }
 }
+
+export async function fetchAudioPresets(): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE}/audio/presets`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+

@@ -48,6 +48,7 @@ func NewRouter(store *boltdb.Store, pg *postgres.DB, hub *sse.Hub, embeddedStmt,
 		api.Get("/author", h.AuthorHandler)
 		api.Get("/oracle/daily", h.OracleDailyHandler)
 		api.Get("/transition/threshold", h.TransitionHandler)
+		api.Get("/audio/presets", h.AudioPresetsHandler)
 	})
 
 	return r

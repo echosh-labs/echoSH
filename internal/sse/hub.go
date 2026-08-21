@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -24,7 +23,6 @@ type Hub struct {
 	broadcast  chan Event
 	register   chan *Client
 	unregister chan *Client
-	mu         sync.RWMutex
 }
 
 func NewHub() *Hub {
@@ -43,39 +41,46 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.register:
-			h.mu.Lock()
 			h.clients[client] = true
-			h.mu.Unlock()
 			log.Printf("[SSE Hub] Client connected. Total active streams: %d", len(h.clients))
 
 		case client := <-h.unregister:
-			h.mu.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
+				log.Printf("[SSE Hub] Client disconnected. Total active streams: %d", len(h.clients))
 			}
-			h.mu.Unlock()
-			log.Printf("[SSE Hub] Client disconnected. Total active streams: %d", len(h.clients))
 
 		case event := <-h.broadcast:
-			h.mu.RLock()
 			for client := range h.clients {
 				select {
 				case client.send <- event:
 				default:
 					// Slow client buffer full, drop and unregister
-					close(client.send)
 					delete(h.clients, client)
+					close(client.send)
+					log.Printf("[SSE Hub] Dropped slow client stream. Remaining streams: %d", len(h.clients))
 				}
 			}
-			h.mu.RUnlock()
 
 		case <-ticker.C:
 			// Heartbeat keep-alive ping
-			h.Broadcast("heartbeat", map[string]interface{}{
-				"status": "active",
-				"time":   time.Now().UTC().Format(time.RFC3339),
-			})
+			heartbeatEvent := Event{
+				Type: "heartbeat",
+				Payload: map[string]interface{}{
+					"status": "active",
+					"time":   time.Now().UTC().Format(time.RFC3339),
+				},
+				Timestamp: time.Now().UTC(),
+			}
+			for client := range h.clients {
+				select {
+				case client.send <- heartbeatEvent:
+				default:
+					delete(h.clients, client)
+					close(client.send)
+				}
+			}
 		}
 	}
 }
