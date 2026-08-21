@@ -58,7 +58,6 @@ func NewWorkspaceService(ctx context.Context) *WorkspaceService {
 		drive.DriveReadonlyScope,
 		admin.AdminDirectoryUserReadonlyScope,
 		chat.ChatMessagesCreateScope,
-		chat.ChatBotScope,
 	}
 
 	ws := &WorkspaceService{
