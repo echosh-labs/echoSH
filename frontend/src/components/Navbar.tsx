@@ -15,6 +15,7 @@ export function Navbar({ health, activeSection, setActiveSection, isSSEConnected
   const navItems = [
     { id: "threshold", label: "2028 Threshold Portal" },
     { id: "foundational", label: "Foundational Axiom" },
+    { id: "synesthetic-audio", label: "Synesthetic Audio DSP" },
     { id: "oracle", label: "Mercurial Oracle" },
     { id: "context-graph", label: "BoltDB Context Graph" },
     { id: "dasha-engine", label: "17-Yr Dasha Engine" },

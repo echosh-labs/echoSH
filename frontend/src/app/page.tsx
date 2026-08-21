@@ -9,6 +9,7 @@ import { ContextGraphExplorer } from "@/components/ContextGraphExplorer";
 import { DashaEngine } from "@/components/DashaEngine";
 import { AlchemicalCrucible } from "@/components/AlchemicalCrucible";
 import { AuthorOpusView } from "@/components/AuthorOpus";
+import { SynestheticAudioConsole } from "@/components/SynestheticAudioConsole";
 import { useSSE } from "@/hooks/useSSE";
 import { 
   fetchHealth, 
@@ -85,6 +86,10 @@ export default function HomePage() {
 
         {activeSection === "foundational" && statement && (
           <FoundationalHero statement={statement} />
+        )}
+
+        {activeSection === "synesthetic-audio" && (
+          <SynestheticAudioConsole />
         )}
 
         {activeSection === "oracle" && oracle && (
