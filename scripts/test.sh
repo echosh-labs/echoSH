@@ -29,11 +29,9 @@ cd ..
 echo ""
 echo "=== STAGE 3/3: Ephemeral HTTP Contract Assertions ==="
 
-# Ensure executable binary is compiled
-if [ ! -f "./mercury-dasha-server" ]; then
-    echo "Executable binary not found. Running build pipeline..."
-    bash scripts/build.sh
-fi
+# Ensure executable binary is compiled with latest Go source
+echo "Compiling latest Go binary for ephemeral testing..."
+go build -o ./mercury-dasha-server .
 
 TEST_PORT=3099
 echo "Launching ephemeral test server on http://localhost:$TEST_PORT..."
@@ -78,6 +76,8 @@ assert_endpoint "/api/dasha" 200 "17-Year Dasha Chronology"
 assert_endpoint "/api/nakshatras" 200 "27 Nakshatras Mandala"
 assert_endpoint "/api/alchemical" 200 "Alchemical Crucible"
 assert_endpoint "/api/author" 200 "Author Opus & Essays"
+assert_endpoint "/api/axismundi/directives" 200 "Axis Mundi Directives Registry"
+assert_endpoint "/api/axismundi/directives/pending" 200 "Axis Mundi Pending Directives"
 assert_endpoint "/archive/axis-mundi/" 200 "Axis Mundi Embedded Archive"
 assert_endpoint "/archive/foundations/" 200 "Foundations Embedded Archive"
 assert_endpoint "/foundations" 200 "Dedicated Foundations Story Route"

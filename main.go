@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"mercury-dasha/internal/api"
+	"mercury-dasha/internal/axismundi"
 	"mercury-dasha/internal/boltdb"
 	"mercury-dasha/internal/config"
 	"mercury-dasha/internal/postgres"
@@ -25,6 +26,7 @@ func main() {
 	log.Println("       Author: Justin Andrew Wood | Engine: Go + BoltDB   ")
 	log.Println("      PostgreSQL Primary Store + BoltDB Context Graph     ")
 	log.Println("       Real-Time Server-Sent Events (SSE) Hub Active      ")
+	log.Println("       Axis Mundi Zero-Token Ingestion & MCP Server Active")
 	log.Println("==========================================================")
 
 	// 1. Initialize PostgreSQL Primary Relational Layer (with Embedded SQL Migrations)
@@ -54,13 +56,21 @@ func main() {
 	go sseHub.Run()
 	log.Println("[SSE Hub] Real-time event streaming engine active on /api/stream/events")
 
-	// 5. Setup Router and Routes
-	router := api.NewRouter(store, pgDB, sseHub, EmbeddedFoundationalStatement, cfg.StatementFilePath)
+	// 5. Initialize Axis Mundi Zero-Token Amra Core Engine & MCP Server
+	axisStore, err := axismundi.NewStore(store.DB())
+	if err != nil {
+		log.Fatalf("[FATAL] Could not initialize Axis Mundi store: %v", err)
+	}
+	axisEngine := axismundi.NewEngine(axisStore, sseHub)
+	log.Println("[Axis Mundi] Zero-token Amra Core ingestion engine and MCP endpoint (/api/mcp) active.")
 
-	// 6. Register Embedded Frontend Routes (ui.go)
+	// 6. Setup Router and Routes
+	router := api.NewRouter(store, pgDB, sseHub, axisEngine, EmbeddedFoundationalStatement, cfg.StatementFilePath)
+
+	// 7. Register Embedded Frontend Routes (ui.go)
 	RegisterUIRoutes(router)
 
-	// 7. Start HTTP Server
+	// 8. Start HTTP Server
 	serverAddr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
 	srv := &http.Server{
 		Addr:         serverAddr,

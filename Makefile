@@ -24,3 +24,11 @@ run:
 clean:
 	@bash scripts/clean.sh
 
+# Ingest directive into Axis Mundi
+axismundi-send:
+	@bash scripts/axismundi.sh send "$(NOTE)"
+
+# List Axis Mundi directives
+axismundi-list:
+	@bash scripts/axismundi.sh list
+

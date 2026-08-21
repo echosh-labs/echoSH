@@ -49,6 +49,10 @@ func (s *Store) Close() error {
 	return s.db.Close()
 }
 
+func (s *Store) DB() *bolt.DB {
+	return s.db
+}
+
 func (s *Store) Init() error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		buckets := [][]byte{

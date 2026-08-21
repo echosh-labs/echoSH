@@ -1,4 +1,4 @@
-package api
+﻿package api
 
 import (
 	"time"
@@ -7,12 +7,13 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
+	"mercury-dasha/internal/axismundi"
 	"mercury-dasha/internal/boltdb"
 	"mercury-dasha/internal/postgres"
 	"mercury-dasha/internal/sse"
 )
 
-func NewRouter(store *boltdb.Store, pg *postgres.DB, hub *sse.Hub, embeddedStmt, sourceFile string) *chi.Mux {
+func NewRouter(store *boltdb.Store, pg *postgres.DB, hub *sse.Hub, axisEngine *axismundi.Engine, embeddedStmt, sourceFile string) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -34,6 +35,22 @@ func NewRouter(store *boltdb.Store, pg *postgres.DB, hub *sse.Hub, embeddedStmt,
 
 	// Stream Routes
 	r.Get("/api/stream/events", hub.ServeHTTP)
+
+	// Model Context Protocol (MCP) Server Handler
+	if axisEngine != nil {
+		mcpHandler := axismundi.NewMCPHandler(axisEngine)
+		r.Handle("/api/mcp", mcpHandler)
+		r.Handle("/mcp", mcpHandler)
+
+		axisHandlers := axismundi.NewHandlers(axisEngine)
+		r.Route("/api/axismundi", func(ax chi.Router) {
+			ax.Get("/directives", axisHandlers.ListDirectives)
+			ax.Get("/directives/pending", axisHandlers.GetPendingDirectives)
+			ax.Post("/ingest", axisHandlers.IngestNote)
+			ax.Post("/keep/webhook", axisHandlers.KeepWebhook)
+			ax.Post("/directives/{id}/status", axisHandlers.UpdateStatus)
+		})
+	}
 
 	// REST API Routes
 	r.Route("/api", func(api chi.Router) {
