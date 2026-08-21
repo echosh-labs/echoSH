@@ -24,6 +24,36 @@ func TestGatekeeperPassiveNotes(t *testing.T) {
 	}
 }
 
+func TestGatekeeperPolicyExecute(t *testing.T) {
+	// A note without [EXECUTE] tags should be automatically promoted when PolicyExecute is active
+	note := KeepNotePayload{
+		Title:   "Refactor audio synthesis parameters",
+		Content: "Update carrier frequency modulators and run build",
+		Source:  "google_keep_api",
+	}
+
+	directive := TriageNoteWithPolicy(note, PolicyExecute)
+	if !directive.IsExecute {
+		t.Errorf("Expected IsExecute to be true under PolicyExecute, got false")
+	}
+	if directive.Status != StatusQueuedForAgent {
+		t.Errorf("Expected status %s, got %s", StatusQueuedForAgent, directive.Status)
+	}
+	if directive.Type != TypeBuildRequest {
+		t.Errorf("Expected type %s, got %s", TypeBuildRequest, directive.Type)
+	}
+
+	// But a note explicitly marked [DRAFT] should remain passive
+	draftNote := KeepNotePayload{
+		Title:   "[DRAFT] Brainstorming idea",
+		Content: "Just a casual thought not meant for agent execution",
+	}
+	draftDirective := TriageNoteWithPolicy(draftNote, PolicyExecute)
+	if draftDirective.IsExecute {
+		t.Errorf("Expected draft note to not be executed under PolicyExecute")
+	}
+}
+
 func TestGatekeeperExecuteDirectives(t *testing.T) {
 	tests := []struct {
 		name         string

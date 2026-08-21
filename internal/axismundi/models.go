@@ -2,6 +2,27 @@
 
 import "time"
 
+type EngineMode string
+
+const (
+	ModeAuto   EngineMode = "AUTO"
+	ModeManual EngineMode = "MANUAL"
+)
+
+type IngestPolicy string
+
+const (
+	PolicyPending IngestPolicy = "PENDING"
+	PolicyExecute IngestPolicy = "EXECUTE"
+)
+
+type SystemControlState struct {
+	Mode            EngineMode   `json:"mode"`
+	IngestPolicy    IngestPolicy `json:"ingest_policy"`
+	PollIntervalSec int          `json:"poll_interval_sec"`
+	UpdatedAt       time.Time    `json:"updated_at"`
+}
+
 type DirectiveType string
 
 const (

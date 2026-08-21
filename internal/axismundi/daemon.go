@@ -3,42 +3,58 @@
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	"mercury-dasha/internal/sse"
 )
 
 type Engine struct {
-	store     *Store
-	hub       *sse.Hub
-	workspace *WorkspaceService
-	syncer    *KeepSyncer
+	mu           sync.RWMutex
+	store        *Store
+	hub          *sse.Hub
+	workspace    *WorkspaceService
+	syncer       *KeepSyncer
+	controlState SystemControlState
 }
 
 func NewEngine(store *Store, hub *sse.Hub, ws *WorkspaceService) *Engine {
+	initialState := SystemControlState{
+		Mode:            ModeAuto,
+		IngestPolicy:    PolicyExecute,
+		PollIntervalSec: 30,
+		UpdatedAt:       time.Now().UTC(),
+	}
+
+	if store != nil {
+		initialState = store.GetControlState()
+	}
+
 	e := &Engine{
-		store:     store,
-		hub:       hub,
-		workspace: ws,
+		store:        store,
+		hub:          hub,
+		workspace:    ws,
+		controlState: initialState,
 	}
 
 	if ws != nil {
-		e.syncer = NewKeepSyncer(ws, e, 30*time.Second)
+		e.syncer = NewKeepSyncer(ws, e, time.Duration(initialState.PollIntervalSec)*time.Second)
 		e.syncer.Start()
 	}
 
 	return e
 }
 
-// IngestNote processes a note without AI token consumption, saves it, and emits real-time events.
+// IngestNote processes a note without AI token consumption, applying active Ingestion Policy.
 func (e *Engine) IngestNote(payload KeepNotePayload) (*AxisDirective, error) {
-	directive := TriageNote(payload)
+	policy := e.GetControlState().IngestPolicy
+	directive := TriageNoteWithPolicy(payload, policy)
 
 	if err := e.store.SaveDirective(directive); err != nil {
 		return nil, err
 	}
 
-	log.Printf("[AxisMundi] Ingested note %s (Execute: %v, Status: %s)", directive.ID, directive.IsExecute, directive.Status)
+	log.Printf("[AxisMundi] Ingested note %s (Policy: %s, Execute: %v, Status: %s)", directive.ID, policy, directive.IsExecute, directive.Status)
 
 	// Broadcast reactive SSE event
 	if e.hub != nil {
@@ -50,6 +66,37 @@ func (e *Engine) IngestNote(payload KeepNotePayload) (*AxisDirective, error) {
 	}
 
 	return &directive, nil
+}
+
+func (e *Engine) GetControlState() SystemControlState {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.controlState
+}
+
+func (e *Engine) SetControlState(mode EngineMode, policy IngestPolicy) SystemControlState {
+	e.mu.Lock()
+	if mode != "" {
+		e.controlState.Mode = mode
+	}
+	if policy != "" {
+		e.controlState.IngestPolicy = policy
+	}
+	e.controlState.UpdatedAt = time.Now().UTC()
+	updated := e.controlState
+	e.mu.Unlock()
+
+	if e.store != nil {
+		_ = e.store.SetControlState(updated)
+	}
+
+	log.Printf("[AxisMundi] System Control updated: Mode=%s, IngestPolicy=%s", updated.Mode, updated.IngestPolicy)
+
+	if e.hub != nil {
+		e.hub.Broadcast("axismundi_control_changed", updated)
+	}
+
+	return updated
 }
 
 func (e *Engine) TriggerKeepSync(ctx context.Context) (int, error) {

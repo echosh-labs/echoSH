@@ -87,6 +87,25 @@ func (h *MCPHandler) handleRequest(req JSONRPCRequest) JSONRPCResponse {
 							"required": []string{"content"},
 						},
 					},
+					{
+						"name":        "axismundi_get_mode",
+						"description": "Get current Axis Mundi operational mode (AUTO vs MANUAL) and Auto-Ingest Policy (EXECUTE vs PENDING).",
+						"inputSchema": map[string]interface{}{
+							"type":       "object",
+							"properties": map[string]interface{}{},
+						},
+					},
+					{
+						"name":        "axismundi_set_mode",
+						"description": "Set Axis Mundi operational mode (AUTO/MANUAL) and Ingest Policy (EXECUTE/PENDING).",
+						"inputSchema": map[string]interface{}{
+							"type": "object",
+							"properties": map[string]interface{}{
+								"mode":          map[string]string{"type": "string", "enum": "AUTO, MANUAL"},
+								"ingest_policy": map[string]string{"type": "string", "enum": "EXECUTE, PENDING"},
+							},
+						},
+					},
 				},
 			},
 		}
@@ -188,6 +207,24 @@ func (h *MCPHandler) handleRequest(req JSONRPCRequest) JSONRPCResponse {
 				JSONRPC: "2.0",
 				ID:      req.ID,
 				Result:  d,
+			}
+
+		case "axismundi_get_mode":
+			state := h.engine.GetControlState()
+			return JSONRPCResponse{
+				JSONRPC: "2.0",
+				ID:      req.ID,
+				Result:  state,
+			}
+
+		case "axismundi_set_mode":
+			modeStr, _ := args["mode"].(string)
+			policyStr, _ := args["ingest_policy"].(string)
+			updated := h.engine.SetControlState(EngineMode(modeStr), IngestPolicy(policyStr))
+			return JSONRPCResponse{
+				JSONRPC: "2.0",
+				ID:      req.ID,
+				Result:  updated,
 			}
 
 		default:

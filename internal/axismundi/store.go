@@ -9,7 +9,11 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-const DirectivesBucket = "axis_mundi_directives"
+const (
+	DirectivesBucket = "axis_mundi_directives"
+	ControlBucket    = "axis_mundi_control"
+	ControlStateKey  = "system_control_state"
+)
 
 type Store struct {
 	db *bolt.DB
@@ -17,11 +21,16 @@ type Store struct {
 
 func NewStore(db *bolt.DB) (*Store, error) {
 	err := db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(DirectivesBucket))
-		return err
+		if _, err := tx.CreateBucketIfNotExists([]byte(DirectivesBucket)); err != nil {
+			return err
+		}
+		if _, err := tx.CreateBucketIfNotExists([]byte(ControlBucket)); err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to init axis mundi bucket: %w", err)
+		return nil, fmt.Errorf("failed to init axis mundi buckets: %w", err)
 	}
 	return &Store{db: db}, nil
 }
@@ -139,4 +148,46 @@ func (s *Store) UpdateStatus(id string, status DirectiveStatus, executionLog str
 		return nil, err
 	}
 	return &updated, nil
+}
+
+func (s *Store) GetControlState() SystemControlState {
+	var state SystemControlState
+	defaultState := SystemControlState{
+		Mode:            ModeAuto,
+		IngestPolicy:    PolicyExecute,
+		PollIntervalSec: 30,
+		UpdatedAt:       time.Now().UTC(),
+	}
+
+	err := s.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(ControlBucket))
+		if b == nil {
+			return fmt.Errorf("bucket not found")
+		}
+		data := b.Get([]byte(ControlStateKey))
+		if data == nil {
+			return fmt.Errorf("key not found")
+		}
+		return json.Unmarshal(data, &state)
+	})
+
+	if err != nil {
+		return defaultState
+	}
+	return state
+}
+
+func (s *Store) SetControlState(state SystemControlState) error {
+	state.UpdatedAt = time.Now().UTC()
+	return s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(ControlBucket))
+		if b == nil {
+			return fmt.Errorf("bucket %s not found", ControlBucket)
+		}
+		data, err := json.Marshal(state)
+		if err != nil {
+			return err
+		}
+		return b.Put([]byte(ControlStateKey), data)
+	})
 }

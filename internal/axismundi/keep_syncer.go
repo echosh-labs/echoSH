@@ -45,6 +45,11 @@ func (s *KeepSyncer) Start() {
 		for {
 			select {
 			case <-ticker.C:
+				// In MANUAL mode, skip automatic background polling
+				if s.engine != nil && s.engine.GetControlState().Mode == ModeManual {
+					continue
+				}
+
 				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 				_, _ = s.Sync(ctx)
 				cancel()

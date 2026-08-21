@@ -63,6 +63,8 @@ func TestAPIHandlers(t *testing.T) {
 		{"Axis Mundi Directives", "/api/axismundi/directives", "GET", "", http.StatusOK},
 		{"Axis Mundi Pending", "/api/axismundi/directives/pending", "GET", "", http.StatusOK},
 		{"Axis Mundi Workspace Status", "/api/axismundi/workspace/status", "GET", "", http.StatusOK},
+		{"Axis Mundi Get Mode", "/api/axismundi/mode", "GET", "", http.StatusOK},
+		{"Axis Mundi Set Mode", "/api/axismundi/mode", "POST", `{"mode":"AUTO","ingest_policy":"EXECUTE"}`, http.StatusOK},
 		{"Axis Mundi Keep Sync", "/api/axismundi/keep/sync", "POST", "", http.StatusOK},
 		{"Axis Mundi Ingest", "/api/axismundi/ingest", "POST", `{"title":"[EXECUTE] Test Directive","content":"Rebuild pipeline"}`, http.StatusCreated},
 		{"MCP Protocol Tools List", "/api/mcp", "POST", `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`, http.StatusOK},

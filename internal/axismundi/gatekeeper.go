@@ -8,8 +8,13 @@ import (
 	"time"
 )
 
-// TriageNote deterministically analyzes an incoming Google Keep note without consuming AI tokens.
+// TriageNote deterministically analyzes an incoming Google Keep note with default PENDING policy.
 func TriageNote(payload KeepNotePayload) AxisDirective {
+	return TriageNoteWithPolicy(payload, PolicyPending)
+}
+
+// TriageNoteWithPolicy analyzes an incoming note deterministically according to the active Ingestion Policy.
+func TriageNoteWithPolicy(payload KeepNotePayload, policy IngestPolicy) AxisDirective {
 	now := time.Now().UTC()
 	if payload.Timestamp.IsZero() {
 		payload.Timestamp = now
@@ -35,6 +40,13 @@ func TriageNote(payload KeepNotePayload) AxisDirective {
 			strings.Contains(upperText, "#AMRA-EXEC") ||
 			strings.Contains(upperText, "[BUILD]") ||
 			strings.HasPrefix(upperText, "EXEC ") {
+			isExecute = true
+		}
+	}
+
+	// If the global policy is PolicyExecute, automatically promote incoming notes unless explicitly marked draft/ignore
+	if !isExecute && policy == PolicyExecute {
+		if !strings.Contains(upperText, "[DRAFT]") && !strings.Contains(upperText, "[IGNORE]") && !strings.Contains(upperText, "#DRAFT") {
 			isExecute = true
 		}
 	}

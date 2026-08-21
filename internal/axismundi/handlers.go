@@ -140,3 +140,24 @@ func (h *Handlers) TriggerKeepSync(w http.ResponseWriter, r *http.Request) {
 		"timestamp":      time.Now().UTC(),
 	})
 }
+
+func (h *Handlers) GetMode(w http.ResponseWriter, r *http.Request) {
+	state := h.engine.GetControlState()
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(state)
+}
+
+func (h *Handlers) SetMode(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Mode         EngineMode   `json:"mode"`
+		IngestPolicy IngestPolicy `json:"ingest_policy"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid JSON body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	updated := h.engine.SetControlState(body.Mode, body.IngestPolicy)
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(updated)
+}

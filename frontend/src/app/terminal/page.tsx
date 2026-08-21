@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Terminal as TerminalIcon, Radio, RefreshCw, Send, Layers, Cloud, ShieldCheck, CloudOff, ArrowDownCircle } from "lucide-react";
+import { ArrowLeft, Terminal as TerminalIcon, Radio, RefreshCw, Send, Layers, Cloud, CloudOff, ArrowDownCircle, Cpu, Zap } from "lucide-react";
 import { BuckyballCanvas } from "./BuckyballCanvas";
 import { useSSE } from "@/hooks/useSSE";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
@@ -31,6 +31,13 @@ interface WorkspaceStatus {
   items_indexed: number;
 }
 
+interface ControlState {
+  mode: "AUTO" | "MANUAL";
+  ingest_policy: "EXECUTE" | "PENDING";
+  poll_interval_sec: number;
+  updated_at: string;
+}
+
 interface TelemetryLog {
   id: string;
   timestamp: string;
@@ -41,6 +48,7 @@ interface TelemetryLog {
 
 export default function TerminalPage() {
   const [mode, setMode] = useState<"AUTO" | "MANUAL">("AUTO");
+  const [policy, setPolicy] = useState<"EXECUTE" | "PENDING">("EXECUTE");
   const [directives, setDirectives] = useState<AxisDirective[]>([]);
   const [workspaceStatus, setWorkspaceStatus] = useState<WorkspaceStatus | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -68,7 +76,7 @@ export default function TerminalPage() {
   const { playKeystroke, playUIClick, playUIChime } = useAudioEngine();
   const logEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Fetch initial directives from backend
+  // Fetch initial directives
   const fetchDirectives = useCallback(async () => {
     try {
       const res = await fetch("/api/axismundi/directives");
@@ -94,10 +102,54 @@ export default function TerminalPage() {
     }
   }, []);
 
+  // Fetch control state (mode & policy)
+  const fetchControlState = useCallback(async () => {
+    try {
+      const res = await fetch("/api/axismundi/mode");
+      if (res.ok) {
+        const data: ControlState = await res.json();
+        setMode(data.mode);
+        setPolicy(data.ingest_policy);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch control state:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDirectives();
     fetchWorkspaceStatus();
-  }, [fetchDirectives, fetchWorkspaceStatus]);
+    fetchControlState();
+  }, [fetchDirectives, fetchWorkspaceStatus, fetchControlState]);
+
+  // Update control state (Mode or Policy)
+  const updateControlState = useCallback(async (newMode: "AUTO" | "MANUAL", newPolicy: "EXECUTE" | "PENDING") => {
+    playUIClick();
+    try {
+      const res = await fetch("/api/axismundi/mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: newMode, ingest_policy: newPolicy }),
+      });
+      if (res.ok) {
+        const updated: ControlState = await res.json();
+        setMode(updated.mode);
+        setPolicy(updated.ingest_policy);
+        setLogs((prev) => [
+          ...prev,
+          {
+            id: `log-${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString(),
+            source: "SYSTEM",
+            level: "INFO",
+            message: `Control state updated: Mode [${updated.mode}] | Policy [${updated.ingest_policy}]`,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn("Failed to update control state:", err);
+    }
+  }, [playUIClick]);
 
   // Trigger Google Keep Sync
   const handleTriggerKeepSync = useCallback(async () => {
@@ -143,7 +195,7 @@ export default function TerminalPage() {
           timestamp: timeStr,
           source: d.source === "google_keep_api" ? "KEEP_API" : "INGESTION",
           level: "INFO",
-          message: `Ingested note: "${d.title}" (Source: ${d.source})`,
+          message: `Ingested note: "${d.title}" (Status: ${d.status})`,
         },
       ]);
     } else if (lastEvent.type === "axismundi_execute_alert" && lastEvent.payload) {
@@ -160,6 +212,10 @@ export default function TerminalPage() {
           message: `[ALERT] EXECUTE Directive Queued for Agent: "${d.title}"`,
         },
       ]);
+    } else if (lastEvent.type === "axismundi_control_changed" && lastEvent.payload) {
+      const ctrl = lastEvent.payload as ControlState;
+      setMode(ctrl.mode);
+      setPolicy(ctrl.ingest_policy);
     } else if (lastEvent.type === "axismundi_status_changed" && lastEvent.payload) {
       const d = lastEvent.payload as AxisDirective;
       setDirectives((prev) => prev.map((item) => (item.id === d.id ? d : item)));
@@ -260,7 +316,7 @@ export default function TerminalPage() {
       <BuckyballCanvas />
 
       {/* Top TUI Navigation Header */}
-      <header className="w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4 z-20">
+      <header className="w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 z-20">
         <div className="flex items-center gap-3">
           <Link
             href="/"
@@ -282,8 +338,8 @@ export default function TerminalPage() {
           </div>
         </div>
 
-        {/* Status Indicators & Controls */}
-        <div className="flex items-center gap-3 text-xs flex-wrap">
+        {/* Status Indicators & Dual-Mode Controls */}
+        <div className="flex items-center gap-2.5 text-xs flex-wrap">
           {/* Google Workspace Connection Status Badge */}
           <div
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono ${
@@ -320,20 +376,32 @@ export default function TerminalPage() {
             <span>{isSyncing ? "SYNCING..." : "SYNC KEEP"}</span>
           </button>
 
-          {/* Mode Toggle Button */}
+          {/* System Mode Toggle Button (AUTO vs MANUAL) */}
           <button
-            onClick={() => {
-              playUIClick();
-              setMode(mode === "AUTO" ? "MANUAL" : "AUTO");
-            }}
-            className={`px-3 py-1 rounded-lg border text-xs font-mono transition-all ${
+            onClick={() => updateControlState(mode === "AUTO" ? "MANUAL" : "AUTO", policy)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-all ${
               mode === "AUTO"
-                ? "bg-emerald-950/70 border-emerald-500/50 text-emerald-300"
-                : "bg-amber-950/70 border-amber-500/50 text-amber-300 shadow-sm"
+                ? "bg-emerald-950/70 border-emerald-500/50 text-emerald-300 shadow-sm"
+                : "bg-amber-950/70 border-amber-500/50 text-amber-300"
             }`}
-            title="Toggle between AUTO (Zero-Token Background Daemon) and MANUAL (Operator Control)"
+            title="Toggle between AUTO (Zero-Token Background Polling) and MANUAL (On-Demand Ingestion Only)"
           >
-            MODE: [{mode}]
+            <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+            <span>MODE: [{mode}]</span>
+          </button>
+
+          {/* Auto-Ingestion Policy Toggle Button (EXECUTE vs PENDING) */}
+          <button
+            onClick={() => updateControlState(mode, policy === "EXECUTE" ? "PENDING" : "EXECUTE")}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-all ${
+              policy === "EXECUTE"
+                ? "bg-amber-950/80 border-amber-500/60 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+                : "bg-sky-950/80 border-sky-500/60 text-sky-300"
+            }`}
+            title="Auto-Ingestion Policy: In EXECUTE policy, all incoming Keep notes are automatically flagged for agent coding execution."
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <span>INGEST: [{policy}]</span>
           </button>
 
           {/* SSE Live Indicator */}
@@ -348,6 +416,7 @@ export default function TerminalPage() {
             onClick={() => {
               fetchDirectives();
               fetchWorkspaceStatus();
+              fetchControlState();
             }}
             className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-emerald-300 hover:bg-slate-800 transition-all"
             title="Refresh Directives"
@@ -601,7 +670,7 @@ export default function TerminalPage() {
 
       {/* Subtle Terminal Footer */}
       <footer className="w-full border-t border-slate-900/80 px-6 py-3 text-center text-slate-600 text-[10px] font-mono z-10">
-        Axis Mundi v2.0 • Google Workspace Keep, Docs, Sheets & Drive Synchronizer
+        Axis Mundi v2.0 • Dual-Mode System Engine (AUTO/MANUAL) • Auto-Ingest Policy (EXECUTE/PENDING)
       </footer>
     </div>
   );
