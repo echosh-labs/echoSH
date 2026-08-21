@@ -1,278 +1,190 @@
-﻿'use client';
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { Navbar, Workspace } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-
-// Feature Components
-import { UnifiedManifesto } from "@/features/portal/UnifiedManifesto";
-import { FoundationsJourney } from "@/features/portal/FoundationsJourney";
-import { ThresholdPortalView } from "@/features/portal/ThresholdPortal";
-import { FoundationalHero } from "@/features/portal/FoundationalHero";
-import { AlchemicalCrucible } from "@/features/portal/AlchemicalCrucible";
-import { AuthorOpusView } from "@/features/portal/AuthorOpus";
-
-import { DashaEngine } from "@/features/astrology/DashaEngine";
-import { MercurialOracleView } from "@/features/astrology/MercurialOracle";
-import { ContextGraphExplorer } from "@/features/astrology/ContextGraphExplorer";
-
+import React, { useState } from "react";
+import Link from "next/link";
+import { Sparkles, Activity, Archive, Waves, Volume2, VolumeX, ArrowUpRight, Music2 } from "lucide-react";
+import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { SynestheticAudioConsole } from "@/features/audio/SynestheticAudioConsole";
 
-import { useSSE } from "@/hooks/useSSE";
-import { useAudioEngine } from "@/hooks/useAudioEngine";
-import {
-  fetchHealth,
-  fetchFoundationalStatement,
-  fetchContextNodes,
-  fetchDashaOverview,
-  fetchNakshatras,
-  fetchAlchemicalPrinciples,
-  fetchAuthorOpus,
-  fetchDailyOracle,
-  fetchTransitionPortal,
-  fetchFoundationsNarrative,
-  fetchManifesto,
-} from "@/lib/api";
-import {
-  HealthStatus,
-  FoundationalStatement,
-  ContextNode,
-  DashaOverview,
-  Nakshatra,
-  AlchemicalPrinciple,
-  AuthorOpus,
-  OracleContemplation,
-  DashaTransition,
-  FoundationsStage,
-  ManifestoSection,
-} from "@/types";
-
 export default function HomePage() {
-  const [activeWorkspace, setActiveWorkspace] = useState<Workspace>("portal");
-  const [portalSection, setPortalSection] = useState<"manifesto" | "foundations" | "threshold" | "axiom" | "crucible" | "opus">("manifesto");
-  const [astroSection, setAstroSection] = useState<"dasha" | "oracle" | "graph">("dasha");
+  const [showAudioStudio, setShowAudioStudio] = useState<boolean>(false);
+  const {
+    isMuted,
+    toggleMute,
+    isAmbientActive,
+    toggleAmbient,
+    playUIClick,
+  } = useAudioEngine();
 
-  const [health, setHealth] = useState<HealthStatus | null>(null);
-  const [statement, setStatement] = useState<FoundationalStatement | null>(null);
-  const [transition, setTransition] = useState<DashaTransition | null>(null);
-  const [contextNodes, setContextNodes] = useState<ContextNode[]>([]);
-  const [dasha, setDasha] = useState<DashaOverview | null>(null);
-  const [nakshatras, setNakshatras] = useState<Nakshatra[]>([]);
-  const [principles, setPrinciples] = useState<AlchemicalPrinciple[]>([]);
-  const [authorOpus, setAuthorOpus] = useState<AuthorOpus | null>(null);
-  const [oracle, setOracle] = useState<OracleContemplation | null>(null);
-  const [stages, setStages] = useState<FoundationsStage[]>([]);
-  const [manifestoSections, setManifestoSections] = useState<ManifestoSection[]>([]);
-
-  // Audio Engine Hook for Pervasive Acoustic Modulation
-  const { playUIClick, playUIChime, setAmbientFrequency } = useAudioEngine();
-
-  // Real-time Server-Sent Events stream hook
-  const { isConnected: isSSEConnected, lastEvent } = useSSE("/api/stream/events");
-
-  // Initial dynamic data fetch
-  useEffect(() => {
-    fetchHealth().then(setHealth);
-    fetchFoundationalStatement().then(setStatement);
-    fetchTransitionPortal().then(setTransition);
-    fetchContextNodes().then(setContextNodes);
-    fetchDashaOverview().then(setDasha);
-    fetchNakshatras().then(setNakshatras);
-    fetchAlchemicalPrinciples().then(setPrinciples);
-    fetchAuthorOpus().then(setAuthorOpus);
-    fetchDailyOracle().then(setOracle);
-    fetchFoundationsNarrative().then(setStages);
-    fetchManifesto().then(setManifestoSections);
-  }, []);
-
-  // Update ambient frequency when workspace shifts
-  useEffect(() => {
-    if (activeWorkspace === "portal") {
-      setAmbientFrequency(432); // Violet Intuitive Bed
-    } else if (activeWorkspace === "astrology") {
-      setAmbientFrequency(141.27); // Mercury Planetary Frequency
-    } else if (activeWorkspace === "audio") {
-      setAmbientFrequency(528); // Solfeggio Ascent
-    }
-  }, [activeWorkspace, setAmbientFrequency]);
-
-  // Reactive updates from live SSE stream + Audio Alerts
-  useEffect(() => {
-    if (!lastEvent) return;
-    if (lastEvent.type === "oracle_pulse" && lastEvent.payload) {
-      setOracle(lastEvent.payload);
-      playUIChime(741); // Epistemic chime on live oracle pulse
-    }
-  }, [lastEvent, playUIChime]);
-
-  const handlePortalSectionChange = (sec: "manifesto" | "foundations" | "threshold" | "axiom" | "crucible" | "opus") => {
+  const handleToggleStudio = () => {
     playUIClick();
-    setPortalSection(sec);
-  };
-
-  const handleAstroSectionChange = (sec: "dasha" | "oracle" | "graph") => {
-    playUIClick();
-    setAstroSection(sec);
+    setShowAudioStudio(!showAudioStudio);
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
-      <Navbar
-        health={health}
-        activeWorkspace={activeWorkspace}
-        setActiveWorkspace={setActiveWorkspace}
-        isSSEConnected={isSSEConnected}
-      />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500/20">
+      {/* Top Quiet Minimal Bar */}
+      <header className="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-serif font-bold text-sm">
+            ☿
+          </div>
+          <div>
+            <span className="font-serif tracking-widest font-bold text-slate-200 text-sm">
+              FOUNDATIONS
+            </span>
+            <p className="text-[10px] text-slate-500 font-mono tracking-wider">ECHO SH • JUSTIN ANDREW WOOD</p>
+          </div>
+        </div>
 
-      <main className="flex-1 pb-16 space-y-8">
-        {/* Workspace 1: Portal & Philosophy */}
-        {activeWorkspace === "portal" && (
-          <div className="space-y-8 animate-fadeIn">
-            {/* Sub-Navigation Pills */}
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <button
-                onClick={() => handlePortalSectionChange("manifesto")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                  portalSection === "manifesto"
-                    ? "bg-slate-800 text-hermetic-gold border border-hermetic-gold/40 font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                }`}
+        {/* Minimal Audio Controls */}
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => toggleAmbient(432)}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border transition-all ${
+              isAmbientActive
+                ? "bg-violet-950/80 border-violet-500/60 text-violet-300 shadow-[0_0_12px_rgba(139,92,246,0.25)] animate-pulse"
+                : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200"
+            }`}
+            title="Toggle Continuous Generative Ambient Drone (432 Hz)"
+          >
+            <Waves className={`w-3 h-3 ${isAmbientActive ? "text-violet-400" : "text-slate-500"}`} />
+            <span>{isAmbientActive ? "AMBIENT: 432 HZ" : "AMBIENT"}</span>
+          </button>
+
+          <button
+            onClick={toggleMute}
+            className={`p-1.5 rounded-full border transition-all ${
+              isMuted
+                ? "bg-rose-950/80 border-rose-500/50 text-rose-400"
+                : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-emerald-300"
+            }`}
+            title={isMuted ? "Unmute Audio" : "Mute Audio"}
+          >
+            {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+      </header>
+
+      {/* Main Minimalist Center Stage */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-12 flex flex-col justify-center">
+        {!showAudioStudio ? (
+          <div className="space-y-12 animate-fadeIn">
+            {/* Minimal Typographic Hero */}
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-[11px] font-mono text-emerald-400">
+                <Sparkles className="w-3 h-3" />
+                <span>TRI-PARTITE CONSCIOUSNESS & ACOUSTIC SYNTHESIS</span>
+              </div>
+              <h1 className="text-4xl sm:text-6xl font-serif font-bold text-slate-100 tracking-tight leading-tight">
+                The Architecture of Intuition & Sound.
+              </h1>
+              <p className="text-slate-400 text-base sm:text-lg font-light max-w-2xl leading-relaxed">
+                A contemplative exploration of cognitive evolution, procedural Web Audio 2.0 synthesis, and visual narrative architecture.
+              </p>
+            </div>
+
+            {/* Clean Navigation Menu */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+              {/* Option 01: Foundations Route */}
+              <Link
+                href="/foundations"
+                onClick={playUIClick}
+                className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-emerald-500/40 transition-all space-y-3"
               >
-                Fundamental Manifesto
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-emerald-400 font-medium">01 / STORY & ARTWORK</span>
+                  <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                </div>
+                <h2 className="text-xl font-serif font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">
+                  Foundations Journey
+                </h2>
+                <p className="text-xs text-slate-400 font-light leading-relaxed">
+                  Enter the upgraded visual story engine. Experience high-resolution scene artwork with tuned harmonic frequencies (432 Hz, 528 Hz, 141.27 Hz).
+                </p>
+              </Link>
+
+              {/* Option 02: Synesthetic Audio Studio */}
+              <button
+                onClick={handleToggleStudio}
+                className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-emerald-500/40 transition-all text-left space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-emerald-400 font-medium">02 / DSP SYNTHESIS</span>
+                  <Music2 className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                </div>
+                <h2 className="text-xl font-serif font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">
+                  Synesthetic Studio
+                </h2>
+                <p className="text-xs text-slate-400 font-light leading-relaxed">
+                  Explore FM synthesis, physical Karplus-Strong plucked strings, planetary celestial octaves, and interactive keyboard synesthesia.
+                </p>
               </button>
-              <button
-                onClick={() => handlePortalSectionChange("foundations")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                  portalSection === "foundations"
-                    ? "bg-slate-800 text-violet-300 border border-violet-500/40 font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                }`}
+
+              {/* Option 03: Axis Mundi Archive */}
+              <a
+                href="/archive/axis-mundi/"
+                className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-slate-700 transition-all space-y-3"
               >
-                Foundations Staircase
-              </button>
-              <button
-                onClick={() => handlePortalSectionChange("threshold")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                  portalSection === "threshold"
-                    ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                }`}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-500">03 / LEGACY ARCHIVE</span>
+                  <Archive className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
+                </div>
+                <h2 className="text-xl font-serif font-bold text-slate-200 group-hover:text-slate-100 transition-colors">
+                  Axis Mundi Archive
+                </h2>
+                <p className="text-xs text-slate-400 font-light leading-relaxed">
+                  Access the original 2025 Axis Mundi research archive and interactive Buckyball visualizer.
+                </p>
+              </a>
+
+              {/* Option 04: Foundations Archive */}
+              <a
+                href="/archive/foundations/"
+                className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-slate-700 transition-all space-y-3"
               >
-                2028 Threshold Portal
-              </button>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-500">04 / ORIGINAL APP</span>
+                  <Archive className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
+                </div>
+                <h2 className="text-xl font-serif font-bold text-slate-200 group-hover:text-slate-100 transition-colors">
+                  Foundations Archive
+                </h2>
+                <p className="text-xs text-slate-400 font-light leading-relaxed">
+                  Preserved original standalone Foundations story engine and telemetry visualizer.
+                </p>
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <span className="text-xs font-mono text-emerald-400 font-semibold">{"//"} ACOUSTIC LABORATORY</span>
+                <h2 className="text-2xl font-serif font-bold text-slate-100">Synesthetic Audio Console</h2>
+              </div>
               <button
-                onClick={() => handlePortalSectionChange("axiom")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                  portalSection === "axiom"
-                    ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                }`}
+                onClick={handleToggleStudio}
+                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-mono text-slate-300 transition-all"
               >
-                Foundational Axiom
-              </button>
-              <button
-                onClick={() => handlePortalSectionChange("crucible")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                  portalSection === "crucible"
-                    ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                }`}
-              >
-                Alchemical Crucible
-              </button>
-              <button
-                onClick={() => handlePortalSectionChange("opus")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                  portalSection === "opus"
-                    ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                }`}
-              >
-                Justin Andrew Wood (Opus)
+                Close Studio
               </button>
             </div>
 
-            {/* Sub-Section Content */}
-            {portalSection === "manifesto" && (
-              <UnifiedManifesto sections={manifestoSections} />
-            )}
-            {portalSection === "foundations" && (
-              <FoundationsJourney stages={stages} />
-            )}
-            {portalSection === "threshold" && transition && (
-              <ThresholdPortalView transition={transition} />
-            )}
-            {portalSection === "axiom" && statement && (
-              <FoundationalHero statement={statement} />
-            )}
-            {portalSection === "crucible" && (
-              <AlchemicalCrucible principles={principles} />
-            )}
-            {portalSection === "opus" && authorOpus && (
-              <AuthorOpusView opus={authorOpus} />
-            )}
-          </div>
-        )}
-
-        {/* Workspace 2: Mercurial Engine */}
-        {activeWorkspace === "astrology" && (
-          <div className="space-y-8 animate-fadeIn">
-            {/* Sub-Navigation Pills */}
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <button
-                onClick={() => handleAstroSectionChange("dasha")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                  astroSection === "dasha"
-                    ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                }`}
-              >
-                17-Year Dasha Chronology
-              </button>
-              <button
-                onClick={() => handleAstroSectionChange("oracle")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                  astroSection === "oracle"
-                    ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                }`}
-              >
-                Mercurial Oracle
-              </button>
-              <button
-                onClick={() => handleAstroSectionChange("graph")}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                  astroSection === "graph"
-                    ? "bg-slate-800 text-emerald-300 border border-emerald-500/40 font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                }`}
-              >
-                BoltDB Context Graph
-              </button>
-            </div>
-
-            {/* Sub-Section Content */}
-            {astroSection === "dasha" && dasha && (
-              <DashaEngine dasha={dasha} nakshatras={nakshatras} />
-            )}
-            {astroSection === "oracle" && oracle && (
-              <MercurialOracleView oracle={oracle} />
-            )}
-            {astroSection === "graph" && (
-              <ContextGraphExplorer initialNodes={contextNodes} />
-            )}
-          </div>
-        )}
-
-        {/* Workspace 3: Synesthetic Sound Studio */}
-        {activeWorkspace === "audio" && (
-          <div className="pt-4">
             <SynestheticAudioConsole />
           </div>
         )}
       </main>
 
-      <Footer />
+      {/* Clean Minimal Footer */}
+      <footer className="w-full max-w-6xl mx-auto px-6 py-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-500">
+        <div>© 2026 Justin Andrew Wood • echoSH Labs</div>
+        <div className="flex items-center gap-4">
+          <Link href="/foundations" className="hover:text-emerald-400 transition-colors">Foundations</Link>
+          <a href="/archive/axis-mundi/" className="hover:text-emerald-400 transition-colors">Axis Mundi</a>
+          <a href="/archive/foundations/" className="hover:text-emerald-400 transition-colors">Archive</a>
+        </div>
+      </footer>
     </div>
   );
 }

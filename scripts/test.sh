@@ -80,6 +80,7 @@ assert_endpoint "/api/alchemical" 200 "Alchemical Crucible"
 assert_endpoint "/api/author" 200 "Author Opus & Essays"
 assert_endpoint "/archive/axis-mundi/" 200 "Axis Mundi Embedded Archive"
 assert_endpoint "/archive/foundations/" 200 "Foundations Embedded Archive"
+assert_endpoint "/foundations" 200 "Dedicated Foundations Story Route"
 assert_endpoint "/" 200 "Next.js Static SPA Root"
 
 echo ""
