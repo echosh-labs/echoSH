@@ -121,37 +121,38 @@ export default function HomePage() {
                 </p>
               </button>
 
-              {/* Option 03: Axis Mundi Archive */}
+              {/* Option 03: Axis Mundi TUI Console */}
+              <Link
+                href="/terminal"
+                onClick={playUIClick}
+                className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-emerald-500/40 transition-all space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-emerald-400 font-medium">03 / AMRA CORE TUI</span>
+                  <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                </div>
+                <h2 className="text-xl font-serif font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">
+                  Axis Mundi Terminal
+                </h2>
+                <p className="text-xs text-slate-400 font-light leading-relaxed">
+                  Interactive TUI command center. Monitor zero-token background Keep ingestion, live SSE telemetry streams, and 3D Buckyball dynamics.
+                </p>
+              </Link>
+
+              {/* Option 04: Legacy Archives */}
               <a
                 href="/archive/axis-mundi/"
                 className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-slate-700 transition-all space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-slate-500">03 / LEGACY ARCHIVE</span>
+                  <span className="text-xs font-mono text-slate-500">04 / PRESERVED ARCHIVES</span>
                   <Archive className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
                 </div>
                 <h2 className="text-xl font-serif font-bold text-slate-200 group-hover:text-slate-100 transition-colors">
-                  Axis Mundi Archive
+                  Historical Archives
                 </h2>
                 <p className="text-xs text-slate-400 font-light leading-relaxed">
-                  Access the original 2025 Axis Mundi research archive and interactive Buckyball visualizer.
-                </p>
-              </a>
-
-              {/* Option 04: Foundations Archive */}
-              <a
-                href="/archive/foundations/"
-                className="group p-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/80 hover:border-slate-700 transition-all space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-slate-500">04 / ORIGINAL APP</span>
-                  <Archive className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
-                </div>
-                <h2 className="text-xl font-serif font-bold text-slate-200 group-hover:text-slate-100 transition-colors">
-                  Foundations Archive
-                </h2>
-                <p className="text-xs text-slate-400 font-light leading-relaxed">
-                  Preserved original standalone Foundations story engine and telemetry visualizer.
+                  Access the original 2025 Axis Mundi workspace research archive and standalone Foundations story engine.
                 </p>
               </a>
             </div>

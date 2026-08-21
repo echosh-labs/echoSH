@@ -81,6 +81,7 @@ assert_endpoint "/api/axismundi/directives/pending" 200 "Axis Mundi Pending Dire
 assert_endpoint "/archive/axis-mundi/" 200 "Axis Mundi Embedded Archive"
 assert_endpoint "/archive/foundations/" 200 "Foundations Embedded Archive"
 assert_endpoint "/foundations" 200 "Dedicated Foundations Story Route"
+assert_endpoint "/terminal" 200 "Axis Mundi Interactive TUI Route"
 assert_endpoint "/" 200 "Next.js Static SPA Root"
 
 echo ""
