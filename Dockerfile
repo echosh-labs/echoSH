@@ -1,5 +1,5 @@
 # Stage 1: Build the Next.js static UI export
-FROM node:20-alpine AS build-frontend
+FROM node:22-alpine AS build-frontend
 WORKDIR /src/frontend
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY frontend/package.json frontend/pnpm-lock.yaml* frontend/package-lock.json* ./
