@@ -1,0 +1,10 @@
+.git
+.gcloudignore
+.gitignore
+node_modules
+frontend/node_modules
+archive/**/node_modules
+frontend/.next
+mercury-dasha-server
+data/*.db
+data/*.db-*

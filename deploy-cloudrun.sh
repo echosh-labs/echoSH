@@ -5,9 +5,9 @@
 set -euo pipefail
 
 # Configuration
-PROJECT_ID="${GCP_PROJECT:-echosh-labs-prod}"
+PROJECT_ID="${GCP_PROJECT:-amra-core}"
 REGION="${GCP_REGION:-northamerica-northeast1}"
-REPO_NAME="${ARTIFACT_REPO:-echosh-repo}"
+REPO_NAME="${ARTIFACT_REPO:-axis-repo}"
 SERVICE_NAME="${SERVICE_NAME:-echosh-labs}"
 IMAGE_NAME="mercury-dasha"
 IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:latest"
