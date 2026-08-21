@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from "react";
 import { Volume2, VolumeX } from "lucide-react";
@@ -26,7 +26,7 @@ export function SynestheticAudioConsole() {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-emerald-400 font-mono text-sm tracking-wider uppercase font-semibold">
-              // Procedural DSP Engine
+              {"//"} Procedural DSP Engine
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
               Web Audio 2.0

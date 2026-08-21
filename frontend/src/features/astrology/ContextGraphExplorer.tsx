@@ -54,7 +54,7 @@ export function ContextGraphExplorer({ initialNodes }: ContextGraphExplorerProps
           Relative Context & Knowledge Graph
         </h2>
         <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto mt-2">
-          Explore how the foundational qualities of Mercury dynamically interconnect across hermetic philosophy, astrological nakshatras, alchemical principles, and Justin Andrew Wood's authored works.
+          Explore how the foundational qualities of Mercury dynamically interconnect across hermetic philosophy, astrological nakshatras, alchemical principles, and Justin Andrew Wood&apos;s authored works.
         </p>
       </div>
 

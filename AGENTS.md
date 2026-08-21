@@ -40,6 +40,13 @@
 - **Zero Lingering Tasks Mandate:** The agent MUST ensure that all background tasks and test servers are cleanly terminated (`kill`) before completing a turn.
 - **Quiescence Before User Testing:** The user will wait until there are NO active tasks in the Antigravity container prior to testing. The agent must never leave rogue processes holding the BoltDB (`data/mercury_context.db`) file lock or network ports.
 
+### 6. CONTINUOUS TEST-DRIVEN COVERAGE & ITERATIVE TESTING (CRITICAL)
+- **Test As You Build:** Whenever adding or modifying Go backend packages (`internal/*`) or frontend utilities/components (`frontend/src/*`), the agent MUST author or update corresponding unit and integration tests.
+  - Go Backend: Add tests in `*_test.go` verifying unit logic, error branches, and race conditions (`go test -v -race ./...`).
+  - Frontend: Add unit tests in `src/**/*.test.ts` via Vitest, maintain TypeScript type safety (`pnpm typecheck`), and enforce zero lint errors (`pnpm lint`).
+- **100% Green Verification:** Every agent turn MUST conclude by running `make test` (or `bash scripts/test.sh`) to verify that all 3 testing tiers (Go unit/race tests, Frontend typecheck/unit/lint, and HTTP route assertions) pass with zero errors.
+
+
 ---
 
 ## 2. Core Technology Stack

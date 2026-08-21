@@ -155,6 +155,8 @@ export const audioPresets: AudioPreset[] = [
     category: "Percussion",
     description: "Punchy sub-bass kick with rapid pitch descent and warm lowpass filtering.",
     blueprint: {
+      id: "808-kick",
+      name: "808 Kick",
       sources: [{ type: "oscillator", oscillatorType: "sine", frequency: 150 }],
       envelope: { attack: 0.01, decay: 0.3, sustain: 0.0, release: 0.05 },
       filter: { type: "lowpass", frequency: 500, Q: 1.5 },
@@ -168,6 +170,8 @@ export const audioPresets: AudioPreset[] = [
     category: "Percussion",
     description: "White noise snap blended with a resonant sine body.",
     blueprint: {
+      id: "snare-drum",
+      name: "Snare Drum",
       sources: [
         { type: "noise", noiseType: "white" },
         { type: "oscillator", oscillatorType: "sine", frequency: 200 },
@@ -183,6 +187,8 @@ export const audioPresets: AudioPreset[] = [
     category: "Percussion",
     description: "Crisp, metallic hi-hat using highpass filtered white noise.",
     blueprint: {
+      id: "closed-hi-hat",
+      name: "Closed Hi-Hat",
       sources: [{ type: "noise", noiseType: "white" }],
       envelope: { attack: 0.005, decay: 0.03, sustain: 0.0, release: 0.01 },
       filter: { type: "highpass", frequency: 8000, Q: 6 },
@@ -195,6 +201,8 @@ export const audioPresets: AudioPreset[] = [
     category: "Sound Effects",
     description: "Classic sci-fi laser sound with rapid downward pitch sweep.",
     blueprint: {
+      id: "laser-blast",
+      name: "Laser Blast",
       sources: [{ type: "oscillator", oscillatorType: "square", frequency: 1200 }],
       envelope: { attack: 0.01, decay: 0.15, sustain: 0.0, release: 0.01 },
       lfo: { type: "sine", frequency: 40, depth: 1000, target: "frequency" },
@@ -207,6 +215,8 @@ export const audioPresets: AudioPreset[] = [
     category: "Instruments",
     description: "Multi-octave organ voicing with rich harmonic reverberation.",
     blueprint: {
+      id: "church-organ",
+      name: "Church Organ",
       sources: [
         { type: "oscillator", oscillatorType: "sawtooth", frequency: 440 },
         { type: "oscillator", oscillatorType: "sawtooth", frequency: 880, detune: 5 },
@@ -223,6 +233,8 @@ export const audioPresets: AudioPreset[] = [
     category: "Pads & Drones",
     description: "Bright shimmering pad with detuned triangle waves and stereo delay.",
     blueprint: {
+      id: "crystal-pad",
+      name: "Crystal Pad",
       sources: [
         { type: "oscillator", oscillatorType: "triangle", frequency: 880, detune: 7 },
         { type: "oscillator", oscillatorType: "triangle", frequency: 1320, detune: -7 },

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from "react";
 import { Sparkles, ArrowRight, Play, Compass, Eye, ShieldCheck } from "lucide-react";
@@ -47,7 +47,7 @@ export function FoundationsJourney({ stages }: FoundationsJourneyProps) {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-emerald-400 font-mono text-sm tracking-wider uppercase font-semibold">
-              // The Mythos of Foundations
+              {"//"} The Mythos of Foundations
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-violet-500/10 text-violet-300 border border-violet-500/30">
               Tripartite Consciousness Staircase
@@ -125,7 +125,7 @@ export function FoundationsJourney({ stages }: FoundationsJourneyProps) {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
             <div>
               <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400">
-                // Stage 0{activeStage.stage_number} Manifestation
+                {"//"} Stage 0{activeStage.stage_number} Manifestation
               </span>
               <h3 className="text-2xl font-serif font-bold text-slate-100 mt-0.5">
                 {activeStage.title}

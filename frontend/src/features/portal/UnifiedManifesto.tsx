@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from "react";
 import { Sparkles, Scroll, Play, ShieldAlert, Sun, BookOpen } from "lucide-react";
@@ -22,7 +22,7 @@ export function UnifiedManifesto({ sections }: UnifiedManifestoProps) {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-emerald-400 font-mono text-sm tracking-wider uppercase font-semibold">
-              // Sacred Doctrine
+              {"//"} Sacred Doctrine
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-hermetic-gold/10 text-hermetic-gold border border-hermetic-gold/30">
               Corpus Hermeticum & The Quicksilver Symphony

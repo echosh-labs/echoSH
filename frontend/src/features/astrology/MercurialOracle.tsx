@@ -24,7 +24,7 @@ export function MercurialOracleView({ oracle }: MercurialOracleProps) {
           Daily Mercurial Contemplation
         </h2>
         <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto mt-2">
-          Seeded dynamically in BoltDB: algorithmic daily aphorisms and meditative exercises aligned with Mercury's volatile intellect.
+          Seeded dynamically in BoltDB: algorithmic daily aphorisms and meditative exercises aligned with Mercury&apos;s volatile intellect.
         </p>
       </div>
 

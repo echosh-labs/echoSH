@@ -11,10 +11,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-//go:embed frontend/out/*
+//go:embed all:frontend/out
 var frontendEmbedFS embed.FS
 
-//go:embed archive/*
+//go:embed all:archive
 var archiveEmbedFS embed.FS
 
 // RegisterUIRoutes configures the HTTP router to serve the embedded Next.js static export

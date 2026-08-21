@@ -5,13 +5,31 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
 echo "=========================================================="
-echo " [TEST] Running Automated Mercury Dasha Test Suite"
+echo " [TEST] Running Automated Mercury Dasha Multi-Tier Test Suite"
 echo "=========================================================="
 
 # 1. Kill any existing instances to avoid BoltDB lock collision
 killall -9 mercury-dasha-server 2>/dev/null || true
 
-# 2. Ensure executable binary is compiled
+# --- STAGE 1: Go Backend Unit & Concurrency Tests ---
+echo ""
+echo "=== STAGE 1/3: Go Backend Unit & Race Tests ==="
+go test -v -race ./...
+
+# --- STAGE 2: Frontend Typecheck, Unit Tests & Lint ---
+echo ""
+echo "=== STAGE 2/3: Frontend Tests & Linting ==="
+cd frontend
+pnpm typecheck
+pnpm test
+pnpm lint
+cd ..
+
+# --- STAGE 3: Ephemeral Binary HTTP Route Assertions ---
+echo ""
+echo "=== STAGE 3/3: Ephemeral HTTP Contract Assertions ==="
+
+# Ensure executable binary is compiled
 if [ ! -f "./mercury-dasha-server" ]; then
     echo "Executable binary not found. Running build pipeline..."
     bash scripts/build.sh
@@ -33,9 +51,6 @@ trap cleanup EXIT
 
 # Wait for server to boot
 sleep 1.2
-
-echo ""
-echo "--- Executing HTTP Route Assertions ---"
 
 assert_endpoint() {
     local route="$1"
@@ -69,6 +84,6 @@ assert_endpoint "/" 200 "Next.js Static SPA Root"
 
 echo ""
 echo "=========================================================="
-echo "✅ All 11 Automated Tests Passed Successfully!"
+echo "✅ All Backend, Frontend, and HTTP Integration Tests PASSED!"
 echo "   Zero lingering processes. Environment is quiescent."
 echo "=========================================================="
