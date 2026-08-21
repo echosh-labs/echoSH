@@ -28,26 +28,40 @@ A full-stack esoteric digital compendium, interactive astrological engine, and l
 
 ---
 
-## Quick Start
+## Quick Start & Standardized Scripts
 
-### 1. Start Infrastructure (Postgres)
+The project provides unified `make` targets and modular scripts in `scripts/`:
+
+### 1. Automated Test Suite (Assertions on 11 HTTP Endpoints)
 ```bash
-docker compose up -d
+make test
+# or: bash scripts/test.sh
 ```
 
-### 2. Start Go Backend
+### 2. Live Development Mode (Go Backend on :8080 + Next.js Hot-Reload on :3000)
 ```bash
-cd backend
-go run cmd/server/main.go
-# API runs on http://localhost:8080
+make dev
+# or: bash scripts/dev.sh
 ```
 
-### 3. Start Next.js Frontend
+### 3. Production Build (Single 11MB Binary with Embedded UI)
 ```bash
-cd frontend
-pnpm dev
-# Web app runs on http://localhost:3000
+make build
+# or: bash scripts/build.sh
 ```
+
+### 4. Run Standalone Singular Binary
+```bash
+make run
+# or directly: ./mercury-dasha-server -port 3000
+```
+
+### 5. Clean Environment and Release File Locks
+```bash
+make clean
+# or: bash scripts/clean.sh
+```
+
 
 ---
 
