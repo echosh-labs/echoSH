@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-W077PR428Q"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-W077PR428Q');
+  </script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>C60 Buckyball Viewer</title>
+  <style>
+    html,body { height:100%; margin:0 }
+    #viewer { width:100%; height:100vh; display:block }
+    .overlay { position: absolute; left:12px; top:12px; z-index:2; background:rgba(255,255,255,0.9); padding:8px; border-radius:6px }
+  </style>
+</head>
+<body>
+  <div class="overlay">Controls: drag to orbit, scroll to zoom</div>
+  <div id="viewer"></div>
+
+  <script type="module">
+    import * as THREE from 'https://esm.sh/three@0.159.0';
+    import { OrbitControls } from 'https://esm.sh/three@0.159.0/examples/jsm/controls/OrbitControls.js';
+
+    const container = document.getElementById('viewer');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf7f7fb);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    const light = new THREE.DirectionalLight(0xffffff, 0.8);
+    light.position.set(5,5,5);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+    // fetch generated JSON (run `go run main.go -json vertices.json` first)
+    fetch('./vertices.json').then(r => {
+      if (!r.ok) throw new Error('vertices.json not found; run go run main.go -json vertices.json');
+      return r.json();
+    }).then(data => {
+      const vertices = data.vertices;
+      const edges = data.edges;
+
+      // points
+      const pts = new Float32Array(vertices.length * 3);
+      for (let i = 0; i < vertices.length; i++) {
+        pts[i*3] = vertices[i][0];
+        pts[i*3+1] = vertices[i][1];
+        pts[i*3+2] = vertices[i][2];
+      }
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+      const mat = new THREE.PointsMaterial({ color: 0x1f77b4, size: 0.06 });
+      scene.add(new THREE.Points(geom, mat));
+
+      // edges as lines
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x666666 });
+      edges.forEach(e => {
+        const i = e[0], j = e[1];
+        const a = new THREE.Vector3(vertices[i][0], vertices[i][1], vertices[i][2]);
+        const b = new THREE.Vector3(vertices[j][0], vertices[j][1], vertices[j][2]);
+        const lg = new THREE.BufferGeometry().setFromPoints([a,b]);
+        scene.add(new THREE.Line(lg, lineMat));
+      });
+
+      animate();
+    }).catch(err => {
+      const msg = document.createElement('div');
+      msg.style.position='absolute'; msg.style.left='12px'; msg.style.bottom='12px'; msg.style.background='rgba(255,230,230,0.95)'; msg.style.padding='8px'; msg.style.borderRadius='6px';
+      msg.textContent = err.message;
+      document.body.appendChild(msg);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

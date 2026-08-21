@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foundational Story | A Journey of Healing and Revelation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="story-container">
+    <h1 class="story-title" id="story-title">A Journey of Healing</h1>
+    <p class="story-subtitle" id="story-subtitle">The Interpretation Loop</p>
+    
+    <div class="slides-wrapper" id="slides-wrapper">
+      <!-- Slides will be dynamically injected here -->
+      <div class="slide active" id="loading-slide">
+        <div class="image-container" style="display: flex; align-items: center; justify-content: center; background: #14121E;">
+          <div style="text-align: center; color: var(--text-secondary);">
+            <div style="font-size: 1.5rem; margin-bottom: 8px; font-family: var(--font-serif);">Initializing narrative...</div>
+            <div>Reading storyboards and scene telemetry</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <button class="btn" id="prev-btn" disabled>Previous</button>
+      <div class="dots" id="dots-container">
+        <!-- Dots will be dynamically injected here -->
+      </div>
+      <button class="btn" id="next-btn" disabled>Next</button>
+    </div>
+  </div>
+
+  <footer>
+    Foundations Interpretive Engine • Powered by Antigravity
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

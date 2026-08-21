@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W077PR428Q"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-W077PR428Q');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foundations | Autonomous Ingestion & Workspace Orchestration</title>
+    <link rel="icon" href="https://echosh-labs.com/echoSH_256.png" type="image/png" sizes="256x256">
+    <link rel="apple-touch-icon" href="https://echosh-labs.com/echoSH_256.png">
+    <meta name="description"
+        content="Foundations is an industrial-grade autonomous orchestration engine that turns voice directives into Google Workspace action, creative storyboard assets, and system deployments.">
+    <link rel="canonical" href="https://echosh-labs.com/axis-mundi">
+    <meta name="theme-color" content="#0a0c10">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Foundations | Autonomous AI Orchestration">
+    <meta property="og:description" content="Turn voice directives into autonomous workspace actions, creative storyboards, and compiled deployments.">
+    <meta property="og:url" content="https://echosh-labs.com/axis-mundi">
+    <meta property="og:image" content="https://echosh-labs.com/axis-mundi/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Foundations | Autonomous AI Orchestration">
+    <meta name="twitter:description" content="Turn voice directives into autonomous workspace actions, creative storyboards, and compiled deployments.">
+    <meta name="twitter:image" content="https://echosh-labs.com/axis-mundi/og.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./dist/landing.nK5EWG0B.css" xintegrity="sha384-nK5EWG0BraNhWzn+C9OHEia8SlJxZ1gxbOmzCvMArTRR7P2lquPdgbkzqVtSUDPm" crossorigin="anonymous">
+    
+    <style>
+        :root {
+            --bg: #0a0c10;
+            --panel: #0f1117;
+            --panel-2: #161a23;
+            --text: #e8ecf2;
+            --muted: #9aa4b5;
+            --accent: #1dd3b0;
+            --accent-glow: rgba(29, 211, 176, 0.15);
+            --accent-violet: #8b5cf6;
+            --accent-amber: #f5a524;
+            --border: #1f2430;
+        }
+
+        body {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.08), transparent 30%),
+                        radial-gradient(circle at 90% 10%, rgba(29, 211, 176, 0.08), transparent 35%),
+                        radial-gradient(circle at 50% 80%, rgba(245, 165, 36, 0.05), transparent 40%),
+                        var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        .font-space {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.003));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 16px 45px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(29, 211, 176, 0.2);
+            box-shadow: 0 20px 50px rgba(29, 211, 176, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glow-dot {
+            box-shadow: 0 0 12px var(--accent);
+        }
+
+        /* SVG Flow Chart Animation */
+        .flow-line {
+            stroke-dasharray: 8;
+            animation: dash 30s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+
+        .pulse-node {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.15);
+                opacity: 0.8;
+                filter: drop-shadow(0 0 8px var(--accent));
+            }
+        }
+
+        .shimmer-text-foundations {
+            background-image: linear-gradient(90deg, #8b5cf6, #1dd3b0, #f5a524, #8b5cf6);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shimmer 12s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+
+        /* Carousel Navigation dots */
+        .carousel-dot.active {
+            background-color: var(--accent);
+            width: 24px;
+        }
+        
+        /* Custom scrollbar for console */
+        .console-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .console-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+        .console-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
+        }
+        .console-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(29, 211, 176, 0.3);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-slate-100 relative selection:bg-emerald-500/20 selection:text-emerald-300">
+    <!-- Background Animated Grid -->
+    <div id="bucky-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.15; pointer-events: none;"></div>
+
+    <div class="max-w-6xl mx-auto px-6 py-10 md:py-14">
+        
+        <!-- Header -->
+        <header class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between border-b border-white/[0.04] pb-8">
+            <div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-3.5 py-1 text-xs text-[var(--muted)] font-mono bg-white/[0.02]">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse glow-dot"></span>
+                    <span>Orchestrator Node active</span>
+                    <span class="hidden sm:inline">| Domain: echosh-labs.com</span>
+                </div>
+                <h1 class="mt-4 text-4xl font-bold font-space tracking-tight text-white flex items-center gap-3">
+                    <span class="shimmer-text-foundations">foundations</span>
+                </h1>
+                <p class="mt-2 text-sm text-[var(--muted)]">Autonomous Living through Authentic Freedom</p>
+            </div>
+            
+            <nav class="flex items-center gap-4 text-xs font-mono">
+                <a class="px-4 py-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] transition-colors" href="#architecture">How It Works</a>
+                <a class="px-4 py-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] transition-colors" href="#storyboards">Storyboards</a>
+                <a class="px-4 py-2 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] transition-colors" href="#telemetry">Logs</a>
+                <a class="px-4 py-2 rounded-lg bg-emerald-400 text-charcoal-900 hover:bg-emerald-300 font-bold transition-all transition-transform duration-200" href="./tui.html">Launch TUI</a>
+            </nav>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="mt-16 md:mt-24 text-center max-w-3xl mx-auto space-y-8">
+            <h2 class="text-4xl md:text-6xl font-space font-bold text-white leading-tight tracking-tight">
+                Authentic Freedom <br class="hidden md:inline" />
+                <span class="text-emerald-400">Through Pure Automation</span>
+            </h2>
+            <p class="text-lg md:text-xl text-slate-300 leading-relaxed font-light">
+                Foundations is a multi-pipeline orchestrator designed to free human consciousness from mechanical screen interaction. Speak to Gemini on mobile; Foundations processes your intent, generates media storyboards, compiles custom codebases, and writes directly to your professional Google Workspace.
+            </p>
+            
+            <div class="flex flex-wrap justify-center gap-4 pt-4">
+                <a class="px-8 py-3.5 rounded-full font-bold bg-emerald-400 text-charcoal-900 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(29,211,176,0.3)] transition-all flex items-center gap-2" href="./tui.html">
+                    Open TUI Command Center 
+                    <span class="text-lg">→</span>
+                </a>
+                <a class="px-8 py-3.5 rounded-full font-bold border border-white/[0.1] bg-white/[0.02] hover:bg-white/[0.06] transition-all" href="./mcp/">
+                    Explore MCP Protocol
+                </a>
+            </div>
+        </section>
+
+        <!-- Dynamic Animated Pipeline Diagram -->
+        <section id="architecture" class="mt-20 md:mt-32 glass-panel p-6 md:p-10 relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/[0.02] to-violet-500/[0.02] pointer-events-none"></div>
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.05] pb-6 mb-8">
+                <div>
+                    <h3 class="text-xs uppercase tracking-[0.15em] text-emerald-400 font-mono">Foundations Chassis</h3>
+                    <h4 class="text-2xl font-space font-semibold text-white mt-1">Multi-Pipeline Core Topology</h4>
+                </div>
+                <div class="flex gap-2">
+                    <span class="tag bg-emerald-500/10 text-emerald-300 text-[10px] uppercase font-mono border border-emerald-500/20">Operational</span>
+                    <span class="tag bg-violet-500/10 text-violet-300 text-[10px] uppercase font-mono border border-violet-500/20">Go SSE Stream</span>
+                </div>
+            </div>
+
+            <!-- SVG Pipeline Flow -->
+            <div class="relative w-full overflow-x-auto console-scrollbar py-6 min-w-[750px]">
+                <svg viewBox="0 0 900 280" class="w-full h-auto">
+                    <!-- Definitions for gradients -->
+                    <defs>
+                        <linearGradient id="violet-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#8b5cf6" />
+                            <stop offset="100%" stop-color="#1dd3b0" />
+                        </linearGradient>
+                        <linearGradient id="cyan-amber" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#1dd3b0" />
+                            <stop offset="100%" stop-color="#f5a524" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Connection Lines -->
+                    <path d="M 120 140 L 250 140" stroke="url(#violet-cyan)" stroke-width="2" class="flow-line fill-none" />
+                    
+                    <!-- Branch Lines from Triage to Pipelines -->
+                    <path d="M 370 140 C 430 140, 430 60, 520 60" stroke="#1dd3b0" stroke-width="1.5" class="flow-line fill-none" />
+                    <path d="M 370 140 C 430 140, 430 140, 520 140" stroke="#a7f3d0" stroke-width="1.5" class="flow-line fill-none" />
+                    <path d="M 370 140 C 430 140, 430 220, 520 220" stroke="url(#cyan-amber)" stroke-width="1.5" class="flow-line fill-none" />
+
+                    <!-- Connection to Outputs -->
+                    <path d="M 680 60 C 740 60, 740 140, 780 140" stroke="#1dd3b0" stroke-width="1.5" class="flow-line fill-none" />
+                    <path d="M 680 140 C 740 140, 740 140, 780 140" stroke="#a7f3d0" stroke-width="1.5" class="flow-line fill-none" />
+                    <path d="M 680 220 C 740 220, 740 140, 780 140" stroke="#f5a524" stroke-width="1.5" class="flow-line fill-none" />
+
+                    <!-- Ingestion Node -->
+                    <g transform="translate(60, 140)" class="pulse-node">
+                        <circle r="35" fill="#161a23" stroke="#8b5cf6" stroke-width="2" />
+                        <text y="-8" text-anchor="middle" fill="#e8ecf2" font-family="'Space Grotesk'" font-size="11" font-weight="600">INGESTION</text>
+                        <text y="10" text-anchor="middle" fill="#9aa4b5" font-family="'JetBrains Mono'" font-size="8">Gemini Voice</text>
+                        <circle r="4" cy="24" fill="#8b5cf6" />
+                    </g>
+
+                    <!-- Axis Mundi Hub Node -->
+                    <g transform="translate(310, 140)">
+                        <rect x="-60" y="-35" width="120" height="70" rx="10" fill="#161a23" stroke="#1dd3b0" stroke-width="2" />
+                        <text y="-10" text-anchor="middle" fill="#e8ecf2" font-family="'Space Grotesk'" font-size="12" font-weight="600">AXIS MUNDI</text>
+                        <text y="8" text-anchor="middle" fill="#1dd3b0" font-family="'JetBrains Mono'" font-size="8">SQLite Triage</text>
+                        <text y="22" text-anchor="middle" fill="#9aa4b5" font-family="'JetBrains Mono'" font-size="7">AUTO / MANUAL</text>
+                    </g>
+
+                    <!-- Pipeline Branches -->
+                    <!-- branch 1: Creative -->
+                    <g transform="translate(600, 60)">
+                        <rect x="-80" y="-22" width="160" height="44" rx="6" fill="#161a23" stroke="#8b5cf6" stroke-width="1.5" />
+                        <text y="-4" text-anchor="middle" fill="#e8ecf2" font-family="'Space Grotesk'" font-size="10" font-weight="600">CREATIVE_STORY</text>
+                        <text y="10" text-anchor="middle" fill="#9aa4b5" font-family="'JetBrains Mono'" font-size="8">Narratives & Fallbacks</text>
+                    </g>
+                    <!-- branch 2: Engineering -->
+                    <g transform="translate(600, 140)">
+                        <rect x="-80" y="-22" width="160" height="44" rx="6" fill="#161a23" stroke="#1dd3b0" stroke-width="1.5" />
+                        <text y="-4" text-anchor="middle" fill="#e8ecf2" font-family="'Space Grotesk'" font-size="10" font-weight="600">CODE_DEV</text>
+                        <text y="10" text-anchor="middle" fill="#9aa4b5" font-family="'JetBrains Mono'" font-size="8">Go Builder & Tester</text>
+                    </g>
+                    <!-- branch 3: Strategy -->
+                    <g transform="translate(600, 220)">
+                        <rect x="-80" y="-22" width="160" height="44" rx="6" fill="#161a23" stroke="#f5a524" stroke-width="1.5" />
+                        <text y="-4" text-anchor="middle" fill="#e8ecf2" font-family="'Space Grotesk'" font-size="10" font-weight="600">STRATEGIC_PLAN</text>
+                        <text y="10" text-anchor="middle" fill="#9aa4b5" font-family="'JetBrains Mono'" font-size="8">Workspace Automation</text>
+                    </g>
+
+                    <!-- Destination Node -->
+                    <g transform="translate(830, 140)" class="pulse-node">
+                        <circle r="30" fill="#161a23" stroke="#1dd3b0" stroke-width="2" />
+                        <text y="4" text-anchor="middle" fill="#1dd3b0" font-family="'Space Grotesk'" font-size="10" font-weight="700">ACTION</text>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Pipeline Narrative Breakdown -->
+            <div class="grid gap-6 md:grid-cols-3 mt-10">
+                <div class="p-5 rounded-xl bg-white/[0.01] border border-white/[0.04] space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-violet-400 font-bold font-mono">01.</span>
+                        <h5 class="font-space font-semibold text-white">Ingest & Refine</h5>
+                    </div>
+                    <p class="text-sm text-[var(--muted)] leading-relaxed">
+                        Input commands bypass restrictive, keyboard-heavy screens. Using phonetic regex mapping, Gemini voice files are ingested directly into the SQLite backend, triaging spelling errors like "Sorry board" into structural storyboards seamlessly.
+                    </p>
+                </div>
+                <div class="p-5 rounded-xl bg-white/[0.01] border border-white/[0.04] space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-emerald-400 font-bold font-mono">02.</span>
+                        <h5 class="font-space font-semibold text-white">Cognitive Routing</h5>
+                    </div>
+                    <p class="text-sm text-[var(--muted)] leading-relaxed">
+                        The dynamic classifier parses task strings instantly, allocating payloads. Creative storyboards activate generation algorithms, dev directives fire compiler sequences, and ledger sheets parse budgets.
+                    </p>
+                </div>
+                <div class="p-5 rounded-xl bg-white/[0.01] border border-white/[0.04] space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-amber-400 font-bold font-mono">03.</span>
+                        <h5 class="font-space font-semibold text-white">Autonomous Action</h5>
+                    </div>
+                    <p class="text-sm text-[var(--muted)] leading-relaxed">
+                        System operations occur asynchronously. storyboards publish full glassmorphic web pages, engineering modules trigger compiler suites, and service account impersonation commits updates to Docs and Sheets.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Product Navigation Cards -->
+        <section class="mt-20 md:mt-32 space-y-8">
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <h3 class="text-xs uppercase tracking-[0.15em] text-violet-400 font-mono">Operational Components</h3>
+                <h4 class="text-3xl font-space font-semibold text-white">Navigating the Foundations Chassis</h4>
+                <p class="text-sm text-[var(--muted)]">Explore the three production pillars built by echoSH labs governing ingestion, triage, integration, and streaming telemetry.</p>
+            </div>
+
+            <div class="grid gap-8 md:grid-cols-3">
+                <!-- Card 1: Axis Mundi TUI -->
+                <div class="glass-panel p-6 flex flex-col justify-between h-96 relative group">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl">⌨️</span>
+                            <span class="font-mono text-[9px] uppercase border border-emerald-500/20 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Triage Layer</span>
+                        </div>
+                        <h5 class="text-xl font-space font-bold text-white group-hover:text-emerald-400 transition-colors">Axis Mundi TUI</h5>
+                        <p class="text-sm text-[var(--muted)] leading-relaxed">
+                            A blazing fast keyboard-centric terminal (TUI) providing complete oversight of note registry lifecycles, SQLite databases, and server configurations.
+                        </p>
+                        <!-- Embedded Screenshot bezel -->
+                        <div class="rounded-lg overflow-hidden border border-white/[0.05] bg-charcoal-700 h-28 relative shadow-inner">
+                            <img src="./screenshot.png" alt="Axis Mundi TUI Screenshot" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 to-transparent"></div>
+                        </div>
+                    </div>
+                    <a class="mt-6 w-full text-center py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] group-hover:bg-emerald-400 group-hover:text-charcoal-900 font-bold transition-all text-xs" href="./tui.html">
+                        Access command center
+                    </a>
+                </div>
+
+                <!-- Card 2: MCP Server -->
+                <div class="glass-panel p-6 flex flex-col justify-between h-96 relative group">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl">🤖</span>
+                            <span class="font-mono text-[9px] uppercase border border-violet-500/20 px-2 py-0.5 rounded bg-violet-500/10 text-violet-300">Workspace Integration</span>
+                        </div>
+                        <h5 class="text-xl font-space font-bold text-white group-hover:text-violet-400 transition-colors">Model Context Protocol</h5>
+                        <p class="text-sm text-[var(--muted)] leading-relaxed">
+                            A native server exposing Keep, Docs, Sheets, Gmail, and Calendar objects to any compatible AI assistant (Claude Desktop, VS Code, Cursor). Let agents safely read, write, and index your Workspace.
+                        </p>
+                        
+                        <div class="font-mono text-[10px] text-violet-300 p-3 rounded-lg bg-black/40 border border-white/[0.03] space-y-1">
+                            <div><ctrl42>_call: list_workspace</div>
+                            <div class="text-[var(--muted)]">> Ingesting 25 Registry Items...</div>
+                            <div class="text-emerald-400">> 200 OK (Connection Secure)</div>
+                        </div>
+                    </div>
+                    <a class="mt-6 w-full text-center py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] group-hover:bg-violet-500 group-hover:text-white font-bold transition-all text-xs" href="./mcp/">
+                        View MCP Integration
+                    </a>
+                </div>
+
+                <!-- Card 3: Telemetry Dashboard -->
+                <div class="glass-panel p-6 flex flex-col justify-between h-96 relative group">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl">📊</span>
+                            <span class="font-mono text-[9px] uppercase border border-amber-500/20 px-2 py-0.5 rounded bg-amber-500/10 text-amber-300">Live Streaming</span>
+                        </div>
+                        <h5 class="text-xl font-space font-bold text-white group-hover:text-amber-400 transition-colors">SSE Telemetry</h5>
+                        <p class="text-sm text-[var(--muted)] leading-relaxed">
+                            Sub-millisecond Go telemetry engine feeding a responsive dashboard with live metrics (Flux, Stabilization) and full compilation or generation logging via server-sent events.
+                        </p>
+
+                        <!-- Glowing UI Rings representation -->
+                        <div class="flex justify-around items-center h-28 bg-black/20 rounded-lg border border-white/[0.02] p-2">
+                            <div class="flex flex-col items-center">
+                                <div class="w-12 h-12 rounded-full border-2 border-emerald-400/30 border-t-emerald-400 animate-spin flex items-center justify-center text-[10px] font-mono text-emerald-300">92%</div>
+                                <span class="text-[8px] text-[var(--muted)] mt-1 font-mono">STABILIZE</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="w-12 h-12 rounded-full border-2 border-amber-400/30 border-t-amber-400 flex items-center justify-center text-[10px] font-mono text-amber-300">1.42</div>
+                                <span class="text-[8px] text-[var(--muted)] mt-1 font-mono">FLUX</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a class="mt-6 w-full text-center py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] group-hover:bg-amber-400 group-hover:text-charcoal-900 font-bold transition-all text-xs" href="#telemetry">
+                        Explore Telemetry logs
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Storyboard Creative Section -->
+        <section id="storyboards" class="mt-20 md:mt-32 space-y-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div class="space-y-3">
+                    <h3 class="text-xs uppercase tracking-[0.15em] text-violet-400 font-mono">Creative Pipeline Outputs</h3>
+                    <h4 class="text-3xl font-space font-semibold text-white">Ingested Storyboard: The Ascent</h4>
+                    <p class="text-sm text-[var(--muted)] max-w-xl">
+                        A real-world example of the **CREATIVE_STORY** pipeline capturing a voice directive outlining three psychocentric scenes of human ascent, automatically publishing a responsive media site.
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="px-3.5 py-1.5 rounded bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] text-xs font-mono disabled:opacity-50" id="carousel-prev">PREV</button>
+                    <button class="px-3.5 py-1.5 rounded bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] text-xs font-mono disabled:opacity-50" id="carousel-next">NEXT</button>
+                </div>
+            </div>
+
+            <!-- Slide Display -->
+            <div class="glass-panel p-6 md:p-8 relative overflow-hidden" id="carousel-container">
+                <div class="grid gap-8 md:grid-cols-[1.1fr_0.9fr] items-center">
+                    
+                    <!-- Text side -->
+                    <div class="space-y-6" id="story-content-box">
+                        <div class="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 px-3 py-1 rounded-full text-violet-300 font-mono text-[10px]" id="story-index">
+                            SCENE 1 / 3
+                        </div>
+                        
+                        <h5 class="text-2xl md:text-3xl font-space font-bold text-white tracking-tight" id="story-title">
+                            Intuition: The Inner Staircase
+                        </h5>
+                        
+                        <p class="text-sm md:text-base text-slate-300 leading-relaxed font-light" id="story-narrative">
+                            Our intuition helps us to form a series of steps to climb, a deep inner guidance satisfying our highest psychic self.
+                        </p>
+                        
+                        <div class="space-y-2">
+                            <h6 class="text-xs uppercase tracking-wider text-[var(--muted)] font-mono">Image Generation Prompt</h6>
+                            <p class="text-xs font-mono bg-black/40 border border-white/[0.04] p-4 rounded-xl text-emerald-300 leading-normal" id="story-prompt">
+                                Sleek cybernetic figure standing at the base of a glowing neon staircase, soft neon violet aura surrounding their head, projecting faint holographic glyphs, dark moody background, high contrast HSL tailored purple and deep blue tones
+                            </p>
+                        </div>
+
+                        <!-- System Resilience note -->
+                        <div class="text-[10px] text-amber-300/80 bg-amber-500/5 border border-amber-500/10 p-3 rounded-lg flex items-start gap-2">
+                            <span class="mt-0.5">💡</span>
+                            <p>
+                                <strong>Industrial Resilience:</strong> If external asset APIs rate-limit or fail, the storyteller engine automatically falls back to beautiful local color-matched HSL representations, guaranteeing zero downtime in live presentation pipelines.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Visual Side -->
+                    <div class="flex flex-col items-center justify-center relative">
+                        <!-- Glass beaker frame -->
+                        <div class="w-full aspect-[4/3] rounded-xl overflow-hidden border border-white/[0.08] bg-charcoal-700 relative shadow-2xl flex items-center justify-center">
+                            <!-- Visual Scene representations -->
+                            <div class="absolute inset-0 transition-all duration-500" id="scene-image-container">
+                                <!-- Background HSL gradient representing the scene atmosphere -->
+                                <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center select-none" id="scene-visual-fallback">
+                                    <div class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 bg-white/5 animate-pulse" id="scene-icon">👁️</div>
+                                    <h6 class="text-sm font-space font-semibold text-white tracking-wide uppercase" id="scene-visual-title">Scene Visual Output</h6>
+                                    <p class="text-xs text-[var(--muted)] mt-1.5 max-w-xs leading-normal" id="scene-visual-details">High-fidelity ambient render</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide Dots -->
+            <div class="flex justify-center gap-2" id="carousel-dots-box">
+                <!-- Inject dots -->
+            </div>
+        </section>
+
+        <!-- Simulated Real-time Telemetry logs -->
+        <section id="telemetry" class="mt-20 md:mt-32 grid gap-8 md:grid-cols-[0.8fr_1.2fr] items-center">
+            
+            <div class="space-y-6">
+                <div class="space-y-3">
+                    <h3 class="text-xs uppercase tracking-[0.15em] text-amber-400 font-mono">Live Subsystem Streams</h3>
+                    <h4 class="text-3xl font-space font-semibold text-white">Telemetry & Compilation Logs</h4>
+                    <p class="text-sm text-[var(--muted)] leading-relaxed">
+                        Antigravity Foundations pipelines communicate via rapid Unix domain sockets, feeding server-sent event streams directly to active dashboards. Inspect the pipeline events in real time.
+                    </p>
+                </div>
+
+                <!-- Simulation controller panels -->
+                <div class="glass-panel p-5 space-y-4">
+                    <h5 class="text-xs font-mono uppercase tracking-wider text-slate-300">Mock Orchestration Streams</h5>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button class="px-3.5 py-3 rounded-lg border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-emerald-400/40 text-emerald-400 font-bold transition-all text-left" id="btn-sim-code">
+                            💻 Engineering (CODE_DEV)
+                        </button>
+                        <button class="px-3.5 py-3 rounded-lg border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.06] hover:border-violet-400/40 text-violet-400 font-bold transition-all text-left" id="btn-sim-story">
+                            🎨 Storyboard (CREATIVE)
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-[var(--muted)]">Press a button to trigger simulated pipelines in the terminal stream.</p>
+                </div>
+            </div>
+
+            <!-- Visual Terminal Console Window -->
+            <div class="flex flex-col rounded-2xl border border-white/[0.08] bg-charcoal-900 overflow-hidden shadow-2xl h-[380px] relative">
+                <div class="bg-charcoal-800 px-4 py-3 border-b border-white/[0.05] flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="flex gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500/60"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500/60"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/60"></span>
+                        </div>
+                        <span class="ml-2 text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">foundations-logs.exe</span>
+                    </div>
+                    <span class="font-mono text-[9px] uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">SSE Stream Active</span>
+                </div>
+                
+                <div id="terminal-screen" class="p-5 font-mono text-[11.5px] leading-relaxed text-emerald-300 flex-1 overflow-y-auto console-scrollbar bg-black/40 space-y-1">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Enterprise / Commercial licensing notice -->
+        <section class="mt-20 md:mt-32 glass-panel p-8 md:p-12 text-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-emerald-400/[0.02] pointer-events-none"></div>
+            
+            <h3 class="text-3xl font-space font-bold text-white tracking-tight">
+                Industrial Orchestration. Complete Autonomy.
+            </h3>
+            <p class="text-sm md:text-base text-slate-300 mt-4 max-w-2xl mx-auto leading-relaxed font-light">
+                Whether deploying large-scale creative storytelling decks, syncing multi-user task buckets via Domain-Wide Delegation, or managing multi-node server clusters, Foundations delivers absolute, secure control. 
+            </p>
+            
+            <div class="grid gap-4 md:grid-cols-3 max-w-3xl mx-auto mt-10 text-sm">
+                <div class="p-4 rounded-xl border border-white/[0.04] bg-white/[0.01]">
+                    <div class="text-emerald-400 font-semibold mb-1">Domain Delegation</div>
+                    <p class="text-xs text-[var(--muted)]">Impersonate credentials across primary domains safely.</p>
+                </div>
+                <div class="p-4 rounded-xl border border-white/[0.04] bg-white/[0.01]">
+                    <div class="text-violet-400 font-semibold mb-1">Background Monitoring</div>
+                    <p class="text-xs text-[var(--muted)]">Persistent in-memory caching keeps pipelines responsive 24/7.</p>
+                </div>
+                <div class="p-4 rounded-xl border border-white/[0.04] bg-white/[0.01]">
+                    <div class="text-amber-400 font-semibold mb-1">AGPL / Commercial</div>
+                    <p class="text-xs text-[var(--muted)]">Dual-licensed logic permits seamless, robust integrations.</p>
+                </div>
+            </div>
+
+            <div class="mt-10 flex flex-wrap justify-center gap-4">
+                <a class="px-8 py-3.5 rounded-full font-bold bg-emerald-400 text-charcoal-900 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(29,211,176,0.3)] transition-all" href="mailto:justin@echosh-labs.com?subject=Licensing Inquiry - Foundations">
+                    Secure Commercial License
+                </a>
+                <a class="px-8 py-3.5 rounded-full font-bold border border-white/[0.1] bg-white/[0.02] hover:bg-white/[0.06] transition-all" href="https://github.com/echosh-labs/axis-mundi">
+                    Star on GitHub
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-20 border-t border-white/[0.04] pt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-[11px] text-[var(--muted)] font-mono">
+            <span>© 2026 echoSH labs · Authentic freedom through automation.</span>
+            <div class="flex gap-4">
+                <a class="hover:text-emerald-300" href="https://github.com/echosh-labs" target="_blank" rel="noreferrer">GitHub</a>
+                <a class="hover:text-emerald-300" href="https://www.linkedin.com/in/justinwoodconsulting/" target="_blank" rel="noreferrer">LinkedIn</a>
+                <a class="hover:text-emerald-300" href="mailto:justin@echosh-labs.com">Contact Maintainer</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripting for Interactions -->
+    <script>
+        // Storyboard Data Ingestion
+        const scenes = [
+            {
+                id: 1,
+                title: "Intuition: The Inner Staircase",
+                prompt: "Sleek cybernetic figure standing at the base of a glowing neon staircase, soft neon violet aura surrounding their head, projecting faint holographic glyphs, dark moody background, high contrast HSL tailored purple and deep blue tones",
+                narrative: "Our intuition helps us to form a series of steps to climb, a deep inner guidance satisfying our highest psychic self.",
+                color: "linear-gradient(135deg, #130a24 0%, #0c0818 100%)",
+                glow: "#8b5cf6",
+                icon: "🔮"
+            },
+            {
+                id: 2,
+                title: "Idealism: The Ascent of Aspiration",
+                prompt: "Sleek cybernetic figure climbing a high glowing neon staircase towards a soaring futuristic geometric light architecture, bright cyan lines, glowing orange ember shadows, cinematic lighting",
+                narrative: "Each step in turn is an ideal, ever more advanced, broadening our consciousness and preparing it for the final breakthrough.",
+                color: "linear-gradient(135deg, #091a18 0%, #050d0d 100%)",
+                glow: "#1dd3b0",
+                icon: "🧗"
+            },
+            {
+                id: 3,
+                title: "Illumination: Radiant Consciousness",
+                prompt: "A figure at the summit of a high neon structure, their consciousness expanding as a brilliant golden and peach watercolor nebula, cosmic nebula background, space-age cybernetic style",
+                narrative: "The summit of understanding. Idealism prepares the consciousness, and Illumination follows as a radiant, unified state of being.",
+                color: "linear-gradient(135deg, #241405 0%, #120b02 100%)",
+                glow: "#f5a524",
+                icon: "🌞"
+            }
+        ];
+
+        let activeSceneIndex = 0;
+
+        const storyIndex = document.getElementById("story-index");
+        const storyTitle = document.getElementById("story-title");
+        const storyNarrative = document.getElementById("story-narrative");
+        const storyPrompt = document.getElementById("story-prompt");
+        
+        const sceneVisualFallback = document.getElementById("scene-visual-fallback");
+        const sceneIcon = document.getElementById("scene-icon");
+        const sceneVisualTitle = document.getElementById("scene-visual-title");
+        const sceneVisualDetails = document.getElementById("scene-visual-details");
+        
+        const carouselPrev = document.getElementById("carousel-prev");
+        const carouselNext = document.getElementById("carousel-next");
+        const carouselDotsBox = document.getElementById("carousel-dots-box");
+
+        function renderScene() {
+            const current = scenes[activeSceneIndex];
+            
+            // Text values
+            storyIndex.textContent = `SCENE ${current.id} / ${scenes.length}`;
+            storyIndex.style.color = current.glow;
+            storyIndex.style.borderColor = `${current.glow}33`;
+            storyIndex.style.backgroundColor = `${current.glow}1a`;
+            
+            storyTitle.textContent = current.title;
+            storyNarrative.textContent = current.narrative;
+            storyPrompt.textContent = current.prompt;
+
+            // Visual elements
+            sceneVisualFallback.style.background = current.color;
+            sceneVisualFallback.style.border = `1px solid ${current.glow}33`;
+            sceneIcon.textContent = current.icon;
+            sceneVisualTitle.textContent = current.title.split(":")[0];
+            sceneVisualTitle.style.color = current.glow;
+            sceneVisualDetails.textContent = current.prompt.substring(0, 50) + "...";
+
+            // Update disabled controls
+            carouselPrev.disabled = activeSceneIndex === 0;
+            carouselNext.disabled = activeSceneIndex === scenes.length - 1;
+
+            // Update dots
+            const dots = document.querySelectorAll(".carousel-dot");
+            dots.forEach((dot, idx) => {
+                if (idx === activeSceneIndex) {
+                    dot.classList.add("active");
+                    dot.style.backgroundColor = current.glow;
+                } else {
+                    dot.classList.remove("active");
+                    dot.style.backgroundColor = "rgba(255,255,255,0.1)";
+                }
+            });
+        }
+
+        // Scaffolding Dots
+        carouselDotsBox.innerHTML = '';
+        scenes.forEach((_, idx) => {
+            const dot = document.createElement("button");
+            dot.className = "carousel-dot w-2 h-2 rounded-full transition-all duration-300";
+            dot.onclick = () => {
+                activeSceneIndex = idx;
+                renderScene();
+            };
+            carouselDotsBox.appendChild(dot);
+        });
+
+        carouselPrev.onclick = () => {
+            if (activeSceneIndex > 0) {
+                activeSceneIndex--;
+                renderScene();
+            }
+        };
+
+        carouselNext.onclick = () => {
+            if (activeSceneIndex < scenes.length - 1) {
+                activeSceneIndex++;
+                renderScene();
+            }
+        };
+
+        renderScene();
+
+        // ----------------- Terminal Simulator -----------------
+        const terminalScreen = document.getElementById("terminal-screen");
+        let activeSimulatorTimeout;
+
+        const initialLogs = [
+            "[SYSTEM] Initializing Foundations Telemetry Ingestion Hub...",
+            "[SYSTEM] Listening on Unix domain socket: /tmp/foundations.sock",
+            "[SYSTEM] Real-time SSE stream active on port 8085...",
+            "[TRIAGE] SQLite registry connected: 16 notes active.",
+            "[SYSTEM] Status: STANDBY. Awaiting workspace triggers..."
+        ];
+
+        const codeSimLogs = [
+            "[INGESTION] [LOG] Found Keep note to execute: 'System Prompt for AI Coding Agent'",
+            "[INGESTION] [LOG] Note text: 'Upgrade classifier.py with boundary overrides...'",
+            "[CLASSIFIER] [INFO] Text parsed successfully. Route matched: CODE_DEV",
+            "[ORCHESTRATOR] [LOG] Dynamic route activation. Launching Go builder chassis...",
+            "[COMPILER] [LOG] Executing syntax scans on interpreters/classify.py...",
+            "[COMPILER] [LOG] Running compiler unit test suites: (9 passed, 0 failed)",
+            "[COMPILER] [LOG] Recompiling static foundations engine binary...",
+            "[HUB-API] [LOG] Restarting telemetry hub socket interface...",
+            "[INGESTION] [SUCCESS] Target satisfied! Keep note updated to Complete."
+        ];
+
+        const storySimLogs = [
+            "[INGESTION] [LOG] Found Keep note to execute: 'Sorry board'",
+            "[INGESTION] [LOG] Voice correction applied: 'Sorry board' -> Storyboard: The Ascent",
+            "[CLASSIFIER] [INFO] Text parsed successfully. Route matched: CREATIVE_STORY",
+            "[STORYTELLER] [LOG] Outlining scenes: [1: Intuition, 2: Idealism, 3: Illumination]",
+            "[STORYTELLER] [LOG] Scaffolding web directories at echosh-labs/foundations/web-app...",
+            "[STORYTELLER] [LOG] Creating unified scenes.json database config...",
+            "[STORYBOARDER] [WARN] Image API rate-limited (429). Triggering HSL fallback engine...",
+            "[STORYBOARDER] [LOG] Scene 1 visual assets produced via HSL fallback.",
+            "[STORYBOARDER] [LOG] Scene 2 visual assets produced via HSL fallback.",
+            "[STORYBOARDER] [LOG] Scene 3 visual assets produced via HSL fallback.",
+            "[STORYBOARDER] [SUCCESS] Ingestion completed. Keep note status updated to Complete."
+        ];
+
+        function runLogSimulator(logs, color = "#34d399") {
+            clearTimeout(activeSimulatorTimeout);
+            terminalScreen.innerHTML = "";
+            let idx = 0;
+
+            function printLine() {
+                if (idx < logs.length) {
+                    const line = document.createElement("div");
+                    line.className = "opacity-0 translate-y-1 transition-all duration-150 ease-out";
+                    line.style.color = color;
+                    line.textContent = logs[idx];
+                    terminalScreen.appendChild(line);
+                    
+                    // Reflow
+                    void line.offsetWidth;
+                    line.classList.remove("opacity-0", "translate-y-1");
+                    
+                    terminalScreen.scrollTop = terminalScreen.scrollHeight;
+                    idx++;
+                    
+                    const nextDelay = Math.random() * 250 + 100;
+                    activeSimulatorTimeout = setTimeout(printLine, nextDelay);
+                } else {
+                    const cursor = document.createElement("span");
+                    cursor.className = "inline-block w-2 h-3.5 bg-current animate-pulse ml-1";
+                    terminalScreen.appendChild(cursor);
+                }
+            }
+
+            printLine();
+        }
+
+        document.getElementById("btn-sim-code").onclick = () => {
+            runLogSimulator(codeSimLogs, "#1dd3b0");
+        };
+
+        document.getElementById("btn-sim-story").onclick = () => {
+            runLogSimulator(storySimLogs, "#8b5cf6");
+        };
+
+        // Run Initial Stream
+        runLogSimulator(initialLogs, "#34d399");
+
+    </script>
+    
+    <!-- Three.js Buckyball -->
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.159.0';
+        
+        const container = document.getElementById('bucky-bg');
+        if (container) {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 6);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+
+            const group = new THREE.Group();
+            scene.add(group);
+
+            fetch('./bucky-ball/vertices.json')
+                .then(r => {
+                    if (!r.ok) throw new Error('vertices.json not found');
+                    return r.json();
+                })
+                .then(data => {
+                    const vertices = data.vertices;
+                    const edges = data.edges;
+
+                    const pts = new Float32Array(vertices.length * 3);
+                    for (let i = 0; i < vertices.length; i++) {
+                        pts[i*3] = vertices[i][0];
+                        pts[i*3+1] = vertices[i][1];
+                        pts[i*3+2] = vertices[i][2];
+                    }
+                    const geom = new THREE.BufferGeometry();
+                    geom.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+                    
+                    const mat = new THREE.PointsMaterial({ color: 0x1dd3b0, size: 0.08 }); 
+                    group.add(new THREE.Points(geom, mat));
+
+                    const lineMat = new THREE.LineBasicMaterial({ color: 0x475569, transparent: true, opacity: 0.3 });
+                    edges.forEach(e => {
+                        const i = e[0], j = e[1];
+                        const a = new THREE.Vector3(vertices[i][0], vertices[i][1], vertices[i][2]);
+                        const b = new THREE.Vector3(vertices[j][0], vertices[j][1], vertices[j][2]);
+                        const lg = new THREE.BufferGeometry().setFromPoints([a,b]);
+                        group.add(new THREE.Line(lg, lineMat));
+                    });
+
+                    group.rotation.x = 0.5;
+                    group.rotation.y = 0.5;
+
+                    animate();
+                })
+                .catch(err => console.error('Error loading buckyball:', err));
+
+            function animate() {
+                requestAnimationFrame(animate);
+                group.rotation.x += 0.0003;
+                group.rotation.y += 0.0006;
+                renderer.render(scene, camera);
+            }
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,27 @@
+# Binaries
+mercury-dasha-server
+*.exe
+*.dll
+*.so
+*.dylib
+
+# BoltDB / Local Database
+data/*.db
+data/*.db-*
+!data/.gitkeep
+
+# Node & Next.js
+frontend/node_modules/
+frontend/.next/
+archive/**/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

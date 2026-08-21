@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Foundations // Telemetry Dashboard</title>
+    <meta name="description" content="Premium, real-time glassmorphic monitoring console for the Antigravity Foundations orchestration and telemetry subsystem.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="telemetry.css">
+</head>
+<body>
+    <div class="glow-bg-1"></div>
+    <div class="glow-bg-2"></div>
+    
+    <div class="dashboard-container">
+        <!-- Header / Banner -->
+        <header class="glass-header">
+            <div class="logo-area">
+                <div class="pulse-indicator status-disconnected" id="connection-indicator"></div>
+                <h1 class="glow-text">ANTIGRAVITY // telemetry</h1>
+            </div>
+            
+            <div class="system-status-pills">
+                <div class="status-pill">
+                    <span class="label">API STREAM</span>
+                    <span class="value val-cyan" id="socket-status">OFFLINE</span>
+                </div>
+                <div class="status-pill">
+                    <span class="label">ACTIVE AGENT</span>
+                    <span class="value val-purple" id="active-agent">STANDBY</span>
+                </div>
+                <div class="status-pill">
+                    <span class="label">SYSTEM STATE</span>
+                    <span class="value val-green" id="active-mode">MONITORING</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Grid Layout -->
+        <main class="dashboard-grid">
+            <!-- Left Side: Circular Metrics Rings -->
+            <section class="glass-card metrics-card">
+                <h2 class="section-title">CORE METRICS</h2>
+                
+                <div class="metrics-container">
+                    <!-- Metrics Ring 1: Stabilization -->
+                    <div class="metric-widget">
+                        <div class="ring-wrapper">
+                            <svg class="progress-ring" width="160" height="160">
+                                <circle class="ring-bg" cx="80" cy="80" r="70" />
+                                <circle class="ring-fill fill-cyan" id="stabilization-ring" cx="80" cy="80" r="70" stroke-dasharray="440" stroke-dashoffset="440" />
+                            </svg>
+                            <div class="ring-label-box">
+                                <span class="ring-value" id="stabilization-value">0%</span>
+                                <span class="ring-name">STABILIZATION</span>
+                            </div>
+                        </div>
+                        <div class="widget-details">
+                            <span class="detail-label">Status:</span>
+                            <span class="detail-val val-cyan" id="stabilization-status">STABLE</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Metrics Ring 2: Flux Density -->
+                    <div class="metric-widget">
+                        <div class="ring-wrapper">
+                            <svg class="progress-ring" width="160" height="160">
+                                <circle class="ring-bg" cx="80" cy="80" r="70" />
+                                <circle class="ring-fill fill-pink" id="flux-ring" cx="80" cy="80" r="70" stroke-dasharray="440" stroke-dashoffset="440" />
+                            </svg>
+                            <div class="ring-label-box">
+                                <span class="ring-value" id="flux-value">0.00</span>
+                                <span class="ring-name">FLUX DENSITY</span>
+                            </div>
+                        </div>
+                        <div class="widget-details">
+                            <span class="detail-label">Field Status:</span>
+                            <span class="detail-val val-pink" id="flux-status">STEADY</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Info Panel inside core metrics -->
+                <div class="sys-summary">
+                    <h3 class="subsection-title">Subsystem Integrity</h3>
+                    <div class="integrity-bar-container">
+                        <div class="integrity-bar" id="integrity-fill" style="width: 100%;"></div>
+                    </div>
+                    <div class="sys-stats">
+                        <div class="sys-stat">
+                            <span>Integrity:</span>
+                            <strong id="integrity-value">100%</strong>
+                        </div>
+                        <div class="sys-stat">
+                            <span>Uptime:</span>
+                            <strong id="uptime-value">00:00:00</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Right Side: Console and Telemetry Event Log Stream -->
+            <section class="glass-card console-card">
+                <div class="console-header">
+                    <h2 class="section-title">REAL-TIME TELEMETRY LOGS</h2>
+                    
+                    <div class="console-actions">
+                        <div class="filter-group">
+                            <button class="filter-btn active" data-filter="ALL" id="filter-all">ALL</button>
+                            <button class="filter-btn" data-filter="INFO" id="filter-info">INFO</button>
+                            <button class="filter-btn" data-filter="WARNING" id="filter-warning">WARN</button>
+                            <button class="filter-btn" data-filter="CRITICAL" id="filter-critical">CRIT</button>
+                        </div>
+                        <button class="action-btn" id="btn-clear-logs" title="Clear console log history">CLEAR</button>
+                    </div>
+                </div>
+                
+                <!-- Console Stream Container -->
+                <div class="console-log-stream" id="log-stream">
+                    <div class="stream-empty-state" id="stream-empty">
+                        <div class="spinner"></div>
+                        <p>WAITING FOR SSE EVENTS ON PORT 8085...</p>
+                    </div>
+                </div>
+                
+                <!-- Command Simulation Bar (For manual validation / visual wow) -->
+                <div class="glass-footer">
+                    <span class="footer-note">SIMULATE EVENT:</span>
+                    <button class="sim-btn sim-info" id="sim-info-btn">MOCK INFO</button>
+                    <button class="sim-btn sim-warn" id="sim-warn-btn">MOCK WARN</button>
+                    <button class="sim-btn sim-crit" id="sim-crit-btn">MOCK CRIT</button>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Toast Alert Container -->
+    <div class="toast-container" id="toast-holder"></div>
+    
+    <script src="telemetry.js"></script>
+</body>
+</html>

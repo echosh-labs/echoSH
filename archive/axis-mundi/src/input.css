@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --bg: #0a0c10;
+        --panel: #0f1117;
+        --panel-2: #161a23;
+        --text: #e8ecf2;
+        --muted: #9aa4b5;
+        --accent: #1dd3b0;
+        --accent-2: #f5a524;
+        --border: #1f2430;
+    }
+
+    * {
+        font-family: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+        background: radial-gradient(circle at 20% 20%, rgba(29, 211, 176, 0.08), transparent 28%),
+            radial-gradient(circle at 80% 0%, rgba(245, 165, 36, 0.08), transparent 32%),
+            var(--bg);
+        color: var(--text);
+    }
+
+    a {
+        color: inherit;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.001ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.001ms !important;
+        }
+    }
+}
+
+@layer components {
+    .panel {
+        background: linear-gradient(135deg, rgba(255,255,255,0.015), rgba(255,255,255,0.002));
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .tag {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 9999px;
+        padding: 4px 10px;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+    }
+
+    .cta-btn {
+        padding: 0.75rem 1.35rem;
+        border-radius: 999px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .cta-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 38px rgba(29, 211, 176, 0.24);
+    }
+
+    .press-card {
+        display: inline-flex;
+        min-width: min(100%, 21rem);
+        padding: 0.9rem;
+        border-radius: 1.25rem;
+        border: 1px solid rgba(29, 211, 176, 0.22);
+        background: linear-gradient(145deg, rgba(29, 211, 176, 0.08), rgba(255, 255, 255, 0.02));
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .press-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(29, 211, 176, 0.42);
+        box-shadow: 0 24px 60px rgba(29, 211, 176, 0.12);
+    }
+
+    .press-card__badge {
+        display: block;
+        width: 100%;
+        max-width: 19rem;
+        height: auto;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 0.75rem;
+    }
+
+    .mono {
+        font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    }
+
+    @keyframes shimmer {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .shimmer-text {
+        background-image: linear-gradient(90deg, #4c1d95, #7e22ce, #047857);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: shimmer 4s ease-in-out infinite;
+        text-shadow: 0 0 8px rgba(76, 29, 149, 0.45);
+    }
+}

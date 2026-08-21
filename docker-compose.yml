@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mercury_dasha_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mercury_user
+      POSTGRES_PASSWORD: mercury_password
+      POSTGRES_DB: mercury_dasha
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

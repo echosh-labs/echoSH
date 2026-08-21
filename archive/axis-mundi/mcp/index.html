@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W077PR428Q"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W077PR428Q');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server | Axis Mundi</title>
+    <link rel="icon" href="https://echosh-labs.com/echoSH_256.png" type="image/png" sizes="256x256">
+    <link rel="apple-touch-icon" href="https://echosh-labs.com/echoSH_256.png">
+    <meta name="description"
+        content="Axis Mundi MCP Server — Model Context Protocol endpoint exposing Google Workspace items and workflow statuses to cloud code agents.">
+    <link rel="canonical" href="https://echosh-labs.com/axis-mundi/mcp">
+    <meta name="theme-color" content="#0a0c10">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="MCP Server | Axis Mundi">
+    <meta property="og:description"
+        content="Model Context Protocol server for Google Workspace orchestration — Keep, Docs, Sheets, Gmail, Calendar, and workflow statuses.">
+    <meta property="og:url" content="https://echosh-labs.com/axis-mundi/mcp">
+    <meta property="og:image" content="https://echosh-labs.com/axis-mundi/og.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../dist/landing.nK5EWG0B.css" xintegrity="sha384-nK5EWG0BraNhWzn+C9OHEia8SlJxZ1gxbOmzCvMArTRR7P2lquPdgbkzqVtSUDPm" crossorigin="anonymous">
+</head>
+
+<body class="min-h-screen bg-charcoal-900 text-slate-100">
+    <div class="max-w-6xl mx-auto px-6 py-10 md:py-14">
+
+        <!-- Header -->
+        <header class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div>
+                <a href="../" class="inline-flex items-center gap-2 text-xs text-[var(--muted)] hover:text-[var(--accent)] transition-colors mono mb-3">
+                    ← axis mundi
+                </a>
+                <h1 class="text-3xl font-semibold tracking-[0.3em] lowercase shimmer-text drop-shadow-[0_0_8px_rgba(76,29,149,0.45)]">
+                    mcp server</h1>
+                <p class="mt-1 text-sm text-[var(--muted)]">Model Context Protocol endpoint for cloud code agents</p>
+            </div>
+            <div class="flex flex-wrap gap-3 text-xs text-[var(--muted)]">
+                <span class="tag bg-white/5 text-emerald-200">MCP 2025-03-26</span>
+                <span class="tag bg-white/5 text-amber-200">JSON-RPC 2.0</span>
+                <span class="tag bg-white/5">Streamable HTTP</span>
+            </div>
+        </header>
+
+        <main class="mt-12 space-y-14">
+
+            <!-- Hero -->
+            <section class="grid gap-10 md:grid-cols-[1.1fr_0.9fr] items-start">
+                <div class="space-y-6">
+                    <p class="text-lg text-slate-200 leading-relaxed">
+                        Axis Mundi exposes its full workspace registry — Google Keep, Docs, Sheets, Gmail, and Calendar — plus
+                        a seven-state workflow lifecycle to any MCP-compatible agent. Remote agents can read content,
+                        query statuses, and drive items through the pipeline in real time.
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <a class="cta-btn bg-[var(--accent)] text-charcoal-900"
+                            href="https://github.com/echosh-labs/axis-mundi" target="_blank" rel="noreferrer">
+                            View on GitHub
+                            <span aria-hidden="true">↗</span>
+                        </a>
+                        <a class="cta-btn bg-charcoal-800 text-slate-100 border border-[var(--border)]"
+                            href="https://modelcontextprotocol.io/" target="_blank" rel="noreferrer">
+                            MCP Spec
+                            <span aria-hidden="true">↗</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="panel p-5 bg-charcoal-800/60 border border-[var(--border)]">
+                    <div class="flex items-center justify-between text-xs text-[var(--muted)] mb-3">
+                        <span class="mono">architecture</span>
+                        <span class="rounded-full bg-emerald-500/15 text-emerald-100 px-3 py-1 text-[11px]">data flow</span>
+                    </div>
+                    <pre class="text-[11px] mono text-slate-300 leading-relaxed overflow-x-auto whitespace-pre">Cloud Agent
+    │
+    ▼  POST /mcp (JSON-RPC 2.0)
+┌──────────────┐
+│  MCP Server  │──── Bearer Auth (MCP_API_KEY)
+└──────┬───────┘
+       │
+  ┌────┴────┐
+  ▼         ▼
+Workspace  Status
+Service    Manager
+  │         │
+  ▼         ▼
+Google    SQLite +
+APIs      SSE → TUI</pre>
+                    <p class="mt-3 text-[11px] text-[var(--muted)]">Status changes propagate to all connected TUI clients via SSE in real time.</p>
+                </div>
+            </section>
+
+            <!-- Setup -->
+            <section class="panel p-6 bg-charcoal-800/80 border border-[var(--border)]">
+                <h2 class="text-sm uppercase tracking-[0.12em] text-[var(--muted)]">Quick start</h2>
+                <p class="text-lg text-white mt-1 mb-6">Connect in three steps.</p>
+                <div class="grid gap-4 md:grid-cols-3">
+                    <div class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 p-4">
+                        <div class="text-emerald-200 font-semibold mb-2">1 · Configure</div>
+                        <p class="text-sm text-[var(--muted)] mb-3">Set an optional API key in your environment:</p>
+                        <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-emerald-200 overflow-x-auto">MCP_API_KEY=your-secret-key</pre>
+                    </div>
+                    <div class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 p-4">
+                        <div class="text-amber-200 font-semibold mb-2">2 · Start</div>
+                        <p class="text-sm text-[var(--muted)] mb-3">The endpoint starts automatically with Axis Mundi:</p>
+                        <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-amber-200 overflow-x-auto">go run ./cmd/axis</pre>
+                    </div>
+                    <div class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 p-4">
+                        <div class="text-sky-200 font-semibold mb-2">3 · Connect</div>
+                        <p class="text-sm text-[var(--muted)] mb-3">Point your agent at the MCP endpoint:</p>
+                        <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-sky-200 overflow-x-auto">POST http://localhost:8080/mcp</pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tools Grid -->
+            <section>
+                <div class="mb-6">
+                    <h2 class="text-sm uppercase tracking-[0.12em] text-[var(--muted)]">MCP Tools</h2>
+                    <p class="text-lg text-white mt-1">Eleven tools across four domains.</p>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
+
+                    <!-- Keep Tools -->
+                    <div class="panel p-5 bg-charcoal-800/70 border border-[var(--border)]">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="tag bg-yellow-500/15 text-yellow-200">Keep</span>
+                            <span class="text-sm text-[var(--muted)]">3 tools</span>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">list_notes</div>
+                                <p class="text-[var(--muted)]">List all Keep notes with titles and content snippets.</p>
+                            </div>
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">get_note</div>
+                                <p class="text-[var(--muted)]">Retrieve the full content of a specific note by ID.</p>
+                            </div>
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">search_notes</div>
+                                <p class="text-[var(--muted)]">Search notes by keyword across titles and content.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workspace Tools -->
+                    <div class="panel p-5 bg-charcoal-800/70 border border-[var(--border)]">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="tag bg-sky-500/15 text-sky-200">Docs · Sheets · Gmail · Calendar</span>
+                            <span class="text-sm text-[var(--muted)]">4 tools</span>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">get_doc</div>
+                                <p class="text-[var(--muted)]">Retrieve the plain text content of a Google Doc.</p>
+                            </div>
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">get_sheet</div>
+                                <p class="text-[var(--muted)]">Read cell values from a Google Sheet with optional range.</p>
+                            </div>
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">get_gmail_thread</div>
+                                <p class="text-[var(--muted)]">Retrieve the full conversation content of a Gmail thread.</p>
+                            </div>
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">get_calendar_event</div>
+                                <p class="text-[var(--muted)]">Retrieve the details and description of a Google Calendar event.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Registry Tool -->
+                    <div class="panel p-5 bg-charcoal-800/70 border border-[var(--border)]">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="tag bg-violet-500/15 text-violet-200">Registry</span>
+                            <span class="text-sm text-[var(--muted)]">1 tool</span>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">list_workspace</div>
+                                <p class="text-[var(--muted)]">Unified registry across all item types. Returns ID, type, title, snippet, current status, and resource URI for every item.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Tools -->
+                    <div class="panel p-5 bg-charcoal-800/70 border border-[var(--border)]">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="tag bg-emerald-500/15 text-emerald-200">Status</span>
+                            <span class="text-sm text-[var(--muted)]">3 tools</span>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">get_status</div>
+                                <p class="text-[var(--muted)]">Get the current workflow status of any workspace item.</p>
+                            </div>
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">set_status</div>
+                                <p class="text-[var(--muted)]">Set an item's status. Broadcasts via SSE to all connected TUI clients.</p>
+                            </div>
+                            <div class="rounded-lg bg-charcoal-700/60 border border-[var(--border)] p-3">
+                                <div class="mono text-emerald-200 text-xs mb-1">list_statuses</div>
+                                <p class="text-[var(--muted)]">List status of all tracked items and the allowed status values.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Status Lifecycle -->
+            <section class="panel p-6 bg-charcoal-800/80 border border-[var(--border)]">
+                <h2 class="text-sm uppercase tracking-[0.12em] text-[var(--muted)]">Workflow lifecycle</h2>
+                <p class="text-lg text-white mt-1 mb-6">Seven states for every workspace item.</p>
+                <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+                    <div class="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-center">
+                        <div class="mono text-amber-200 text-sm font-semibold">Pending</div>
+                        <p class="text-[11px] text-[var(--muted)] mt-1">Not yet acted upon</p>
+                    </div>
+                    <div class="rounded-xl border border-purple-500/30 bg-purple-500/5 p-3 text-center">
+                        <div class="mono text-purple-200 text-sm font-semibold">Execute</div>
+                        <p class="text-[11px] text-[var(--muted)] mt-1">Queued for execution</p>
+                    </div>
+                    <div class="rounded-xl border border-sky-500/30 bg-sky-500/5 p-3 text-center">
+                        <div class="mono text-sky-200 text-sm font-semibold">Active</div>
+                        <p class="text-[11px] text-[var(--muted)] mt-1">Currently in progress</p>
+                    </div>
+                    <div class="rounded-xl border border-red-500/30 bg-red-500/5 p-3 text-center">
+                        <div class="mono text-red-200 text-sm font-semibold">Blocked</div>
+                        <p class="text-[11px] text-[var(--muted)] mt-1">Waiting on dependency</p>
+                    </div>
+                    <div class="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3 text-center">
+                        <div class="mono text-cyan-200 text-sm font-semibold">Review</div>
+                        <p class="text-[11px] text-[var(--muted)] mt-1">Ready for review</p>
+                    </div>
+                    <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-center">
+                        <div class="mono text-emerald-200 text-sm font-semibold">Complete</div>
+                        <p class="text-[11px] text-[var(--muted)] mt-1">Done</p>
+                    </div>
+                    <div class="rounded-xl border border-rose-500/30 bg-rose-500/5 p-3 text-center">
+                        <div class="mono text-rose-200 text-sm font-semibold">Error</div>
+                        <p class="text-[11px] text-[var(--muted)] mt-1">Needs attention</p>
+                    </div>
+                </div>
+                <p class="mt-4 text-sm text-[var(--muted)]">
+                    Status changes made via MCP are persisted to SQLite, broadcast via SSE to all connected TUI clients,
+                    and reflected in the unified registry in real time. Agents and human operators share the same status state.
+                </p>
+            </section>
+
+            <!-- Resources -->
+            <section class="panel p-6 bg-charcoal-800/70 border border-[var(--border)]">
+                <h2 class="text-sm uppercase tracking-[0.12em] text-[var(--muted)]">MCP Resources</h2>
+                <p class="text-lg text-white mt-1 mb-6">Every workspace item is addressable by URI.</p>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 p-4">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-[11px] uppercase text-[var(--muted)]">
+                                    <th class="text-left pb-2">Type</th>
+                                    <th class="text-left pb-2">URI scheme</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-300 mono text-xs">
+                                <tr class="border-t border-[var(--border)]"><td class="py-2 text-yellow-200">Keep</td><td class="py-2">keep://notes/{id}</td></tr>
+                                <tr class="border-t border-[var(--border)]"><td class="py-2 text-blue-200">Docs</td><td class="py-2">docs://documents/{id}</td></tr>
+                                <tr class="border-t border-[var(--border)]"><td class="py-2 text-emerald-200">Sheets</td><td class="py-2">sheets://spreadsheets/{id}</td></tr>
+                                <tr class="border-t border-[var(--border)]"><td class="py-2 text-slate-200">Gmail</td><td class="py-2">gmail://threads/{id}</td></tr>
+                                <tr class="border-t border-[var(--border)]"><td class="py-2 text-red-200">Calendar</td><td class="py-2">calendar://events/{id}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 p-4">
+                        <p class="text-[11px] uppercase mono text-[var(--muted)] mb-2">MCP Methods</p>
+                        <div class="space-y-2 text-sm text-[var(--muted)]">
+                            <div class="flex gap-3">
+                                <span class="mono text-emerald-200 text-xs w-28 shrink-0">initialize</span>
+                                <span>Handshake — returns server info and capabilities</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="mono text-emerald-200 text-xs w-28 shrink-0">ping</span>
+                                <span>Health check</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="mono text-emerald-200 text-xs w-28 shrink-0">resources/list</span>
+                                <span>List all workspace items with status</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="mono text-emerald-200 text-xs w-28 shrink-0">resources/read</span>
+                                <span>Read full content by URI</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="mono text-emerald-200 text-xs w-28 shrink-0">tools/list</span>
+                                <span>List available tools</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="mono text-emerald-200 text-xs w-28 shrink-0">tools/call</span>
+                                <span>Invoke a tool</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Example calls -->
+            <section class="panel p-6 bg-charcoal-800/80 border border-[var(--border)]">
+                <h2 class="text-sm uppercase tracking-[0.12em] text-[var(--muted)]">Example calls</h2>
+                <p class="text-lg text-white mt-1 mb-6">Copy-paste curl commands to test the endpoint.</p>
+
+                <div class="space-y-4">
+                    <!-- Initialize -->
+                    <details class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 overflow-hidden group">
+                        <summary class="p-4 cursor-pointer flex items-center gap-3 text-sm hover:bg-white/[0.02] transition-colors">
+                            <span class="mono text-emerald-200 text-xs">initialize</span>
+                            <span class="text-[var(--muted)]">Handshake with the server</span>
+                            <span class="ml-auto text-[var(--muted)] text-xs group-open:rotate-90 transition-transform">▶</span>
+                        </summary>
+                        <div class="px-4 pb-4">
+                            <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-slate-300 overflow-x-auto">curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-secret-key-here" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2025-03-26",
+      "clientInfo": { "name": "my-agent", "version": "1.0.0" }
+    }
+  }'</pre>
+                        </div>
+                    </details>
+
+                    <!-- list_workspace -->
+                    <details class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 overflow-hidden group">
+                        <summary class="p-4 cursor-pointer flex items-center gap-3 text-sm hover:bg-white/[0.02] transition-colors">
+                            <span class="mono text-emerald-200 text-xs">list_workspace</span>
+                            <span class="text-[var(--muted)]">Get all items with statuses</span>
+                            <span class="ml-auto text-[var(--muted)] text-xs group-open:rotate-90 transition-transform">▶</span>
+                        </summary>
+                        <div class="px-4 pb-4">
+                            <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-slate-300 overflow-x-auto">curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-secret-key-here" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": { "name": "list_workspace", "arguments": {} }
+  }'</pre>
+                        </div>
+                    </details>
+
+                    <!-- set_status -->
+                    <details class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 overflow-hidden group">
+                        <summary class="p-4 cursor-pointer flex items-center gap-3 text-sm hover:bg-white/[0.02] transition-colors">
+                            <span class="mono text-emerald-200 text-xs">set_status</span>
+                            <span class="text-[var(--muted)]">Update a workflow status</span>
+                            <span class="ml-auto text-[var(--muted)] text-xs group-open:rotate-90 transition-transform">▶</span>
+                        </summary>
+                        <div class="px-4 pb-4">
+                            <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-slate-300 overflow-x-auto">curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-secret-key-here" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "set_status",
+      "arguments": { "id": "doc456", "status": "Review" }
+    }
+  }'</pre>
+                        </div>
+                    </details>
+
+                    <!-- get_note -->
+                    <details class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 overflow-hidden group">
+                        <summary class="p-4 cursor-pointer flex items-center gap-3 text-sm hover:bg-white/[0.02] transition-colors">
+                            <span class="mono text-emerald-200 text-xs">get_note</span>
+                            <span class="text-[var(--muted)]">Read a Keep note by ID</span>
+                            <span class="ml-auto text-[var(--muted)] text-xs group-open:rotate-90 transition-transform">▶</span>
+                        </summary>
+                        <div class="px-4 pb-4">
+                            <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-slate-300 overflow-x-auto">curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-secret-key-here" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "get_note",
+      "arguments": { "noteId": "abc123" }
+    }
+  }'</pre>
+                        </div>
+                    </details>
+
+                    <!-- resources/read -->
+                    <details class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 overflow-hidden group">
+                        <summary class="p-4 cursor-pointer flex items-center gap-3 text-sm hover:bg-white/[0.02] transition-colors">
+                            <span class="mono text-emerald-200 text-xs">resources/read</span>
+                            <span class="text-[var(--muted)]">Read a resource by URI</span>
+                            <span class="ml-auto text-[var(--muted)] text-xs group-open:rotate-90 transition-transform">▶</span>
+                        </summary>
+                        <div class="px-4 pb-4">
+                            <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-slate-300 overflow-x-auto">curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-secret-key-here" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "resources/read",
+    "params": { "uri": "docs://documents/doc456" }
+  }'</pre>
+                        </div>
+                    </details>
+                </div>
+            </section>
+
+            <!-- Agent Config -->
+            <section class="panel p-6 bg-charcoal-800/70 border border-[var(--border)]">
+                <h2 class="text-sm uppercase tracking-[0.12em] text-[var(--muted)]">Agent configuration</h2>
+                <p class="text-lg text-white mt-1 mb-6">Connect your agent in one config block.</p>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="tag bg-sky-500/15 text-sky-200">VS Code / Copilot</span>
+                        </div>
+                        <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-slate-300 overflow-x-auto">{
+  "servers": {
+    "axis-mundi": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_KEY"
+      }
+    }
+  }
+}</pre>
+                        <p class="mt-2 text-[11px] text-[var(--muted)]">Add to <span class="mono">.vscode/mcp.json</span> or user settings.</p>
+                    </div>
+                    <div class="rounded-xl border border-[var(--border)] bg-charcoal-700/60 p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="tag bg-amber-500/15 text-amber-200">Claude Desktop</span>
+                        </div>
+                        <pre class="text-[11px] mono bg-charcoal-900/80 rounded-lg p-3 text-slate-300 overflow-x-auto">{
+  "mcpServers": {
+    "axis-mundi": {
+      "type": "streamableHttp",
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_KEY"
+      }
+    }
+  }
+}</pre>
+                        <p class="mt-2 text-[11px] text-[var(--muted)]">Add to <span class="mono">claude_desktop_config.json</span>.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Codes -->
+            <section class="panel p-6 bg-charcoal-800/80 border border-[var(--border)]">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 class="text-sm uppercase tracking-[0.12em] text-[var(--muted)]">Error codes</h2>
+                        <p class="text-lg text-white mt-1">Standard JSON-RPC 2.0 error responses.</p>
+                    </div>
+                    <div class="flex gap-3 flex-wrap text-xs text-[var(--muted)]">
+                        <span class="tag bg-white/5">JSON-RPC 2.0</span>
+                    </div>
+                </div>
+                <div class="mt-4 rounded-xl border border-[var(--border)] bg-charcoal-700/60 p-4 overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-[11px] uppercase text-[var(--muted)]">
+                                <th class="text-left pb-2 w-24">Code</th>
+                                <th class="text-left pb-2">Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-300 mono text-xs">
+                            <tr class="border-t border-[var(--border)]"><td class="py-2 text-red-300">-32700</td><td class="py-2 font-sans">Parse error — malformed JSON</td></tr>
+                            <tr class="border-t border-[var(--border)]"><td class="py-2 text-red-300">-32600</td><td class="py-2 font-sans">Invalid request — bad JSON-RPC version</td></tr>
+                            <tr class="border-t border-[var(--border)]"><td class="py-2 text-red-300">-32601</td><td class="py-2 font-sans">Method not found</td></tr>
+                            <tr class="border-t border-[var(--border)]"><td class="py-2 text-red-300">-32602</td><td class="py-2 font-sans">Invalid parameters</td></tr>
+                            <tr class="border-t border-[var(--border)]"><td class="py-2 text-red-300">-32603</td><td class="py-2 font-sans">Internal error — API failure</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- CTA -->
+            <section class="panel p-6 bg-charcoal-800/80 border border-[var(--border)]">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 class="text-lg text-white font-semibold">Start building</h2>
+                        <p class="text-sm text-[var(--muted)]">Clone the repo and connect your first agent.</p>
+                    </div>
+                    <div class="flex gap-3 flex-wrap">
+                        <a class="cta-btn bg-[var(--accent)] text-charcoal-900"
+                            href="https://github.com/echosh-labs/axis-mundi" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+                        <a class="cta-btn bg-charcoal-800 text-slate-100 border border-[var(--border)]"
+                            href="../">← Back to Axis Mundi</a>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer
+            class="mt-14 text-[11px] text-[var(--muted)] flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span>© 2026 echoSH labs · Authentic freedom through automation.</span>
+            <span class="mono">MCP Specification 2025-03-26 · Streamable HTTP transport</span>
+        </footer>
+    </div>
+</body>
+
+</html>
