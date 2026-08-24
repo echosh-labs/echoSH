@@ -12,8 +12,11 @@ data/*.db-*
 !data/.gitkeep
 
 # Node & Next.js
-frontend/node_modules/
-frontend/.next/
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.pnpm-store/
 archive/**/node_modules/
 
 # Environment variables and Credentials

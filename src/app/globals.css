@@ -1,0 +1,245 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Surface Tokens */
+  --bg-space: #05070a;
+  --surface-void: #020408;
+  --surface-base: #090d14;
+  --surface-panel: rgba(15, 21, 35, 0.7);
+  --surface-elevated: rgba(22, 31, 51, 0.85);
+  --surface-overlay: rgba(5, 7, 10, 0.85);
+  --surface-sunken: #05070a;
+
+  /* Accent Glow Tokens */
+  --quicksilver: #e2e8f0;
+  --quicksilver-metal: #94a3b8;
+  --emerald-talisman: #10b981;
+  --emerald-glow: rgba(16, 185, 129, 0.4);
+  --hermetic-gold: #f59e0b;
+  --ether-violet: #a855f7;
+  --luna-cyan: #06b6d4;
+  --status-alert: #f43f5e;
+
+  /* Border Tokens */
+  --border-subtle: rgba(226, 232, 240, 0.08);
+  --border-default: rgba(226, 232, 240, 0.14);
+  --border-prominent: rgba(226, 232, 240, 0.25);
+  --border-emerald: rgba(16, 185, 129, 0.35);
+  --border-violet: rgba(168, 85, 247, 0.35);
+  --border-amber: rgba(245, 158, 11, 0.35);
+  --border-cyan: rgba(6, 182, 212, 0.35);
+}
+
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+  }
+
+  body {
+    background-color: var(--bg-space);
+    color: var(--quicksilver);
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    selection-background-color: rgba(16, 185, 129, 0.3);
+    selection-color: #ffffff;
+  }
+
+  /* Accessible focus ring */
+  *:focus-visible {
+    outline: 2px solid rgba(16, 185, 129, 0.6);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* =========================================================================
+     TEXT GRADIENTS & TYPOGRAPHY STYLING
+     ========================================================================= */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #fef08a 0%, #fbbf24 35%, #d97706 75%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-silver-gradient {
+    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 30%, #cbd5e1 65%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-emerald-gradient {
+    background: linear-gradient(135deg, #a7f3d0 0%, #34d399 35%, #10b981 70%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-cyan-gradient {
+    background: linear-gradient(135deg, #cffafe 0%, #67e8f9 35%, #06b6d4 70%, #0891b2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-violet-gradient {
+    background: linear-gradient(135deg, #f3e8ff 0%, #c084fc 35%, #a855f7 70%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-rose-gradient {
+    background: linear-gradient(135deg, #ffe4e6 0%, #fb7185 35%, #f43f5e 70%, #e11d48 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* =========================================================================
+     GLASSMORPHISM & SURFACE HIERARCHY
+     ========================================================================= */
+  .glass-panel {
+    background: rgba(15, 21, 35, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.12);
+  }
+
+  .glass-panel-elevated {
+    background: rgba(22, 31, 51, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.18);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  .glass-panel-sunken {
+    background: rgba(5, 7, 10, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.08);
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .glass-panel-emerald {
+    background: rgba(6, 78, 59, 0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.15);
+  }
+
+  .glass-panel-silver {
+    background: rgba(30, 41, 59, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.2);
+    box-shadow: 0 0 20px -5px rgba(226, 232, 240, 0.1);
+  }
+
+  .glass-panel-violet {
+    background: rgba(88, 28, 135, 0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(168, 85, 247, 0.28);
+    box-shadow: 0 0 20px -5px rgba(168, 85, 247, 0.15);
+  }
+
+  .glass-panel-amber {
+    background: rgba(120, 53, 15, 0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(245, 158, 11, 0.28);
+    box-shadow: 0 0 20px -5px rgba(245, 158, 11, 0.15);
+  }
+
+  .glass-panel-cyan {
+    background: rgba(14, 116, 144, 0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(6, 182, 212, 0.28);
+    box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.15);
+  }
+
+  /* =========================================================================
+     TUI & TERMINAL CONSOLE STYLING
+     ========================================================================= */
+  .tui-window {
+    background: rgba(5, 7, 10, 0.95);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), inset 0 0 15px rgba(16, 185, 129, 0.03);
+    font-family: 'JetBrains Mono', Menlo, monospace;
+  }
+
+  .tui-scanlines {
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%, 
+      rgba(0, 0, 0, 0.25) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+  }
+
+  /* Keycap shortcut pill */
+  .keycap-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.125rem 0.375rem;
+    font-family: 'JetBrains Mono', Menlo, monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 0.375rem;
+    background-color: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(226, 232, 240, 0.18);
+    color: #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  /* =========================================================================
+     SKELETON SHIMMER (PURE ZERO-CONTENT PRESENTATION LOADER)
+     ========================================================================= */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background-color: rgba(22, 31, 51, 0.6);
+    border-radius: 0.5rem;
+  }
+
+  .skeleton-shimmer::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.06) 20%,
+      rgba(16, 185, 129, 0.1) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    animation: shimmer 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    content: '';
+  }
+}
+
+/* =========================================================================
+   CUSTOM COMPACT SCROLLBARS
+   ========================================================================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090d14;
+}
+::-webkit-scrollbar-thumb {
+  background: #22304d;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #10b981;
+}
