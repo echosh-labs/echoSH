@@ -27,9 +27,13 @@
 * [Roadmap](#roadmap)
 * [Monetization Strategy](#monetization-strategy)
 * [Contributing](#contributing)
-* [License](#license)
+* [License](## 📄 License
 
----
+This software is dual-licensed:
+- **Open Source Edition**: Governed by the [GNU Affero General Public License v3.0 (AGPL-3.0)](LICENSE.md) for individual, educational, and open-source usage.
+- **Commercial & Enterprise Edition**: Requires a commercial license from echoSH labs for proprietary integration, corporate deployment, or advanced enterprise features. See [COMMERCIAL.md](COMMERCIAL.md) or visit [echosh-labs.com](https://echosh-labs.com).
+
+For commercial licensing inquiries, contact [justin@echosh-labs.com](mailto:justin@echosh-labs.com).
 
 ### Core Concept
 
@@ -128,8 +132,10 @@ Contributions are what make the open-source community such an amazing place to l
 4.  Push to the Branch (`git push origin feature/AmazingFeature`)
 5.  Open a Pull Request
 
-### License
+## 📄 License
 
-The open-source version of echoSH is distributed under the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0). See the `LICENSE.md` file for the full license text.
+This software is dual-licensed:
+- **Open Source Edition**: Governed by the [GNU Affero General Public License v3.0 (AGPL-3.0)](LICENSE.md) for individual, educational, and open-source usage.
+- **Commercial & Enterprise Edition**: Requires a commercial license from echoSH labs for proprietary integration, corporate deployment, or advanced enterprise features. See [COMMERCIAL.md](COMMERCIAL.md) or visit [echosh-labs.com](https://echosh-labs.com).
 
-A separate commercial license is available for Professional and Enterprise editions.
+For commercial licensing inquiries, contact [justin@echosh-labs.com](mailto:justin@echosh-labs.com).
