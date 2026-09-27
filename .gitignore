@@ -78,3 +78,32 @@ logs
 **/GEMINI.md
 **/AGENTS.md
 **/SCOPE.md
+# ==============================================================================
+# Sovereign Security & Secrets Prevention (echosh-labs)
+# ==============================================================================
+# Environment & Local Configuration
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Cryptographic Keys & Service Credentials
+*.key
+*.pem
+*.cert
+*.p12
+*service-account*.json
+credentials.json
+token.json
+
+# Local Databases, Blobs & Persistent State
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+.data/
+.data

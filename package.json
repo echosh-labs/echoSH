@@ -5,13 +5,13 @@
   "main": "dist/main/index.js",
   "author": {
     "name": "Justin Wood, Josh Wood",
-    "email": "kalaghni@gmail.com",
-    "url": "https://github.com/stiamprie"
+    "email": "justin@echosh-labs.com",
+    "url": "https://echosh-labs.com"
   },
-  "homepage": "",
+  "homepage": "https://echosh-labs.com",
   "repository": {
     "directory": "/",
-    "url": "https://github.com/stiamprie/echoSH"
+    "url": "https://github.com/echosh-labs/echoSH"
   },
   "scripts": {
     "format": "prettier --write .",
